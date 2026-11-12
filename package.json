@@ -17,7 +17,8 @@
     "inspect": "tsx scripts/inspect.ts",
     "preview": "tsx scripts/preview.ts",
     "emoji": "tsx scripts/emoji.ts",
-    "clean": "node scripts/clean.js"
+    "clean": "node scripts/clean.js",
+    "reference": "tsx scripts/reference.ts"
   },
   "keywords": [],
   "author": "",

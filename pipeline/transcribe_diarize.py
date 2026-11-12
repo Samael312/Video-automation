@@ -46,7 +46,7 @@ step("cargando audio")
 audio = whisperx.load_audio(str(video))          # ffmpeg -> numpy 16 kHz
 step(f"transcribiendo con '{args.model}' (cpu/int8)")
 prompt_file = Path(args.prompt)
-initial_prompt = prompt_file.read_text(encoding="utf-8").strip() if prompt_file.exists() else None
+initial_prompt = prompt_file.read_text(encoding="utf-8").strip() if args.prompt and prompt_file.is_file() else None  # --prompt "" = sin prompt
 model = whisperx.load_model(args.model, DEVICE, compute_type=COMPUTE, asr_options={"initial_prompt": initial_prompt})
 result = model.transcribe(audio, batch_size=4)
 lang = result["language"]

@@ -112,6 +112,7 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run render:plan -- X` | valida y renderiza `media/output/edited/X_edited.mp4` y borra sus temporales |
 | `npm run clean -- X` | borra temporales y hoja de preview de X |
 | `npm run clean -- --all` | deja `media/output` solo con `edited/` (los videos finales) |
+| `npm run reference -- V` (o `--all`) | analiza videos de `media/reference/`: hojas, cortes, ritmo, transcript |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
@@ -131,6 +132,16 @@ Archivo: `.claude/skills/video-base/brand.md`. **Puedes editarlo** y Claude lo o
 Regla de los títulos: `line1` ≤ 14 caracteres, `line2` ≤ 18. Más largo se sale de la pantalla.
 
 Si la profe estrena una muletilla o un cierre nuevo ("¡Nos vemos en la próxima!"), añádelo aquí.
+
+### Aprender de videos de referencia: `/analyze-reference`
+
+1. Copia los videos a `media/reference/`.
+2. Escribe `/analyze-reference` (solo los nuevos) o `/analyze-reference Video2.mp4`. Dile de qué creador son si no es la de siempre.
+3. Claude saca fotogramas, cortes, ritmo y transcripción (`npm run reference`), lo compara con el estilo actual y te propone cambios numerados, con el segundo del video como prueba.
+4. Tú eliges cuáles aplicar. Lo analizado queda anotado en `.claude/skills/video-base/references.md`.
+
+- **Misma creadora**: se afina el estilo `referencia` (colores, tamaños, ritmo) y se añaden ganchos/cierres a `brand.md` como patrón, en la voz de la profe.
+- **Otro creador**: se crea un estilo aparte (`"style": "<nombre>"` en el plan). Se toman ideas, no su marca.
 
 ---
 

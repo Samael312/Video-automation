@@ -5,13 +5,17 @@ import {Translate} from './translate';
 import {FalseFriend} from './false-friend';
 import {Mistake} from './mistake';
 import {Example} from './example';
+import {Pronounce} from './pronounce';
+import {Quiz} from './quiz';
 
 export type TemplateProps<D> = {data: D; theme: Theme; durationInFrames: number};
 
 /** Plantillas por tipo de escena. `generated` se resuelve aparte (src/scenes/generated). */
-export const TEMPLATES: Partial<Record<Exclude<SceneType, 'generated'>, React.FC<TemplateProps<any>>>> = {
+export const TEMPLATES: Record<Exclude<SceneType, 'generated'>, React.FC<TemplateProps<any>>> = {
   translate: Translate,
   'false-friend': FalseFriend,
   mistake: Mistake,
   example: Example,
+  pronounce: Pronounce,
+  quiz: Quiz,
 };

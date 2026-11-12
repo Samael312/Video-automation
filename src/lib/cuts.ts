@@ -53,3 +53,12 @@ export const mapTimeNext = (t: number, keeps: Keep[]): number => {
   }
   return offset;
 };
+
+/**
+ * Alinea cada tramo a frames enteros. El video se arma con frames redondeados (keepFrames);
+ * si subtitulos/escenas usaran los tiempos exactos, el error de redondeo se acumularia corte a corte.
+ */
+export const quantizeKeeps = (keeps: Keep[], fps: number): Keep[] =>
+  keeps
+    .map((k) => ({start: Math.round(k.start * fps) / fps, end: Math.round(k.end * fps) / fps}))
+    .filter((k) => k.end > k.start);

@@ -33,6 +33,7 @@ if (!transcript) {
   process.exit(1);
 }
 const cuts = readJson<CutsFile>(`${name}.cuts.json`);
+if (!cuts) console.warn(`AVISO: falta public/${name}.cuts.json; el video se renderizara SIN cortes de silencio (genera los cortes con pipeline/cut.py)`);
 const keeps = cuts ? cuts.keeps : [{start: 0, end: transcript.duration}];
 const plan = readJson<unknown>(`${name}.edit.json`);
 if (!plan) console.log(`(sin ${name}.edit.json: se valida el plan por defecto)`);
@@ -43,6 +44,7 @@ const errors = validatePlan(plan ?? defaultPlan(video), {
   keeps,
   knownStyles: Object.keys(themes),
   knownGenerated: Object.keys(GENERATED),
+  knownEmojis: fs.readdirSync(path.join(pub, 'emoji')).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')),
 });
 if (errors.length) {
   console.error(`edit.json invalido (${errors.length} error${errors.length === 1 ? '' : 'es'}):`);

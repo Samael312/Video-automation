@@ -1,4 +1,4 @@
-"""Detecta pausas largas y escribe public/<video>.cuts.json con los tramos a conservar (tiempo original).
+r"""Detecta pausas largas y escribe public/<video>.cuts.json con los tramos a conservar (tiempo original).
 
 Uso: .venv\Scripts\python pipeline/cut.py public/<video>.transcript.json [--gap 0.7] [--pad 0.1]
 """

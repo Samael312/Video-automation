@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {cutPoints, keptDuration, mapTime, remapWords, type Keep} from './cuts';
+import {cutPoints, keepFrames, keptDuration, mapTime, remapWords, totalFrames, type Keep} from './cuts';
 import type {Word} from './types';
 
 const keeps: Keep[] = [{start: 0.9, end: 2.1}, {start: 3.9, end: 5.1}];
@@ -31,4 +31,7 @@ describe('cuts', () => {
     expect(remapWords(ws, [{start: 0, end: 5}])).toEqual(ws);
   });
   test('remapWords con lista vacía', () => expect(remapWords([], keeps)).toEqual([]));
+  test('keepFrames usa frames redondeados del original', () => expect(keepFrames({start: 0.9, end: 2.1}, 30)).toBe(36));
+  test('totalFrames es la suma de keepFrames', () => expect(totalFrames(keeps, 30)).toBe(72));
+  test('totalFrames con lista vacía es 0', () => expect(totalFrames([], 30)).toBe(0));
 });

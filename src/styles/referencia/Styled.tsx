@@ -1,9 +1,11 @@
 import React, {useMemo} from 'react';
-import {AbsoluteFill, Audio, Img, interpolate, OffthreadVideo, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
+import {AbsoluteFill, Audio, Img, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {loadFont as loadPlayfair} from '@remotion/google-fonts/PlayfairDisplay';
 import {loadFont as loadPoppins} from '@remotion/google-fonts/Poppins';
 import {CREAM, styledConfig as C} from './config';
 import type {Transcript, Word} from '../../lib/types';
+import {CutVideo} from '../../lib/CutVideo';
+import type {Keep} from '../../lib/cuts';
 
 const playfair = loadPlayfair('normal', {weights: ['800']});
 const playfairI = loadPlayfair('italic', {weights: ['500']});
@@ -12,7 +14,7 @@ const SERIF = playfair.fontFamily;
 const SERIF_I = playfairI.fontFamily;
 const SANS = poppins.fontFamily;
 
-export type StyledProps = {videoSrc: string; transcript: Transcript | null};
+export type StyledProps = {videoSrc: string; transcript: Transcript | null; keeps: Keep[]};
 
 // ---------- Titulo de apertura ----------
 const Title: React.FC = () => {
@@ -107,7 +109,7 @@ const EndCard: React.FC = () => {
 };
 
 // ---------- Composicion ----------
-export const Styled: React.FC<StyledProps> = ({videoSrc, transcript}) => {
+export const Styled: React.FC<StyledProps> = ({videoSrc, transcript, keeps}) => {
   const {fps} = useVideoConfig();
   const fr = (s: number) => Math.round(s * fps);
   const chunks = useMemo(() => (transcript ? makeChunks(transcript.words, C.subtitles.maxWords) : []), [transcript]);
@@ -115,7 +117,7 @@ export const Styled: React.FC<StyledProps> = ({videoSrc, transcript}) => {
   const vol = C.sfx.volume;
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
-      <OffthreadVideo src={staticFile(videoSrc)} />
+      <CutVideo src={videoSrc} keeps={keeps} fps={fps} />
 
       <Sequence from={fr(C.title.start)} durationInFrames={fr(C.title.end - C.title.start)}>
         <Title />

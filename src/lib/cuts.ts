@@ -37,3 +37,8 @@ export const cutPoints = (keeps: Keep[]): number[] => {
   });
   return pts;
 };
+
+/** Frames de un tramo (redondeando sobre el tiempo original para no acumular error). */
+export const keepFrames = (k: Keep, fps: number): number => Math.round(k.end * fps) - Math.round(k.start * fps);
+
+export const totalFrames = (keeps: Keep[], fps: number): number => keeps.reduce((sum, k) => sum + keepFrames(k, fps), 0);

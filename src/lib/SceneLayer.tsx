@@ -15,7 +15,7 @@ const SceneFrame: React.FC<{scene: Scene; duration: number; theme: Theme}> = ({s
   const Template = scene.type === 'generated' ? undefined : TEMPLATES[scene.type];
   return (
     <AbsoluteFill style={{backgroundColor: theme.sceneBg, opacity: env, transform: `translateY(${(1 - env) * 60}px)`}}>
-      {Template ? <Template data={scene.data} theme={theme} /> : null}
+      {Template ? <Template data={scene.data} theme={theme} durationInFrames={duration} /> : null}
     </AbsoluteFill>
   );
 };

@@ -1,14 +1,15 @@
 import React, {useMemo} from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {getTheme} from './styles/themes';
-import {Emoji, EndCard, FRAMES_PER_CHAR, Label, Title} from './overlays';
+import {Chat, Emoji, EndCard, FRAMES_PER_CHAR, Item, ITEM_DEFAULT_Y, Label, Title} from './overlays';
+import {BEHIND_ITEM_Y, BEHIND_TITLE_Y, captionsVisible, chatTimes} from './lib/overlayTiming';
 import {CutVideo} from './lib/CutVideo';
 import {cutPoints, mapTimeNext, remapWords, type Keep} from './lib/cuts';
 import {buildPages} from './lib/captions';
 import {keywordEvents, zoomScale} from './lib/dynamics';
 import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
-import type {EditPlan} from './lib/plan';
+import {matteFile, type EditPlan, type ItemOverlay, type Overlay} from './lib/plan';
 import type {Transcript} from './lib/types';
 
 export type EditProps = {videoSrc: string; transcript: Transcript | null; keeps: Keep[]; plan: EditPlan};
@@ -39,9 +40,41 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
   const visiblePages = pages.filter((p) => p.end > subFrom && p.start < subUntil);
 
   const title = plan.title ? mapSpan(plan.title) : null;
-  const overlays = plan.overlays.map(mapSpan).filter((x) => x !== null);
+  const mapOverlay = (o: Overlay): Overlay | null => {
+    const m = mapSpan(o);
+    return m && m.kind === 'chat' ? {...m, messages: m.messages.map((x) => (x.at === undefined ? x : {...x, at: mapAt(x.at)}))} : m;
+  };
+  const overlays = plan.overlays.map(mapOverlay).filter((x): x is Overlay => x !== null);
   const vol = theme.sfxVolume;
   const hasEnd = plan.end !== undefined && Number.isFinite(endAt);
+  const t = frame / fps;
+  const isOn = (s: Span) => t >= s.start && t < s.end;
+
+  const itemY = (o: ItemOverlay) => o.y ?? (o.behind ? BEHIND_ITEM_Y : ITEM_DEFAULT_Y);
+  // Un item arriba ocupa la franja de subtitulos: se esconden mientras esta (como hace Ela).
+  const captionsBlocked = !captionsVisible(t, {
+    from: subFrom,
+    until: subUntil,
+    items: overlays.flatMap((o) => (o.kind === 'item' ? [{start: o.start, end: o.end, top: itemY(o) < 420}] : [])),
+  });
+  // behind: persona recortada (matte) por encima del texto; solo se monta mientras hace falta.
+  const behindTitle = Boolean(title && plan.title?.behind);
+  const behindOn = (behindTitle && isOn(title!)) || overlays.some((o) => o.kind === 'item' && o.behind && isOn(o));
+
+  const renderOverlay = (o: Overlay, i: number) => (
+    <Sequence key={i} from={fr(o.start)} durationInFrames={fr(o.end - o.start)}>
+      {o.kind === 'label' ? <Label text={o.text} x={o.x} y={o.y} dir={o.dir} theme={theme} />
+        : o.kind === 'emoji' ? <Emoji file={o.file} x={o.x} y={o.y} size={o.size} />
+        : o.kind === 'item' ? <Item n={o.n} text={o.text} y={itemY(o)} theme={theme} />
+        : <Chat messages={o.messages} y={o.y} theme={theme} appearAt={chatTimes(o).map((s) => fr(s) - fr(o.start))} />}
+    </Sequence>
+  );
+  const titleEl = title && plan.title ? (
+    <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>
+      <Title line1={plan.title.line1} line2={plan.title.line2} theme={theme} y={plan.title.y ?? (plan.title.behind ? BEHIND_TITLE_Y : undefined)} />
+    </Sequence>
+  ) : null;
+  const isBehind = (o: Overlay) => o.kind === 'item' && Boolean(o.behind);
 
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
@@ -51,19 +84,22 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
 
       <SceneLayer scenes={plan.scenes} keeps={keeps} theme={theme} fps={fps} />
 
-      {title && plan.title ? (
-        <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>
-          <Title line1={plan.title.line1} line2={plan.title.line2} theme={theme} />
-        </Sequence>
+      {/* texto detras de la persona */}
+      {behindTitle ? titleEl : null}
+      {overlays.map((o, i) => (isBehind(o) ? renderOverlay(o, i) : null))}
+      {behindOn ? (
+        <AbsoluteFill style={{transform: `scale(${zoom})`}}>
+          <CutVideo src={matteFile(videoSrc)} keeps={keeps} fps={fps} cutSfx={null} transparent />
+        </AbsoluteFill>
       ) : null}
 
-      <TikTokCaptions pages={visiblePages} highlight={theme.highlight} fontFamily={theme.fonts.sans} fontSize={theme.captionFontSize} top={theme.captionTop} />
+      {behindTitle ? null : titleEl}
 
-      {overlays.map((o, i) => (
-        <Sequence key={i} from={fr(o!.start)} durationInFrames={fr(o!.end - o!.start)}>
-          {o!.kind === 'label' ? <Label text={o!.text} x={o!.x} y={o!.y} dir={o!.dir} theme={theme} /> : <Emoji file={o!.file} x={o!.x} y={o!.y} size={o!.size} />}
-        </Sequence>
-      ))}
+      {captionsBlocked ? null : (
+        <TikTokCaptions pages={visiblePages} highlight={theme.highlight} fontFamily={theme.fonts.sans} fontSize={theme.captionFontSize} top={theme.captionTop} karaoke={theme.captionKaraoke} />
+      )}
+
+      {overlays.map((o, i) => (isBehind(o) ? null : renderOverlay(o, i)))}
 
       {hasEnd && plan.end ? (
         <Sequence from={fr(endAt)}>

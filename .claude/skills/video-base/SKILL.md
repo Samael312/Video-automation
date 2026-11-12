@@ -21,6 +21,7 @@ Antes de empezar lee también:
 2. **Leer** — `npm run inspect -- NOMBRE`
    Muestra cada palabra con su tiempo **original** agrupada por TRAMO conservado, y las zonas `--- CORTE ---`. Todos los tiempos de `edit.json` salen de aquí.
 3. **Planificar** — escribe `public/NOMBRE.edit.json` según la estrategia (ver "Escribir el plan").
+   Si usas `"behind": true` (texto detrás de la profe): `npm run matte -- NOMBRE` una vez por video (tarda ~3–4 min; ver `templates.md`).
 4. **Validar** — `npm run validate -- NOMBRE`. Corrige cada error con su mensaje y repite hasta `OK`. No sigas con errores.
 5. **Preview y pausa** — `npm run preview -- NOMBRE` genera `media/output/NOMBRE_preview.png`. Míralo (Read) y revisa que cada captura muestre lo que planeaste. Luego muestra al usuario el resumen (formato abajo) y la ruta de la hoja. **Para y espera su aprobación. No renderices sin un "sí" explícito.**
 6. **Render** — con aprobación: `npm run render:plan -- NOMBRE` → `media/output/edited/NOMBRE_edited.mp4`. Confirma con `ffprobe -v error -show_entries stream=codec_type,duration -of csv=p=0 media/output/edited/NOMBRE_edited.mp4` que hay video y audio con la misma duración (±0.04 s).
@@ -46,7 +47,8 @@ Reglas comunes (todas las estrategias):
 - **Tiempos**: segundos del video original, tal como los imprime `inspect`. El motor los reubica tras los cortes.
 - **Escenas** (`scenes`): 1–8 s, sin solaparse, **dentro de un solo TRAMO**. Empieza ~0.1 s antes de la primera palabra de la idea que ilustra y termina antes de que empiece la siguiente idea. Nunca la estires sobre un `--- CORTE ---`.
 - **Gancho en los primeros 2 s**: `title` desde 0 (dura 2–3 s, termina cuando la profe ya arrancó la idea). `captions.from` = `title.end` para no tapar el título.
-- **Algo nuevo cada ~3 s**: label, emoji, zoom por palabra clave o escena. Recorre `inspect` en bloques de 3 s; si un bloque no tiene nada, agrega un label o un emoji.
+- **Subtítulos**: estilo Ela, frase entera en blanco (sin palabra activa resaltada). Se esconden solos antes de `captions.from`, desde el cierre y mientras hay un `item` arriba.
+- **Algo nuevo cada ~3 s**: label, emoji, ítem, chat, zoom por palabra clave o escena. Recorre `inspect` en bloques de 3 s; si un bloque no tiene nada, agrega un label o un emoji.
 - **Zoom**: `keywords` = las palabras en inglés que se enseñan (tal como aparecen en el transcript). El zoom en cada corte es automático.
 - **Overlays sobre escenas**: se dibujan **encima** de las escenas. No pongas un label/emoji durante una escena salvo que sea parte de la idea.
 - **Posiciones** (frame 720x1280; los subtítulos ocupan la franja y≈260–330): labels en `y: 400`, con `x: 170, dir: "right"` (izquierda) o `x: 540, dir: "left"` (derecha); emojis en `y: 560`, `x: 130` o `570`, `size: 110`. Alterna lados.

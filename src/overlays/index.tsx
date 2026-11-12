@@ -3,12 +3,13 @@ import {AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, use
 import type {Theme} from '../styles/themes';
 
 // ---------- Titulo de apertura ----------
-export const Title: React.FC<{line1: string; line2: string; theme: Theme}> = ({line1, line2, theme}) => {
+export const TITLE_DEFAULT_Y = 150;
+export const Title: React.FC<{line1: string; line2: string; theme: Theme; y?: number}> = ({line1, line2, theme, y = TITLE_DEFAULT_Y}) => {
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
   const l2 = interpolate(f, [0.35 * fps, 0.35 * fps + 7], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
   return (
-    <AbsoluteFill style={{alignItems: 'center', paddingTop: 150}}>
+    <AbsoluteFill style={{alignItems: 'center', paddingTop: y}}>
       <div style={{fontFamily: theme.fonts.serif, fontWeight: 800, fontSize: 92, color: '#fff', lineHeight: 1.05, textShadow: '0 4px 20px rgba(0,0,0,.35)'}}>{line1}</div>
       <div style={{fontFamily: theme.fonts.serifItalic, fontStyle: 'italic', fontWeight: 500, fontSize: 84, color: theme.cream, lineHeight: 1,
         opacity: l2, transform: `translateY(${(1 - l2) * 34}px)`, textShadow: '0 4px 20px rgba(0,0,0,.35)'}}>{line2}</div>
@@ -65,5 +66,53 @@ export const EndCard: React.FC<{line1: string; line2: string; theme: Theme}> = (
       </div>
       <div style={{fontFamily: theme.fonts.serifItalic, fontStyle: 'italic', fontWeight: 500, fontSize: 38, color: '#fff', opacity: l2, marginTop: 6, textShadow: '0 3px 14px rgba(0,0,0,.4)'}}>{line2}</div>
     </AbsoluteFill>
+  );
+};
+
+// ---------- Item de lista numerada (estilo Ela: 1️⃣ + palabra que se escribe) ----------
+export const ITEM_DEFAULT_Y = 190;
+export const Item: React.FC<{n: number; text: string; y?: number; theme: Theme}> = ({n, text, y = ITEM_DEFAULT_Y, theme}) => {
+  const f = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const pop = spring({frame: f, fps, config: {damping: 10, stiffness: 170}});
+  const typed = Math.min(text.length, Math.max(0, Math.floor((f - 5) / FRAMES_PER_CHAR)));
+  const typing = typed < text.length;
+  return (
+    <AbsoluteFill style={{alignItems: 'center', paddingTop: y}}>
+      <div style={{width: 72, height: 72, borderRadius: 16, transform: `scale(${pop})`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: `linear-gradient(180deg, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 55%), ${theme.keycap}`,
+        boxShadow: 'inset 0 -5px 0 rgba(0,0,0,.18), 0 4px 14px rgba(0,0,0,.3)', border: '2px solid rgba(255,255,255,.55)'}}>
+        <span style={{fontFamily: theme.fonts.sans, fontWeight: 700, fontSize: 46, color: '#fff', lineHeight: 1}}>{n}</span>
+      </div>
+      <div style={{fontFamily: theme.fonts.sans, fontWeight: 700, fontSize: 58, color: theme.cream, marginTop: 10, maxWidth: '90%', textAlign: 'center',
+        textShadow: '0 3px 14px rgba(0,0,0,.4)', minHeight: 70}}>
+        {text.slice(0, typed)}
+        <span style={{opacity: typing ? 1 : 0, fontWeight: 400}}>|</span>
+      </div>
+    </AbsoluteFill>
+  );
+};
+
+// ---------- Burbujas de chat (izquierda = recibido gris, derecha = enviado azul) ----------
+export const CHAT_DEFAULT_Y = 720;
+export const Chat: React.FC<{messages: {text: string; side: 'left' | 'right'}[]; appearAt: number[]; y?: number; theme: Theme}> = ({messages, appearAt, y = CHAT_DEFAULT_Y, theme}) => {
+  const f = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  return (
+    <div style={{position: 'absolute', left: 50, right: 50, top: y, display: 'flex', flexDirection: 'column', gap: 14}}>
+      {messages.map((m, j) => {
+        const s = spring({frame: f - appearAt[j], fps, config: {damping: 13, stiffness: 190}});
+        if (f < appearAt[j]) return null;
+        const right = m.side === 'right';
+        return (
+          <div key={j} style={{alignSelf: right ? 'flex-end' : 'flex-start', maxWidth: '80%', padding: '16px 26px', borderRadius: 34,
+            [right ? 'borderBottomRightRadius' : 'borderBottomLeftRadius']: 8, background: right ? '#0A84FF' : '#E9E9EB', color: right ? '#fff' : '#111',
+            fontFamily: theme.fonts.sans, fontWeight: 600, fontSize: 34, lineHeight: 1.25, boxShadow: '0 4px 16px rgba(0,0,0,.25)',
+            transformOrigin: right ? 'bottom right' : 'bottom left', transform: `scale(${0.6 + 0.4 * s}) translateY(${(1 - s) * 18}px)`, opacity: Math.min(1, s * 1.4)}}>
+            {m.text}
+          </div>
+        );
+      })}
+    </div>
   );
 };

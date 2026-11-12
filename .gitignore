@@ -16,6 +16,7 @@ media/output/*
 # Assets generados en runtime para Remotion (copia normalizada + transcripcion)
 public/*.mp4
 public/*.mov
+public/*.matte.webm
 public/*.transcript.json
 
 # Remotion / build / caches

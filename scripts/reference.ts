@@ -1,4 +1,4 @@
-// Uso: npm run reference -- <video en media/reference | --all> [--no-transcribe]
+// Uso: npm run reference -- <video | carpeta-creadora | --all> [--no-transcribe]   (media/reference/<creadora>/<video>)
 // Por cada video: hojas de fotogramas (1/s), cortes de camara, transcript y report.md
 // en media/output/work/reference/<nombre>/. Lo usa la skill analyze-reference.
 import {execFileSync, spawnSync} from 'node:child_process';
@@ -27,8 +27,12 @@ const resolve = (a: string): string => {
   process.exit(1);
 };
 
-const videos = target === '--all'
-  ? fs.readdirSync(REF_DIR).filter((f) => VIDEO_EXT.test(f)).map((f) => path.join(REF_DIR, f))
+// media/reference/<creadora>/<video>: recorre subcarpetas (una por creadora)
+const walk = (dir: string): string[] =>
+  fs.readdirSync(dir, {withFileTypes: true}).flatMap((e) =>
+    e.isDirectory() ? walk(path.join(dir, e.name)) : VIDEO_EXT.test(e.name) ? [path.join(dir, e.name)] : []);
+const videos = target === '--all' ? walk(REF_DIR) : fs.existsSync(path.join(REF_DIR, target)) && fs.statSync(path.join(REF_DIR, target)).isDirectory()
+  ? walk(path.join(REF_DIR, target)) // npm run reference -- Ela
   : [resolve(target)];
 if (!videos.length) {
   console.error('No hay videos en media/reference.');
@@ -39,8 +43,10 @@ const probeDuration = (v: string) =>
   Number(execFileSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', v]).toString().trim());
 
 const analyze = (video: string) => {
-  const name = path.basename(video).replace(/\.[^.]+$/, '');
-  const out = path.join(OUT_ROOT, name);
+  const rel = path.relative(REF_DIR, video);
+  const inRef = !rel.startsWith('..');
+  const name = (inRef ? rel : path.basename(video)).replace(/\.[^.]+$/, '').split(path.sep).join('/'); // "Ela/ela_2"
+  const out = path.join(OUT_ROOT, ...name.split('/'));
   fs.mkdirSync(out, {recursive: true});
   console.log(`\n== ${name} ==`);
 

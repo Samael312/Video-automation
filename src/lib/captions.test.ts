@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {buildPages} from './captions';
+import {buildPages, tokenStyle} from './captions';
 import type {Word} from './types';
 
 const mk = (n: number): Word[] =>
@@ -32,5 +32,16 @@ describe('buildPages', () => {
   });
   test('los tokens no llevan espacios (el componente los separa)', () => {
     for (const p of buildPages(mk(6), 3)) for (const t of p.tokens) expect(t.text).toBe(t.text.trim());
+  });
+});
+
+describe('tokenStyle', () => {
+  const tok = {text: 'hola', start: 1, end: 2};
+  test('karaoke: la palabra que se dice va en color destacado y algo mas grande', () => {
+    expect(tokenStyle(tok, 1.5, {karaoke: true, highlight: '#FCF4B0', color: '#fff'})).toEqual({color: '#FCF4B0', transform: 'scale(1.08)'});
+    expect(tokenStyle(tok, 2.5, {karaoke: true, highlight: '#FCF4B0', color: '#fff'})).toEqual({color: '#fff', transform: undefined});
+  });
+  test('sin karaoke: todas las palabras iguales aunque se esten diciendo', () => {
+    expect(tokenStyle(tok, 1.5, {karaoke: false, highlight: '#FCF4B0', color: '#fff'})).toEqual({color: '#fff', transform: undefined});
   });
 });

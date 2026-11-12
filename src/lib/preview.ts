@@ -6,6 +6,7 @@ export type PreviewFrame = {frame: number; label: string};
 
 const MIN_FRAMES = 4;
 const AT = 0.6; // capturar al 60 % de un elemento: su animacion de entrada ya termino
+const CHAT_AT = 0.9; // el chat al final, con todas las burbujas ya visibles
 
 /**
  * Frames a capturar para revisar un plan: centro de cada escena, 60 % de cada label, titulo y cierre.
@@ -14,7 +15,7 @@ const AT = 0.6; // capturar al 60 % de un elemento: su animacion de entrada ya t
 export const previewFrames = (plan: EditPlan, keeps: Keep[], fps: number, total: number): PreviewFrame[] => {
   const out: PreviewFrame[] = [];
   const clamp = (f: number) => Math.max(0, Math.min(total - 1, Math.round(f)));
-  const at = (start: number, end: number) => clamp((mapTimeNext(start, keeps) + AT * (mapTimeNext(end, keeps) - mapTimeNext(start, keeps))) * fps);
+  const at = (start: number, end: number, p = AT) => clamp((mapTimeNext(start, keeps) + p * (mapTimeNext(end, keeps) - mapTimeNext(start, keeps))) * fps);
 
   plan.scenes.forEach((s, i) => {
     const fr = sceneFrames(s.start, s.end, keeps, fps);
@@ -22,6 +23,8 @@ export const previewFrames = (plan: EditPlan, keeps: Keep[], fps: number, total:
   });
   plan.overlays.forEach((o) => {
     if (o.kind === 'label') out.push({frame: at(o.start, o.end), label: `label: ${o.text}`});
+    if (o.kind === 'item') out.push({frame: at(o.start, o.end), label: `item ${o.n}: ${o.text}`});
+    if (o.kind === 'chat') out.push({frame: at(o.start, o.end, CHAT_AT), label: 'chat'});
   });
   if (plan.title) out.push({frame: at(plan.title.start, plan.title.end), label: 'título'});
   if (plan.end) {

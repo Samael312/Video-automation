@@ -18,6 +18,7 @@ Si el video explica una regla o una pronunciación paso a paso, sugiere `edit-mo
 - `"strategy": "captions"`, `"scenes": []` (siempre vacío).
 - **Un label por cada palabra/frase en inglés que se enseña**, cuando la dice; y su traducción en otro label del lado opuesto cuando la profe la traduce (p. ej. "actually" a la izquierda en x 170, "en realidad" a la derecha en x 540).
 - **Emojis** que refuercen la emoción de cada idea (1 por idea, no más de uno en pantalla a la vez).
+- `item` (lista numerada) y `chat` (diálogo) también valen: son overlays, no escenas. Un `item` cuenta como el label en inglés de esa idea.
 - `zoom.keywords`: todas las palabras en inglés enseñadas.
 - `captions.maxWords`: 4–5 (ritmo rápido).
 

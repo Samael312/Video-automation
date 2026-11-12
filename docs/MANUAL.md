@@ -81,6 +81,18 @@ Una escena animada por idea (ejemplo, error → corrección, pronunciación por 
 
 Durante una escena la voz y los subtítulos siguen; solo se tapa la imagen.
 
+### Otros elementos (sin tapar a la profe)
+| Elemento | Qué muestra | Ideal para |
+|---|---|---|
+| label | palabra en serif con flecha | señalar una palabra u objeto |
+| emoji | emoji que entra con rebote | emoción de cada idea |
+| **item** | 1️⃣ + palabra que se escribe (arriba) | listas: "3 palabras que debes conocer" |
+| **chat** | burbujas tipo iMessage, una a una | diálogos en inglés |
+
+**Texto detrás de la profe** (`behind`): el título o un ítem quedan *detrás* de su cabeza, como si ella estuviera delante del texto. Pídelo así: "pon el título detrás de ella". Claude corre `npm run matte -- NOMBRE` (recorta a la profe, ~3–4 min por cada 20 s de video, solo la primera vez) y ajusta la altura mirando el preview.
+
+Los subtítulos van en blanco, frase entera (estilo Ela), y se esconden solos mientras hay un ítem arriba.
+
 ---
 
 ## 4. Cómo pedir cambios
@@ -113,6 +125,7 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run clean -- X` | borra temporales y hoja de preview de X |
 | `npm run clean -- --all` | deja `media/output` solo con `edited/` (los videos finales) |
 | `npm run reference -- V` (o `--all`) | analiza videos de `media/reference/`: hojas, cortes, ritmo, transcript |
+| `npm run matte -- X` | recorta a la profe (fondo transparente) para el texto detrás; ~3–4 min por 20 s |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
@@ -135,7 +148,7 @@ Si la profe estrena una muletilla o un cierre nuevo ("¡Nos vemos en la próxima
 
 ### Aprender de videos de referencia: `/analyze-reference`
 
-1. Copia los videos a `media/reference/`.
+1. Copia los videos a `media/reference/<creadora>/` (una carpeta por creadora, p. ej. `media/reference/Ela/`).
 2. Escribe `/analyze-reference` (solo los nuevos) o `/analyze-reference Video2.mp4`. Dile de qué creador son si no es la de siempre.
 3. Claude saca fotogramas, cortes, ritmo y transcripción (`npm run reference`), lo compara con el estilo actual y te propone cambios numerados, con el segundo del video como prueba.
 4. Tú eliges cuáles aplicar. Lo analizado queda anotado en `.claude/skills/video-base/references.md`.
@@ -180,6 +193,8 @@ Queda guardada para próximos videos. Puedes pedirlo directo: "haz una escena co
 | Palabra en inglés mal escrita en los subtítulos | WhisperX la oyó mal | añádela a `pipeline/vocab.txt` y vuelve a transcribir; en el plan Claude escribe la forma correcta |
 | "escena cruza un corte" | la escena pisa un silencio cortado | acórtala al tramo (ver `inspect`) |
 | Título cortado en los bordes | texto muy largo | acórtalo (ver regla en `brand.md`) |
+| "behind necesita la persona recortada" | falta el matte | `npm run matte -- X` |
+| Texto detrás casi no se lee | la cabeza lo tapa de más | pide subirlo (menor `y`) |
 | El video final dura distinto que lo esperado | normal: se quitaron los silencios | `inspect` muestra la "Duración final" |
 | Las skills no aparecen en Claude Code | sesión abierta antes de crearlas | cierra y abre Claude Code |
 

@@ -79,3 +79,33 @@ describe('validatePlan: robustez (no lanza)', () => {
     expect(errs(b).length).toBeGreaterThan(0);
   });
 });
+
+describe('validatePlan: item, chat y behind', () => {
+  const ov = (...overlays: unknown[]) => ({...base(), overlays});
+  const item = (over: Record<string, unknown> = {}) => ({kind: 'item', n: 1, text: 'actually', start: 2, end: 4, ...over});
+  const chat = (over: Record<string, unknown> = {}) => ({kind: 'chat', start: 2, end: 6, messages: [{text: 'How are you?', side: 'left'}, {text: "I'm fine", side: 'right', at: 3}], ...over});
+
+  test('item válido (sin x/y)', () => expect(errs(ov(item()))).toEqual([]));
+  test('item con n fuera de 1..10', () => has(ov(item({n: 0})), 'n'));
+  test('item sin texto', () => has(ov(item({text: ''})), 'text'));
+  test('chat válido', () => expect(errs(ov(chat()))).toEqual([]));
+  test('chat sin mensajes', () => has(ov(chat({messages: []})), 'messages'));
+  test('chat con 5 mensajes', () => has(ov(chat({messages: Array(5).fill({text: 'x', side: 'left'})})), 'messages'));
+  test('chat con side inválido', () => has(ov(chat({messages: [{text: 'x', side: 'up'}]})), 'side'));
+  test('chat con at fuera del overlay', () => has(ov(chat({messages: [{text: 'x', side: 'left', at: 7}]})), 'at'));
+  test('kind desconocido', () => has(ov({kind: 'sticker', start: 2, end: 3}), 'kind'));
+
+  const noMatte = {...ctx, hasMatte: false};
+  const yesMatte = {...ctx, hasMatte: true};
+  test('behind sin matte avisa cómo generarlo', () =>
+    expect(validatePlan(ov(item({behind: true})), noMatte).join(' ')).toContain('npm run matte'));
+  test('title behind sin matte también', () =>
+    expect(validatePlan({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2, behind: true}}, noMatte).join(' ')).toContain('matte'));
+  test('behind con matte es válido', () => expect(validatePlan(ov(item({behind: true})), yesMatte)).toEqual([]));
+  test('sin behind no exige matte', () => expect(validatePlan(ov(item()), noMatte)).toEqual([]));
+});
+
+describe('validatePlan: title.y', () => {
+  test('y no numérico', () => has({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2, y: 'alto'}}, 'title.y'));
+  test('y numérico es válido', () => expect(errs({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2, y: 300}})).toEqual([]));
+});

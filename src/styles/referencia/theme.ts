@@ -13,6 +13,8 @@ export type Theme = {
   fonts: {serif: string; serifItalic: string; sans: string};
   captionTop: number;
   captionFontSize: number;
+  captionKaraoke: boolean; // true: la palabra que se dice va en `highlight`
+  keycap: string; // color del cuadrito con numero del overlay `item`
   sceneBg: string;
   sfxVolume: number;
 };
@@ -24,6 +26,8 @@ export const referencia: Theme = {
   fonts: {serif: playfair.fontFamily, serifItalic: playfairI.fontFamily, sans: poppins.fontFamily},
   captionTop: 285,
   captionFontSize: 25,
+  captionKaraoke: false, // Ela: frase entera en blanco (ela_1, ela_2, ela_3)
+  keycap: '#4A90E2', // Ela: 1️⃣ 2️⃣ 3️⃣ azul (ela_2 4 s, ela_3 6 s)
   sceneBg: '#1c1712',
   sfxVolume: 0.5,
 };

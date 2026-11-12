@@ -63,3 +63,18 @@ Cada escena tapa a la profe con un fondo oscuro a pantalla completa; su voz y lo
 {"kind": "emoji", "file": "1f4da", "start": 8.0, "end": 10.4, "x": 570, "y": 560, "size": 110}
 ```
 Label = texto serif con flecha discontinua animada. Emoji = entra con rebote. `start` debe caer en un tramo conservado.
+
+```json
+{"kind": "item", "n": 1, "text": "actually", "start": 2.6, "end": 4.4}
+```
+**Ítem de lista numerada** (estilo Ela): cuadrito azul con el número (1–10) que entra con rebote + texto crema que se escribe. Arriba (y 190) por defecto; mientras está, los subtítulos se esconden. Úsalo con ganchos tipo "3 palabras…": un ítem al empezar cada una (`start` = la palabra − 0.1, 1.5–2.5 s). `y` opcional.
+
+```json
+{"kind": "chat", "start": 12.6, "end": 17.4, "messages": [
+  {"text": "Why are you red?", "side": "left"},
+  {"text": "I'm so embarrassed!", "side": "right", "at": 13.4}]}
+```
+**Burbujas de chat** (tipo iMessage): `left` = gris (recibido), `right` = azul (enviado). 1–4 mensajes; cada uno aparece en su `at` (segundo original, entre start y end) o escalonado cada 0.8 s. Abajo (y 720) para no tapar la cara. Úsalo para **diálogos en inglés** que la profe cuenta o ejemplifica. Sin emojis dentro del texto (la fuente no los tiene). Pon un `pop` en cada `at`.
+
+### Texto detrás de la persona (`behind`)
+`"behind": true` en `title` o en un `item`: la persona queda **delante** del texto (estilo Bog). Requiere `npm run matte -- NOMBRE` (~3–4 min por 20 s de video; el validador avisa si falta). Por defecto baja el texto para que cruce la parte alta de la cabeza (título y 330, ítem y 340). **Mira el preview**: el texto debe leerse con ≤ 1/3 tapado; si la cabeza lo tapa de más, sube `y` (menor número); si no la toca, bájalo. Úsalo en 1–2 momentos por video, no en todo.

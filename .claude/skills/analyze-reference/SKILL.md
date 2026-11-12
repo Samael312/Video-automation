@@ -8,7 +8,8 @@ description: Analiza videos de referencia de TikTok (media/reference/) y propone
 No cambia nada sin un "sí". Mira, compara con lo que ya hacemos, propone y espera.
 
 ## 0. Qué videos y de quién
-- Lista `media/reference/` y lee `.claude/skills/video-base/references.md` (registro de lo ya analizado).
+- Lista `media/reference/` (una subcarpeta por creadora: `media/reference/<creadora>/<video>`) y lee `.claude/skills/video-base/references.md` (registro de lo ya analizado).
+- El nombre de la carpeta dice de quién es. Videos sueltos en la raíz: pregunta de quién son.
 - Analiza los que el usuario nombró; si no nombró ninguno, solo los que no están en el registro.
 - **¿De qué creador es?** Si el usuario no lo dijo, pregúntalo antes de seguir:
   - **misma creadora** que el estilo `referencia` → se afina ese estilo (`src/styles/referencia/theme.ts`).
@@ -16,13 +17,13 @@ No cambia nada sin un "sí". Mira, compara con lo que ya hacemos, propone y espe
 
 ## 1. Extraer
 ```
-npm run reference -- <video>      # o: npm run reference -- --all
+npm run reference -- <creadora>/<video>   # o: npm run reference -- <creadora>   # o: --all
 ```
-Por video deja en `media/output/work/reference/<nombre>/`: `report.md` (ritmo, gancho, cierre, cortes, transcript) y `sheet_NN.png` (1 fotograma por segundo; hoja N, casilla k = segundo (N-1)*30 + k-1). Transcribe sin `vocab.txt` (tarda ~1–2 min por video).
+Por video deja en `media/output/work/reference/<creadora>/<video>/`: `report.md` (ritmo, gancho, cierre, cortes, transcript) y `sheet_NN.png` (1 fotograma por segundo; hoja N, casilla k = segundo (N-1)*30 + k-1). Transcribe sin `vocab.txt` (tarda ~1–2 min por video).
 
 ## 2. Mirar
 Lee `report.md` y **todas** las hojas (Read). Si una casilla no se entiende, saca el fotograma exacto:
-`ffmpeg -v error -ss <s> -i media/reference/<video> -frames:v 1 media/output/work/reference/<nombre>/f_<s>.png`
+`ffmpeg -v error -ss <s> -i media/reference/<creadora>/<video> -frames:v 1 media/output/work/reference/<creadora>/<video>/f_<s>.png`
 
 Anota, con evidencia (video + segundo):
 

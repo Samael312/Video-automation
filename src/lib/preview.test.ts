@@ -49,3 +49,16 @@ describe('previewFrames', () => {
     frames.forEach((f) => expect(f).toBeLessThan(total));
   });
 });
+
+describe('previewFrames: item y chat', () => {
+  test('item al 60 % y chat al 90 % (con todas las burbujas fuera)', () => {
+    const fr = previewFrames(plan({overlays: [
+      {kind: 'item', n: 1, text: 'actually', start: 2, end: 4},
+      {kind: 'chat', start: 10, end: 14, messages: [{text: 'hi', side: 'left'}]},
+    ]}), keeps, 30, total);
+    // item: 2..4 -> 1..3 s reubicado; 60 % = 2.2 s = 66
+    expect(fr).toContainEqual({frame: 66, label: 'item 1: actually'});
+    // chat: 10..14 -> 8..12 s; 90 % = 11.6 s = 348
+    expect(fr).toContainEqual({frame: 348, label: 'chat'});
+  });
+});

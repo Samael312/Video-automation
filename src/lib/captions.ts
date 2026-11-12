@@ -36,3 +36,9 @@ export const buildPages = (words: Word[], maxWords: number): CaptionPage[] => {
   });
   return out;
 };
+
+/** Estilo de una palabra en el instante t. Sin karaoke (estilo Ela) todas van iguales. */
+export const tokenStyle = (tok: CaptionToken, t: number, o: {karaoke: boolean; highlight: string; color: string}): {color: string; transform: string | undefined} => {
+  const active = o.karaoke && t >= tok.start && t < tok.end;
+  return {color: active ? o.highlight : o.color, transform: active ? 'scale(1.08)' : undefined};
+};

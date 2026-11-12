@@ -1,9 +1,11 @@
 // Uso: npm run validate -- <video>
 // Valida public/<nombre>.edit.json contra el transcript y los cortes. Sale con codigo 1 si hay errores.
-import {defaultPlan, validatePlan} from '../src/lib/plan';
+import fs from 'node:fs';
+import path from 'node:path';
+import {defaultPlan, matteFile, validatePlan} from '../src/lib/plan';
 import {themes} from '../src/styles/themes';
 import {GENERATED} from '../src/scenes/generated';
-import {knownEmojis, loadTranscriptAndKeeps, readPublicJson, resolveVideo} from './common';
+import {knownEmojis, loadTranscriptAndKeeps, PUBLIC, readPublicJson, resolveVideo} from './common';
 
 const {name, video} = resolveVideo(process.argv[2], 'npm run validate -- <video>');
 const {transcript, keeps} = loadTranscriptAndKeeps(name);
@@ -17,6 +19,7 @@ const errors = validatePlan(plan ?? defaultPlan(video), {
   knownStyles: Object.keys(themes),
   knownGenerated: Object.keys(GENERATED),
   knownEmojis: knownEmojis(),
+  hasMatte: fs.existsSync(path.join(PUBLIC, matteFile(video))),
 });
 if (errors.length) {
   console.error(`edit.json invalido (${errors.length} error${errors.length === 1 ? '' : 'es'}):`);

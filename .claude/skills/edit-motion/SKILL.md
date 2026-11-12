@@ -22,6 +22,7 @@ description: Edita un video de la profe de inglés para TikTok con motion graphi
   - nada encaja (p. ej. una tabla de conjugación, una línea de tiempo) → `generated` (ver `video-base`)
 - **La profe en el gancho y en el cierre**: ninguna escena en los primeros ~2.5 s (título sobre la profe) ni durante el CTA.
 - Overlays: casi ninguno; solo en los tramos con la profe en cámara entre escenas (un emoji o un label para no dejar 3 s vacíos).
+- Reglas o errores numerados ("3 errores…"): un `item` en el tramo de profe antes de cada escena, para que se sepa en qué punto va.
 - `zoom.keywords`: las palabras clave de la regla.
 
 ## Qué evitar

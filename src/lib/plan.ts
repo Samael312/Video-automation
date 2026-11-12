@@ -5,7 +5,14 @@ export type SceneType = (typeof SCENE_TYPES)[number];
 
 export type LabelOverlay = {kind: 'label'; text: string; start: number; end: number; x: number; y: number; dir: 'left' | 'right'};
 export type EmojiOverlay = {kind: 'emoji'; file: string; start: number; end: number; x: number; y: number; size: number};
-export type Overlay = LabelOverlay | EmojiOverlay;
+/** Item de lista numerada: cuadrito 1..10 + texto que se escribe (estilo Ela). `behind`: la persona queda delante. */
+export type ItemOverlay = {kind: 'item'; n: number; text: string; start: number; end: number; y?: number; behind?: boolean};
+export type ChatMessage = {text: string; side: 'left' | 'right'; at?: number};
+/** Burbujas de chat que aparecen una a una (`at`: segundo del video original; por defecto escalonadas). */
+export type ChatOverlay = {kind: 'chat'; messages: ChatMessage[]; start: number; end: number; y?: number};
+export type Overlay = LabelOverlay | EmojiOverlay | ItemOverlay | ChatOverlay;
+export const OVERLAY_KINDS = ['label', 'emoji', 'item', 'chat'] as const;
+export const MAX_CHAT_MESSAGES = 4;
 
 export type Scene = {type: SceneType; start: number; end: number; data: Record<string, unknown>};
 export type SfxName = 'pop' | 'swoosh' | 'tick' | 'ding';
@@ -16,7 +23,7 @@ export type EditPlan = {
   video: string;
   style: string;
   strategy: 'captions' | 'motion' | 'mixed';
-  title?: {line1: string; line2: string; start: number; end: number};
+  title?: {line1: string; line2: string; start: number; end: number; y?: number; behind?: boolean};
   end?: {start: number; line1: string; line2: string};
   captions: {maxWords: number; from?: number; until?: number; emphasis?: string[]};
   zoom: {peak: number; duration: number; keywords: string[]};
@@ -25,8 +32,14 @@ export type EditPlan = {
   sfx: {at: number; name: SfxName}[];
 };
 
-/** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan. */
-export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]};
+/** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan.
+ *  `hasMatte`: si se da, `behind: true` exige que exista public/<video>.matte.webm. */
+export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; hasMatte?: boolean};
+
+/** Archivo con la persona recortada (fondo transparente) que usa `behind`. */
+export const matteFile = (video: string) => video.replace(/\.[^.]+$/, '') + '.matte.webm';
+export const usesBehind = (plan: Pick<EditPlan, 'title' | 'overlays'>): boolean =>
+  Boolean(plan.title?.behind) || plan.overlays.some((o) => o.kind === 'item' && o.behind);
 
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
@@ -121,6 +134,7 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
   if (plan.title !== undefined) {
     const t = plan.title;
     if (!isObj(t) || !isStr(t.line1) || !isStr(t.line2) || !isNum(t.start) || !isNum(t.end)) e.push('title debe tener line1, line2 (texto) y start, end (numeros)');
+    else if (t.y !== undefined && !isNum(t.y)) e.push('title.y debe ser un numero (px desde arriba)');
   }
   if (plan.end !== undefined) {
     const t = plan.end;
@@ -157,13 +171,40 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
   if (!Array.isArray(plan.overlays)) e.push('overlays debe ser una lista');
   else {
     plan.overlays.forEach((o: unknown, i: number) => {
-      if (!isObj(o) || (o.kind !== 'label' && o.kind !== 'emoji') || !isNum(o.start) || !isNum(o.end) || !isNum(o.x) || !isNum(o.y)) {
-        return void e.push(`overlay[${i}]: forma invalida (kind, start, end, x, y)`);
+      const tag = `overlay[${i}]`;
+      if (!isObj(o) || !(OVERLAY_KINDS as readonly string[]).includes(o.kind as string)) {
+        return void e.push(`${tag}: kind debe ser uno de: ${OVERLAY_KINDS.join(', ')}`);
       }
-      if (keepIndex(o.start, ctx.keeps) < 0) e.push(`overlay[${i}]: empieza en zona cortada (${o.start}); muevelo a un tramo conservado`);
-      const m = o.kind === 'emoji' ? missingEmoji(o.file, ctx) : null;
-      if (m) e.push(`overlay[${i}]: ${m}`);
+      if (!isNum(o.start) || !isNum(o.end) || o.start >= o.end) return void e.push(`${tag}: start y end deben ser numeros con start < end`);
+      if ((o.kind === 'label' || o.kind === 'emoji') && (!isNum(o.x) || !isNum(o.y))) return void e.push(`${tag}: ${o.kind} necesita x, y (numeros)`);
+      if (o.y !== undefined && !isNum(o.y)) e.push(`${tag}: y debe ser un numero`);
+      if (keepIndex(o.start, ctx.keeps) < 0) e.push(`${tag}: empieza en zona cortada (${o.start}); muevelo a un tramo conservado`);
+      if (o.kind === 'emoji') {
+        const m = missingEmoji(o.file, ctx);
+        if (m) e.push(`${tag}: ${m}`);
+      }
+      if (o.kind === 'item') {
+        if (!Number.isInteger(o.n) || (o.n as number) < 1 || (o.n as number) > 10) e.push(`${tag}: n debe ser un entero entre 1 y 10`);
+        if (!isStr(o.text)) e.push(`${tag}: falta text`);
+      }
+      if (o.kind === 'chat') {
+        const ms = o.messages;
+        if (!Array.isArray(ms) || ms.length < 1 || ms.length > MAX_CHAT_MESSAGES) e.push(`${tag}: messages debe tener entre 1 y ${MAX_CHAT_MESSAGES} mensajes`);
+        else ms.forEach((m: unknown, j: number) => {
+          if (!isObj(m) || !isStr(m.text)) return void e.push(`${tag}.messages[${j}]: falta text`);
+          if (m.side !== 'left' && m.side !== 'right') e.push(`${tag}.messages[${j}]: side debe ser "left" (recibido) o "right" (enviado)`);
+          if (m.at !== undefined && (!isNum(m.at) || m.at < (o.start as number) || m.at >= (o.end as number))) {
+            e.push(`${tag}.messages[${j}]: at (${String(m.at)}) debe estar entre start y end del overlay`);
+          }
+        });
+      }
     });
+  }
+
+  // ----- behind: la persona delante del texto -----
+  const behind = (isObj(plan.title) && plan.title.behind === true) || (Array.isArray(plan.overlays) && plan.overlays.some((o) => isObj(o) && o.kind === 'item' && o.behind === true));
+  if (behind && ctx.hasMatte === false) {
+    e.push(`"behind" necesita la persona recortada: falta public/${matteFile(ctx.video)}; corre: npm run matte -- ${ctx.video.replace(/\.[^.]+$/, '')}`);
   }
   if (!Array.isArray(plan.sfx)) e.push('sfx debe ser una lista');
   else {

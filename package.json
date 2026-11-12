@@ -18,7 +18,8 @@
     "preview": "tsx scripts/preview.ts",
     "emoji": "tsx scripts/emoji.ts",
     "clean": "node scripts/clean.js",
-    "reference": "tsx scripts/reference.ts"
+    "reference": "tsx scripts/reference.ts",
+    "matte": "node scripts/matte.js"
   },
   "keywords": [],
   "author": "",

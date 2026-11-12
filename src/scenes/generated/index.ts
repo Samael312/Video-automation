@@ -1,6 +1,8 @@
 import type React from 'react';
 import type {Theme} from '../../styles/themes';
 import {Demo} from './demo';
+import {Definition} from './definition';
+import {WordList} from './wordlist';
 
 export type GeneratedProps = {props: Record<string, unknown>; theme: Theme; durationInFrames: number};
 
@@ -11,4 +13,6 @@ export type GeneratedProps = {props: Record<string, unknown>; theme: Theme; dura
  */
 export const GENERATED: Record<string, React.FC<GeneratedProps>> = {
   demo: Demo,
+  wordlist: WordList,
+  definition: Definition,
 };

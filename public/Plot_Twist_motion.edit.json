@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "video": "Plot_Twist_motion.mp4",
+  "style": "referencia",
+  "strategy": "motion",
+  "title": {"line1": "3 palabras", "line2": "de BookTok", "start": 0, "end": 2.6},
+  "end": {"start": 22.6, "line1": "Tu turno", "line2": "¿Tu último page turner?"},
+  "captions": {"maxWords": 5, "from": 2.6},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["twist", "Cliffhanger", "Turner"]},
+  "overlays": [
+    {"kind": "item", "n": 1, "text": "plot twist", "start": 7.3, "end": 8.6},
+    {"kind": "item", "n": 2, "text": "cliffhanger", "start": 11.95, "end": 13.0},
+    {"kind": "item", "n": 3, "text": "page turner", "start": 18.2, "end": 19.3}
+  ],
+  "scenes": [
+    {"type": "generated", "start": 3.05, "end": 7.2, "data": {"component": "wordlist", "props": {"title": "3 palabras", "words": ["plot twist", "cliffhanger", "page turner"], "stagger": 0.45}}},
+    {"type": "translate", "start": 8.6, "end": 11.3, "data": {"word": "plot twist", "translation": "giro inesperado", "emoji": "1f631"}},
+    {"type": "generated", "start": 13.0, "end": 17.3, "data": {"component": "definition", "props": {"word": "cliffhanger", "definition": "Un capítulo o libro termina en el punto más tenso… y te deja sufriendo", "emoji": "1f629"}}},
+    {"type": "translate", "start": 19.3, "end": 22.0, "data": {"word": "page turner", "translation": "libro que no puedes soltar", "emoji": "1f4da"}}
+  ],
+  "sfx": [
+    {"at": 0.3, "name": "swoosh"},
+    {"at": 7.3, "name": "pop"},
+    {"at": 11.95, "name": "pop"},
+    {"at": 18.2, "name": "pop"}
+  ]
+}

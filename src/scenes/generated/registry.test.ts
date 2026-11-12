@@ -10,6 +10,7 @@ describe('registro de escenas generadas', () => {
     for (const [name, c] of Object.entries(GENERATED)) expect(typeof c, name).toBe('function');
   });
   test('incluye la escena demo', () => expect(Object.keys(GENERATED)).toContain('demo'));
+  test('incluye wordlist y definition', () => expect(Object.keys(GENERATED)).toEqual(expect.arrayContaining(['wordlist', 'definition'])));
   test('el validador acepta una escena registrada', () => expect(validatePlan(planWith('demo'), ctx())).toEqual([]));
   test('el validador rechaza una escena no registrada', () => expect(validatePlan(planWith('nope'), ctx()).join('\n')).toContain('nope'));
 });

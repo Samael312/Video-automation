@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "video": "Plot_Twist.mp4",
+  "style": "referencia",
+  "strategy": "mixed",
+  "title": {"line1": "3 palabras", "line2": "de BookTok", "start": 0, "end": 2.6, "behind": true, "y": 265},
+  "end": {"start": 22.6, "line1": "Tu turno", "line2": "¿Tu último page turner?"},
+  "captions": {"maxWords": 5, "from": 2.6},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["twist", "Cliffhanger", "Turner"]},
+  "overlays": [
+    {"kind": "emoji", "file": "1f4da", "start": 3.1, "end": 5.3, "x": 570, "y": 560, "size": 110},
+    {"kind": "emoji", "file": "1f914", "start": 5.4, "end": 7.2, "x": 130, "y": 560, "size": 110},
+    {"kind": "item", "n": 1, "text": "plot twist", "start": 7.3, "end": 8.9},
+    {"kind": "item", "n": 2, "text": "cliffhanger", "start": 11.92, "end": 13.6},
+    {"kind": "item", "n": 3, "text": "page turner", "start": 18.2, "end": 19.7}
+  ],
+  "scenes": [
+    {"type": "translate", "start": 8.9, "end": 11.3, "data": {"word": "plot twist", "translation": "giro inesperado", "emoji": "1f631"}},
+    {"type": "translate", "start": 13.6, "end": 17.3, "data": {"word": "cliffhanger", "translation": "final en suspenso", "emoji": "1f633"}},
+    {"type": "translate", "start": 19.7, "end": 21.95, "data": {"word": "page turner", "translation": "libro que no puedes soltar", "emoji": "1f4da"}}
+  ],
+  "sfx": [
+    {"at": 0.3, "name": "swoosh"},
+    {"at": 3.1, "name": "pop"},
+    {"at": 5.4, "name": "pop"},
+    {"at": 7.3, "name": "pop"},
+    {"at": 11.95, "name": "pop"},
+    {"at": 18.2, "name": "pop"}
+  ]
+}

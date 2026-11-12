@@ -20,11 +20,13 @@ run('whisperx', `"${py}" -c "import whisperx;print('import ok')"`);
 run('faster-whisper', `"${py}" -c "import faster_whisper;print(faster_whisper.__version__)"`);
 run('remotion', 'npx remotion versions');
 if (full) {
-  fs.mkdirSync(path.join(root, 'media', 'output'), {recursive: true});
-  run('test video', 'ffmpeg -y -f lavfi -i testsrc=d=3:s=320x240:r=10 -f lavfi -i sine=f=440:d=3 -shortest media/output/test.mp4');
-  run('frames', 'node scripts/extract_frames.js media/output/test.mp4 1 media/output/frames');
-  run('whisperx transcribe', `"${py}" pipeline/transcribe.py media/output/test.mp4 tiny`);
-  run('remotion still', 'npx remotion still src/index.ts Hello media/output/hello.png --frame=30');
+  const tmp = 'media/output/work/verify';
+  fs.mkdirSync(path.join(root, tmp), {recursive: true});
+  run('test video', `ffmpeg -y -f lavfi -i testsrc=d=3:s=320x240:r=10 -f lavfi -i sine=f=440:d=3 -shortest ${tmp}/test.mp4`);
+  run('frames', `node scripts/extract_frames.js ${tmp}/test.mp4 1 ${tmp}/frames`);
+  run('whisperx transcribe', `"${py}" pipeline/transcribe.py ${tmp}/test.mp4 tiny`);
+  run('remotion still', `npx remotion still src/index.ts Hello ${tmp}/hello.png --frame=30`);
+  require('./outputs').cleanResidue(root, 'verify');
 }
 console.log(fail ? `\n${fail} fallo(s)` : '\nTodo OK');
 process.exit(fail ? 1 : 0);

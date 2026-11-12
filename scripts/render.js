@@ -1,8 +1,10 @@
 // Uso: node scripts/render.js <video>   (o: npm run render:plan -- <video>)
-// Valida public/<nombre>.edit.json y, si es valido, renderiza la composicion Edit a media/output/<nombre>_edited.mp4
+// Valida public/<nombre>.edit.json y, si es valido, renderiza la composicion Edit a media/output/edited/<nombre>_edited.mp4
+// Si sale bien, borra los temporales y la hoja de preview de ese video.
 const {execSync} = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const {outputPaths, cleanResidue} = require('./outputs');
 
 const root = path.join(__dirname, '..');
 const arg = process.argv[2];
@@ -13,10 +15,11 @@ if (!arg) {
 const base = path.basename(arg);
 const name = base.replace(/\.[^.]+$/, '');
 const publicVideo = /\.[^.]+$/.test(base) ? base : `${base}.mp4`;
-const outDir = path.join(root, 'media', 'output');
-const out = path.join(outDir, `${name}_edited.mp4`);
-const propsFile = path.join(outDir, `${name}.props.json`);
-fs.mkdirSync(outDir, {recursive: true});
+const paths = outputPaths(root, name);
+const out = paths.final;
+const propsFile = paths.props;
+fs.mkdirSync(paths.finalDir, {recursive: true});
+fs.mkdirSync(paths.work, {recursive: true});
 
 const run = (label, cmd) => {
   console.log(`\n== ${label} ==`);
@@ -32,4 +35,5 @@ run('validar edit.json', `npx tsx scripts/validate.ts "${publicVideo}"`);
 // calculateMetadata de la composicion carga transcript, cuts y plan desde public/
 fs.writeFileSync(propsFile, JSON.stringify({videoSrc: publicVideo, transcript: null, keeps: [], plan: null}));
 run('renderizar', `npx remotion render src/index.ts Edit "${out}" --props="${propsFile}"`);
-console.log(`\nListo: ${out}`);
+cleanResidue(root, name);
+console.log(`\nListo: ${out}\n(temporales y hoja de preview de ${name} borrados)`);

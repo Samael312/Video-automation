@@ -40,7 +40,7 @@ La primera transcripción descarga el modelo WhisperX `medium` (~1.5 GB) y tarda
    - un **resumen** (gancho, escenas, overlays, cierre, duración), y
    - la **hoja de capturas** `media/output/IDIOM1_preview.png`.
 5. Revisa. Responde **"sí"** para renderizar o pide cambios (ver sección 4).
-6. Resultado: `media/output/IDIOM1_edited.mp4`, listo para subir.
+6. Resultado: `media/output/edited/IDIOM1_edited.mp4`, listo para subir. Al terminar se borran solos los temporales y la hoja de preview.
 
 No hace falta llamar a `video-base`: cada skill la carga sola.
 
@@ -109,7 +109,9 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run inspect -- X` | lista cada palabra con su tiempo, por tramos y cortes |
 | `npm run validate -- X` | revisa `public/X.edit.json` y explica cada error |
 | `npm run preview -- X` | hoja de capturas `media/output/X_preview.png` (~20 s) |
-| `npm run render:plan -- X` | valida y renderiza `media/output/X_edited.mp4` |
+| `npm run render:plan -- X` | valida y renderiza `media/output/edited/X_edited.mp4` y borra sus temporales |
+| `npm run clean -- X` | borra temporales y hoja de preview de X |
+| `npm run clean -- --all` | deja `media/output` solo con `edited/` (los videos finales) |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
@@ -176,7 +178,9 @@ Queda guardada para próximos videos. Puedes pedirlo directo: "haz una escena co
 
 ```
 media/input/            tus videos originales
-media/output/           videos editados y hojas de preview
+media/output/edited/    videos finales (lo único que se queda)
+media/output/           hoja de preview mientras revisas (se borra al renderizar)
+media/output/work/      temporales (se borran solos)
 public/X.edit.json      el plan de edición de cada video
 public/X.transcript.json, X.cuts.json   transcripción y cortes (no se suben a git)
 .claude/skills/         las skills (router, captions, motion, mixed, base)

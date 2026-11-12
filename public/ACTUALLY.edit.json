@@ -8,19 +8,17 @@
   "captions": {"maxWords": 5, "from": 2.8},
   "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["actually", "library", "embarrassed"]},
   "overlays": [
-    {"kind": "emoji", "file": "1f92b", "start": 1.3, "end": 2.8, "x": 560, "y": 560, "size": 110},
-    {"kind": "label", "text": "biblioteca", "start": 11.1, "end": 12.4, "x": 540, "y": 400, "dir": "left"},
-    {"kind": "emoji", "file": "1f64c", "start": 17.8, "end": 20.2, "x": 130, "y": 560, "size": 110}
+    {"kind": "emoji", "file": "1f92b", "start": 1.3, "end": 4.9, "x": 570, "y": 560, "size": 110},
+    {"kind": "emoji", "file": "1f64c", "start": 17.8, "end": 19.0, "x": 130, "y": 560, "size": 110}
   ],
   "scenes": [
-    {"type": "translate", "start": 4.8, "end": 6.9, "data": {"word": "actually", "translation": "en realidad", "emoji": "1f92b"}},
-    {"type": "false-friend", "start": 8.1, "end": 10.6, "data": {"a": "library", "b": "librería", "note": "library = biblioteca"}},
-    {"type": "quiz", "start": 12.9, "end": 16.4, "data": {"question": "¿Qué significa \"embarrassed\"?", "options": ["Embarazada", "Avergonzado", "Emocionado"], "answer": 1, "countdown": 2}}
+    {"type": "translate", "start": 5.0, "end": 7.05, "data": {"word": "actually", "translation": "en realidad", "emoji": "1f92b"}},
+    {"type": "false-friend", "start": 7.9, "end": 11.9, "data": {"a": "library", "b": "librería", "note": "library = biblioteca"}},
+    {"type": "quiz", "start": 13.2, "end": 16.7, "data": {"question": "¿Qué significa \"embarrassed\"?", "options": ["Embarazada", "Avergonzado", "Emocionado"], "answer": 1, "countdown": 2}}
   ],
   "sfx": [
     {"at": 1.07, "name": "swoosh"},
     {"at": 1.3, "name": "pop"},
-    {"at": 11.1, "name": "pop"},
     {"at": 17.8, "name": "pop"}
   ]
 }

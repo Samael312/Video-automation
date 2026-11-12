@@ -1,0 +1,34 @@
+# Dependencias
+node_modules/
+.venv/
+
+# Secretos
+.env
+.env.*
+!.env.example
+
+# Medios (pesados y regenerables): se conserva solo la estructura
+media/input/*
+media/reference/*
+media/output/*
+!media/**/.gitkeep
+
+# Assets generados en runtime para Remotion (copia normalizada + transcripcion)
+public/*.mp4
+public/*.mov
+public/*.transcript.json
+
+# Remotion / build / caches
+out/
+.remotion/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+.cache/
+
+# SO / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

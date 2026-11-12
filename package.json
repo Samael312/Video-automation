@@ -10,7 +10,8 @@
     "verify:full": "node scripts/verify.js --full",
     "render:captions": "remotion render src/index.ts Captions media/output/captions.mp4",
     "render:styled": "remotion render src/index.ts Styled media/output/ACTUALLY_edited.mp4",
-    "test": "vitest run"
+    "test": "vitest run",
+    "edit": "node scripts/edit.js"
   },
   "keywords": [],
   "author": "",

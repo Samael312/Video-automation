@@ -24,6 +24,9 @@ docs/                Specs y planes
 
 ```bash
 npm install
+npm run edit -- media/input/video.mp4   # pipeline completo → media/output/video_edited.mp4
+npm test                           # vitest (lib TypeScript)
+.venv\Scripts\python -m pytest pipeline/tests   # pytest (pipeline)
 npm run verify                     # revisa ffmpeg, venv, Remotion
 npm run studio                     # previsualizar
 npm run render:styled              # → media/output/ACTUALLY_edited.mp4
@@ -31,3 +34,8 @@ npm run render:styled              # → media/output/ACTUALLY_edited.mp4
 ```
 
 Copia `.env.example` a `.env` y pon tu `HF_TOKEN`.
+
+## Pipeline actual
+
+`normalizar → transcribir (WhisperX medium + vocab.txt) → cortar silencios (cuts.json) → render Remotion`.
+Subtítulos por palabra, zoom en cortes/palabras clave y sfx en cortes son automáticos. Labels, emojis y título del estilo `referencia` siguen siendo manuales (`src/styles/referencia/config.ts`) hasta el Plan 2 (plan automático + plantillas).

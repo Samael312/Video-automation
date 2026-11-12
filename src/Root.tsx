@@ -2,7 +2,8 @@ import React from 'react';
 import {Composition, staticFile} from 'remotion';
 import {Hello} from './compositions/Hello';
 import {Captions, CaptionsProps, Transcript} from './compositions/Captions';
-import {Styled, StyledProps} from './styles/referencia/Styled';
+import {Edit, EditProps} from './Edit';
+import {defaultPlan, type EditPlan} from './lib/plan';
 import {totalFrames} from './lib/cuts';
 import type {CutsFile} from './lib/types';
 
@@ -27,20 +28,22 @@ export const Root: React.FC = () => (
       }}
     />
     <Composition
-      id="Styled"
-      component={Styled}
+      id="Edit"
+      component={Edit}
       width={720}
       height={1280}
       fps={FPS}
       durationInFrames={FPS * 20}
-      defaultProps={{videoSrc: 'ACTUALLY.mp4', transcript: null, keeps: []} as StyledProps}
-      // Lee <video>.transcript.json y <video>.cuts.json (si falta, conserva el video completo)
+      defaultProps={{videoSrc: 'ACTUALLY.mp4', transcript: null, keeps: [], plan: defaultPlan('ACTUALLY.mp4')} as EditProps}
+      // Lee <video>.transcript.json, <video>.cuts.json (si falta: video completo) y <video>.edit.json (si falta: plan por defecto)
       calculateMetadata={async ({props}) => {
         const name = props.videoSrc.replace(/\.[^.]+$/, '');
         const transcript: Transcript = await (await fetch(staticFile(`${name}.transcript.json`))).json();
-        const res = await fetch(staticFile(`${name}.cuts.json`));
-        const keeps = res.ok ? ((await res.json()) as CutsFile).keeps : [{start: 0, end: transcript.duration}];
-        return {durationInFrames: totalFrames(keeps, FPS), props: {...props, transcript, keeps}};
+        const cutsRes = await fetch(staticFile(`${name}.cuts.json`));
+        const keeps = cutsRes.ok ? ((await cutsRes.json()) as CutsFile).keeps : [{start: 0, end: transcript.duration}];
+        const planRes = await fetch(staticFile(`${name}.edit.json`));
+        const plan: EditPlan = planRes.ok ? await planRes.json() : defaultPlan(props.videoSrc);
+        return {durationInFrames: totalFrames(keeps, FPS), props: {...props, transcript, keeps, plan}};
       }}
     />
   </>

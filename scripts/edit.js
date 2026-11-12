@@ -1,5 +1,5 @@
 // Uso: node scripts/edit.js <video> [--model medium] [--gap 0.7]
-// Normaliza -> transcribe -> corta silencios -> renderiza la composicion Edit (lee public/<nombre>.edit.json) en media/output/<nombre>_edited.mp4
+// Normaliza -> transcribe -> corta silencios -> valida edit.json y renderiza (scripts/render.js) en media/output/<nombre>_edited.mp4
 const {execSync} = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -17,16 +17,14 @@ const name = path.basename(video).replace(/\.[^.]+$/, '');
 const publicVideo = `${name}.mp4`;
 const outDir = path.join(root, 'media', 'output');
 const out = path.join(outDir, `${name}_edited.mp4`);
-const propsFile = path.join(outDir, `${name}.props.json`);
 fs.mkdirSync(outDir, {recursive: true});
 
 const steps = [
   ['normalizar video', `node scripts/normalize_video.js "${video}" "public/${publicVideo}"`],
   ['transcribir', `"${py}" pipeline/transcribe_diarize.py "${video}" --model ${opt('--model', 'medium')}`],
   ['cortar silencios', `"${py}" pipeline/cut.py "public/${name}.transcript.json" --gap ${opt('--gap', '0.7')}`],
-  ['renderizar', `npx remotion render src/index.ts Edit "${out}" --props="${propsFile}"`],
+  ['validar y renderizar', `node scripts/render.js "${publicVideo}"`],
 ];
-fs.writeFileSync(propsFile, JSON.stringify({videoSrc: publicVideo, transcript: null, keeps: [], plan: null}));
 for (const [label, cmd] of steps) {
   console.log(`\n== ${label} ==`);
   try {

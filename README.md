@@ -25,6 +25,8 @@ docs/                Specs y planes
 ```bash
 npm install
 npm run edit -- media/input/video.mp4   # pipeline completo → media/output/video_edited.mp4
+npm run validate -- video              # valida public/video.edit.json
+npm run render:plan -- video           # valida y renderiza con el plan
 npm test                           # vitest (lib TypeScript)
 .venv\Scripts\python -m pytest pipeline/tests   # pytest (pipeline)
 npm run verify                     # revisa ffmpeg, venv, Remotion
@@ -37,5 +39,16 @@ Copia `.env.example` a `.env` y pon tu `HF_TOKEN`.
 
 ## Pipeline actual
 
-`normalizar → transcribir (WhisperX medium + vocab.txt) → cortar silencios (cuts.json) → render Remotion`.
-Subtítulos por palabra, zoom en cortes/palabras clave y sfx en cortes son automáticos. Labels, emojis y título del estilo `referencia` siguen siendo manuales (`src/styles/referencia/config.ts`) hasta el Plan 2 (plan automático + plantillas).
+`normalizar → transcribir (WhisperX medium + vocab.txt) → cortar silencios (cuts.json) → validar edit.json → render Remotion (composición Edit)`.
+
+### El plan de edición (`public/<video>.edit.json`)
+Un archivo de datos describe la edición: título, cierre, subtítulos, zoom, overlays (labels/emojis), **escenas** y sfx. Todos los tiempos son segundos del video **original**; el motor los reubica según los cortes. Si no existe, se usa un plan por defecto (solo subtítulos + zoom). Ejemplo completo (estrategia `mixed`): `public/ACTUALLY.edit.json`. Reglas en `src/lib/plan.ts` (`validatePlan`).
+
+Escenas (motion graphics a pantalla completa con la voz de fondo y subtítulos encima): `translate`, `false-friend`, `pronounce`, `mistake`, `example`, `quiz` (plantillas en `src/templates/`) y `generated`.
+
+### Escenas generadas por IA
+1. Crear `src/scenes/generated/<nombre>.tsx` (componente `React.FC<GeneratedProps>`; ver `demo.tsx`).
+2. Registrarlo con una línea en `src/scenes/generated/index.ts`.
+3. Usarlo en el plan: `{"type": "generated", "start": 4, "end": 6, "data": {"component": "<nombre>", "props": {...}}}`.
+
+Los overlays se dibujan **encima** de las escenas: en un plan `mixed`, no dejes overlays que dupliquen el contenido de una escena.

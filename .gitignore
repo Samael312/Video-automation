@@ -35,3 +35,5 @@ desktop.ini
 
 # Ledger de ejecucion
 .superpowers/
+
+public/*.cuts.json

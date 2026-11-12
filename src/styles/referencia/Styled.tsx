@@ -5,8 +5,9 @@ import {loadFont as loadPoppins} from '@remotion/google-fonts/Poppins';
 import {CREAM, styledConfig as C, type LabelCfg} from './config';
 import type {Transcript} from '../../lib/types';
 import {CutVideo} from '../../lib/CutVideo';
-import {mapTimeNext, remapWords, type Keep} from '../../lib/cuts';
+import {cutPoints, mapTimeNext, remapWords, type Keep} from '../../lib/cuts';
 import {buildPages} from '../../lib/captions';
+import {keywordEvents, zoomScale} from '../../lib/dynamics';
 import {TikTokCaptions} from '../../lib/TikTokCaptions';
 
 const playfair = loadPlayfair('normal', {weights: ['800']});
@@ -90,6 +91,7 @@ type Span = {start: number; end: number};
 
 export const Styled: React.FC<StyledProps> = ({videoSrc, transcript, keeps}) => {
   const {fps} = useVideoConfig();
+  const frame = useCurrentFrame();
   const fr = (s: number) => Math.round(s * fps);
   // Todo lo definido en config.ts esta en tiempo del video ORIGINAL; aqui se pasa al tiempo del video recortado.
   const mapSpan = <T extends Span>(x: T): T | null => {
@@ -98,7 +100,10 @@ export const Styled: React.FC<StyledProps> = ({videoSrc, transcript, keeps}) => 
     return end > start ? {...x, start, end} : null;
   };
   const mapAt = (t: number) => mapTimeNext(t, keeps);
-  const pages = useMemo(() => (transcript ? buildPages(remapWords(transcript.words, keeps), C.subtitles.maxWords) : []), [transcript, keeps]);
+  const newWords = useMemo(() => (transcript ? remapWords(transcript.words, keeps) : []), [transcript, keeps]);
+  const pages = useMemo(() => buildPages(newWords, C.subtitles.maxWords), [newWords]);
+  const zoomEvents = useMemo(() => [...cutPoints(keeps), ...keywordEvents(newWords, C.dynamics.keywords)], [keeps, newWords]);
+  const zoom = zoomScale(frame / fps, zoomEvents, C.dynamics.zoom, C.dynamics.duration);
   const subFrom = mapAt(C.subtitles.from);
   const endAt = mapAt(C.end.start);
   const visiblePages = pages.filter((p) => p.end > subFrom && p.start < endAt);
@@ -110,7 +115,9 @@ export const Styled: React.FC<StyledProps> = ({videoSrc, transcript, keeps}) => 
   const swooshAt = C.sfx.swooshAt.map(mapAt);
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
-      <CutVideo src={videoSrc} keeps={keeps} fps={fps} />
+      <AbsoluteFill style={{transform: `scale(${zoom})`}}>
+        <CutVideo src={videoSrc} keeps={keeps} fps={fps} />
+      </AbsoluteFill>
 
       {title ? (
         <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>

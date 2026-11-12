@@ -13,13 +13,17 @@
     "test": "vitest run",
     "edit": "node scripts/edit.js",
     "validate": "tsx scripts/validate.ts",
-    "render:plan": "node scripts/render.js"
+    "render:plan": "node scripts/render.js",
+    "inspect": "tsx scripts/inspect.ts",
+    "preview": "tsx scripts/preview.ts",
+    "emoji": "tsx scripts/emoji.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@remotion/bundler": "4.0.543",
     "@remotion/captions": "^4.0.543",
     "@remotion/cli": "^4.0.543",
     "@remotion/google-fonts": "^4.0.543",
@@ -28,6 +32,7 @@
     "@remotion/media-utils": "^4.0.543",
     "@remotion/motion-blur": "4.0.543",
     "@remotion/paths": "4.0.543",
+    "@remotion/renderer": "4.0.543",
     "@remotion/shapes": "4.0.543",
     "@remotion/transitions": "4.0.543",
     "react": "^19.3.1",

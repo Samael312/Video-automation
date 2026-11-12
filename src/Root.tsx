@@ -4,7 +4,7 @@ import {Hello} from './compositions/Hello';
 import {Captions, CaptionsProps, Transcript} from './compositions/Captions';
 import {Edit, EditProps} from './Edit';
 import {defaultPlan, type EditPlan} from './lib/plan';
-import {totalFrames} from './lib/cuts';
+import {quantizeKeeps, totalFrames} from './lib/cuts';
 import type {CutsFile} from './lib/types';
 
 const FPS = 30;
@@ -40,7 +40,9 @@ export const Root: React.FC = () => (
         const name = props.videoSrc.replace(/\.[^.]+$/, '');
         const transcript: Transcript = await (await fetch(staticFile(`${name}.transcript.json`))).json();
         const cutsRes = await fetch(staticFile(`${name}.cuts.json`));
-        const keeps = cutsRes.ok ? ((await cutsRes.json()) as CutsFile).keeps : [{start: 0, end: transcript.duration}];
+        const rawKeeps = cutsRes.ok ? ((await cutsRes.json()) as CutsFile).keeps : [{start: 0, end: transcript.duration}];
+        // Tramos alineados a frames: video, subtitulos, zoom y escenas comparten la misma linea de tiempo
+        const keeps = quantizeKeeps(rawKeeps, FPS);
         const planRes = await fetch(staticFile(`${name}.edit.json`));
         const plan: EditPlan = planRes.ok ? await planRes.json() : defaultPlan(props.videoSrc);
         return {durationInFrames: totalFrames(keeps, FPS), props: {...props, transcript, keeps, plan}};

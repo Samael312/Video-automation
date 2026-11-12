@@ -1,6 +1,8 @@
 # video-automation
 
 Automatiza la edición de TikToks (9:16) para una profe de inglés online: transcripción, cortes de silencio, subtítulos, transiciones y motion graphics.
+**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, problemas comunes).
+
 Diseño completo: [`docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md`](docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md).
 
 ## Estructura
@@ -27,11 +29,12 @@ npm install
 npm run edit -- media/input/video.mp4   # pipeline completo → media/output/video_edited.mp4
 npm run validate -- video              # valida public/video.edit.json
 npm run render:plan -- video           # valida y renderiza con el plan
+npm run inspect -- video               # palabras con tiempos, por tramos
+npm run preview -- video               # hoja de capturas del plan
 npm test                           # vitest (lib TypeScript)
 .venv\Scripts\python -m pytest pipeline/tests   # pytest (pipeline)
 npm run verify                     # revisa ffmpeg, venv, Remotion
 npm run studio                     # previsualizar
-npm run render:styled              # → media/output/ACTUALLY_edited.mp4
 .venv\Scripts\python pipeline\transcribe_diarize.py media\input\video.mp4
 ```
 

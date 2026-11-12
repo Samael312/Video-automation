@@ -48,6 +48,20 @@ describe('validatePlan: overlays y sfx', () => {
   test('overlay válido', () => expect(errs({...base(), overlays: [{kind: 'label', text: 'hi', start: 2, end: 3, x: 1, y: 1, dir: 'left'}]})).toEqual([]));
 });
 
+describe('validatePlan: emojis y countdown', () => {
+  const withEmojis = {...ctx, knownEmojis: ['1f92b', '1f4da']};
+  const emojiOverlay = (file: string) => ({...base(), overlays: [{kind: 'emoji', file, start: 2, end: 3, x: 1, y: 1, size: 10}]});
+  test('overlay con emoji existente', () => expect(validatePlan(emojiOverlay('1f92b'), withEmojis)).toEqual([]));
+  test('overlay con emoji inexistente', () => expect(validatePlan(emojiOverlay('1f600'), withEmojis).join(' | ')).toContain('1f600'));
+  test('translate con emoji inexistente', () =>
+    expect(validatePlan(withScenes(scene({data: {word: 'a', translation: 'b', emoji: '1f600'}})), withEmojis).join(' | ')).toContain('1f600'));
+  test('sin lista de emojis en el contexto no se comprueba', () => expect(errs(emojiOverlay('1f600'))).toEqual([]));
+  test('quiz con countdown de texto', () =>
+    has(withScenes(scene({type: 'quiz', data: {question: 'q', options: ['a', 'b'], answer: 0, countdown: '3'}})), 'countdown'));
+  test('quiz con countdown válido', () =>
+    expect(errs(withScenes(scene({type: 'quiz', data: {question: 'q', options: ['a', 'b'], answer: 0, countdown: 3}})))).toEqual([]));
+});
+
 describe('validatePlan: title y end', () => {
   test('title válido', () => expect(errs({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2}})).toEqual([]));
   test('title sin line1', () => has({...base(), title: {line2: 'b', start: 0, end: 2}}, 'title'));

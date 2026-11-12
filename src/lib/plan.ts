@@ -25,7 +25,8 @@ export type EditPlan = {
   sfx: {at: number; name: SfxName}[];
 };
 
-export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]};
+/** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan. */
+export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]};
 
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
@@ -49,6 +50,10 @@ const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object
 const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.length > 0;
 const keepIndex = (t: number, keeps: Keep[]): number => keeps.findIndex((k) => t >= k.start && t <= k.end);
+const missingEmoji = (file: unknown, ctx: ValidateCtx): string | null =>
+  ctx.knownEmojis && isStr(file) && !ctx.knownEmojis.includes(file)
+    ? `emoji "${file}" no existe en public/emoji (disponibles: ${ctx.knownEmojis.join(', ') || 'ninguno'})`
+    : null;
 
 /** Campos obligatorios de `data` por tipo; devuelve los problemas encontrados. */
 const validateSceneData = (type: SceneType, data: unknown, ctx: ValidateCtx): string[] => {
@@ -56,9 +61,12 @@ const validateSceneData = (type: SceneType, data: unknown, ctx: ValidateCtx): st
   const out: string[] = [];
   const needStr = (...keys: string[]) => keys.forEach((k) => !isStr(data[k]) && out.push(`falta data.${k}`));
   switch (type) {
-    case 'translate':
+    case 'translate': {
       needStr('word', 'translation');
+      const m = missingEmoji(data.emoji, ctx);
+      if (m) out.push(m);
       break;
+    }
     case 'false-friend':
       needStr('a', 'b');
       break;
@@ -79,6 +87,9 @@ const validateSceneData = (type: SceneType, data: unknown, ctx: ValidateCtx): st
         out.push('data.options debe tener 2 o 3 textos');
       } else if (!Number.isInteger(data.answer) || (data.answer as number) < 0 || (data.answer as number) >= opts.length) {
         out.push('data.answer debe ser un indice valido de options');
+      }
+      if (data.countdown !== undefined && (!Number.isInteger(data.countdown) || (data.countdown as number) < 1 || (data.countdown as number) > 10)) {
+        out.push('data.countdown debe ser un entero entre 1 y 10');
       }
       break;
     }
@@ -150,6 +161,8 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
         return void e.push(`overlay[${i}]: forma invalida (kind, start, end, x, y)`);
       }
       if (keepIndex(o.start, ctx.keeps) < 0) e.push(`overlay[${i}]: empieza en zona cortada (${o.start}); muevelo a un tramo conservado`);
+      const m = o.kind === 'emoji' ? missingEmoji(o.file, ctx) : null;
+      if (m) e.push(`overlay[${i}]: ${m}`);
     });
   }
   if (!Array.isArray(plan.sfx)) e.push('sfx debe ser una lista');

@@ -14,11 +14,11 @@ export const TikTokCaptions: React.FC<Props> = ({pages, highlight, fontFamily, f
   const pop = spring({frame: frame - Math.round(page.start * fps), fps, config: {damping: 14, stiffness: 180}});
   return (
     <AbsoluteFill style={{alignItems: 'center', paddingTop: top}}>
-      <div style={{fontFamily, fontWeight: 700, fontSize, textAlign: 'center', maxWidth: '84%', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0 0.3em', textShadow: '0 2px 10px rgba(0,0,0,.5)',
+      <div style={{fontFamily, fontWeight: 700, fontSize, textAlign: 'center', maxWidth: '84%', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '0 0.4em', textShadow: '0 2px 10px rgba(0,0,0,.5)',
         transform: `scale(${0.85 + 0.15 * Math.min(1, pop)})`, opacity: Math.min(1, pop * 1.5)}}>
         {page.tokens.map((tok, i) => {
           const active = t >= tok.start && t < tok.end;
-          return <span key={i} style={{color: active ? highlight : color, display: 'inline-block', transform: active ? 'scale(1.12)' : undefined}}>{tok.text}</span>;
+          return <span key={i} style={{color: active ? highlight : color, display: 'inline-block', transform: active ? 'scale(1.08)' : undefined}}>{tok.text}</span>;
         })}
       </div>
     </AbsoluteFill>

@@ -1,7 +1,7 @@
-"""Transcribe + alinea palabras + diariza (CPU) y exporta JSON para Remotion.
+r"""Transcribe + alinea palabras + diariza (CPU) y exporta JSON para Remotion.
 
 Uso (desde la raiz del proyecto):
-  .venv\Scripts\python pipeline/transcribe_diarize.py [video] [--model tiny|base|small] [--out ruta.json] [--speakers N]
+  .venv\Scripts\python pipeline/transcribe_diarize.py [video] [--model tiny|base|small|medium|large-v3] [--prompt vocab.txt] [--out ruta.json] [--speakers N]
 """
 import argparse, json, os, sys, time, warnings
 from pathlib import Path
@@ -10,6 +10,9 @@ warnings.filterwarnings("ignore")
 from dotenv import load_dotenv
 import whisperx
 from whisperx.diarize import DiarizationPipeline
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from quality import low_confidence_ratio
 
 ROOT = Path(__file__).resolve().parent.parent
 # Acepta .env y .env.txt (Windows suele anadir .txt sin avisar)
@@ -20,7 +23,8 @@ for name in (".env", ".env.txt"):
 
 ap = argparse.ArgumentParser()
 ap.add_argument("video", nargs="?", default=str(ROOT / "media" / "input" / "ACTUALLY.mp4"))
-ap.add_argument("--model", default="base", choices=["tiny", "base", "small"])
+ap.add_argument("--model", default="medium", choices=["tiny", "base", "small", "medium", "large-v3"])
+ap.add_argument("--prompt", default=str(ROOT / "pipeline" / "vocab.txt"), help="texto de vocabulario para initial_prompt")
 ap.add_argument("--out", default=None)
 ap.add_argument("--speakers", type=int, default=None, help="numero de hablantes si lo sabes")
 args = ap.parse_args()
@@ -31,7 +35,7 @@ if not token:
 video = Path(args.video)
 if not video.exists():
     sys.exit(f"ERROR: no existe {video}")
-out = Path(args.out) if args.out else ROOT / "media" / "output" / f"{video.stem}.transcript.json"
+out = Path(args.out) if args.out else ROOT / "public" / f"{video.stem}.transcript.json"
 out.parent.mkdir(parents=True, exist_ok=True)
 
 DEVICE, COMPUTE = "cpu", "int8"  # CPU estricta
@@ -41,7 +45,9 @@ def step(msg): print(f"[{time.time()-t0:6.1f}s] {msg}", flush=True)
 step("cargando audio")
 audio = whisperx.load_audio(str(video))          # ffmpeg -> numpy 16 kHz
 step(f"transcribiendo con '{args.model}' (cpu/int8)")
-model = whisperx.load_model(args.model, DEVICE, compute_type=COMPUTE)
+prompt_file = Path(args.prompt)
+initial_prompt = prompt_file.read_text(encoding="utf-8").strip() if prompt_file.exists() else None
+model = whisperx.load_model(args.model, DEVICE, compute_type=COMPUTE, asr_options={"initial_prompt": initial_prompt})
 result = model.transcribe(audio, batch_size=4)
 lang = result["language"]
 step(f"idioma detectado: {lang}")
@@ -83,3 +89,7 @@ payload = {
 }
 out.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 step(f"OK -> {out}  ({len(words)} palabras, hablantes: {payload['speakers']})")
+
+ratio = low_confidence_ratio(words)
+if ratio > 0.25:
+    step(f"AVISO: {ratio:.0%} de palabras con baja confianza; revisa {out} antes de renderizar")

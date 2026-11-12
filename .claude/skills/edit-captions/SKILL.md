@@ -29,5 +29,5 @@ Si el video explica una regla o una pronunciación paso a paso, sugiere `edit-mo
 ## Cómo elegir tiempos desde `inspect`
 - Label en inglés: `start` = tiempo de la palabra en inglés − 0.1; `end` = cuando empieza la traducción (o +1.5 s).
 - Label de traducción: `start` = primera palabra de la traducción; `end` = fin de la idea (antes de la siguiente palabra en inglés).
-- Emoji: mismo `start` que el label en inglés de esa idea, `end` cuando termina la idea.
+- Emoji: lado opuesto al label en inglés (label en x 170 → emoji en x 570); mismo `start` que ese label, `end` = `start` del label de traducción (si no, la flecha de la traducción cae encima del emoji).
 - Un `pop` en el `start` de cada label/emoji.

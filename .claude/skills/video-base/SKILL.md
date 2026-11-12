@@ -73,7 +73,7 @@ Preview: media/output/NOMBRE_preview.png
 ## Checklist antes del preview
 
 - [ ] `npm run validate -- NOMBRE` → OK
-- [ ] Título en 0–3 s y `captions.from` = `title.end`
+- [ ] Título en 0–3 s, `line1` ≤ 14 y `line2` ≤ 18 caracteres, y `captions.from` = `title.end`
 - [ ] Ningún bloque de 3 s sin algo nuevo
 - [ ] Ningún overlay que duplique una escena
 - [ ] Palabras en inglés escritas correctamente

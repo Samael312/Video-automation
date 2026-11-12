@@ -23,4 +23,28 @@ export const normalizeEmoji = (input: string): string | null => {
   return codes.length ? codes.join('_') : null;
 };
 
-export const notoUrl = (code: string): string => `https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@${NOTO_TAG}/png/512/emoji_u${code}.png`;
+// Un emoji: pictograma + selector de variacion / tono de piel opcionales, unidos con ZWJ (👩‍💻)
+const ONE = '\\p{Extended_Pictographic}\\uFE0F?\\p{Emoji_Modifier}?';
+const EMOJI_RE = new RegExp(`${ONE}(?:\\u200D${ONE})*`, 'gu');
+
+export type TextPart = {text: string} | {emoji: string; raw: string};
+
+/** "Hi 😀" -> [{text:'Hi '}, {emoji:'1f600', raw:'😀'}]: para dibujar los emojis como PNG de public/emoji. */
+export const splitEmoji = (text: string): TextPart[] => {
+  const parts: TextPart[] = [];
+  let last = 0;
+  for (const m of text.matchAll(EMOJI_RE)) {
+    const code = normalizeEmoji(m[0]);
+    if (!code) continue;
+    if (m.index! > last) parts.push({text: text.slice(last, m.index)});
+    parts.push({emoji: code, raw: m[0]});
+    last = m.index! + m[0].length;
+  }
+  if (last < text.length) parts.push({text: text.slice(last)});
+  return parts;
+};
+
+/** Codigos de los emojis que aparecen en un texto (en orden, con repeticiones). */
+export const emojisIn = (text: string): string[] => splitEmoji(text).flatMap((p) => ('emoji' in p ? [p.emoji] : []));
+
+export const notoUrl =(code: string): string => `https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@${NOTO_TAG}/png/512/emoji_u${code}.png`;

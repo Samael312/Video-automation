@@ -13,7 +13,7 @@ Antes de empezar lee también:
 
 ## Flujo (no te saltes pasos)
 
-`<video>` es el archivo que te dio el usuario (normalmente `media/input/NOMBRE.mp4`); `NOMBRE` es su nombre sin extensión.
+`<video>` es el archivo que te dio el usuario (normalmente `media/input/NOMBRE.mp4`; también vale `.mov` de iPhone, incluso HDR); `NOMBRE` es su nombre sin extensión. Todo lo demás usa `NOMBRE` y la salida siempre es mp4.
 
 1. **Preparar** — `npm run edit -- media/input/NOMBRE.mp4 --plan-only`
    Normaliza, transcribe (WhisperX `medium`, tarda minutos la primera vez) y corta silencios. Si la transcripción avisa de baja confianza, revisa `public/NOMBRE.transcript.json`.
@@ -21,7 +21,7 @@ Antes de empezar lee también:
 2. **Leer** — `npm run inspect -- NOMBRE`
    Muestra cada palabra con su tiempo **original** agrupada por TRAMO conservado, y las zonas `--- CORTE ---`. Todos los tiempos de `edit.json` salen de aquí.
 3. **Planificar** — escribe `public/NOMBRE.edit.json` según la estrategia (ver "Escribir el plan").
-   Si usas `"behind": true` (texto detrás de la profe): `npm run matte -- NOMBRE` una vez por video (tarda ~3–4 min; ver `templates.md`).
+   Si usas `"behind": true` (texto detrás de la profe): `npm run matte -- NOMBRE` después de escribir el plan (recorta solo esos tramos, ~10 s por segundo marcado; ver `templates.md`).
 4. **Validar** — `npm run validate -- NOMBRE`. Corrige cada error con su mensaje y repite hasta `OK`. No sigas con errores.
 5. **Preview y pausa** — `npm run preview -- NOMBRE` genera `media/output/NOMBRE_preview.png`. Míralo (Read) y revisa que cada captura muestre lo que planeaste. Luego muestra al usuario el resumen (formato abajo) y la ruta de la hoja. **Para y espera su aprobación. No renderices sin un "sí" explícito.**
 6. **Render** — con aprobación: `npm run render:plan -- NOMBRE` → `media/output/edited/NOMBRE_edited.mp4`. Confirma con `ffprobe -v error -show_entries stream=codec_type,duration -of csv=p=0 media/output/edited/NOMBRE_edited.mp4` que hay video y audio con la misma duración (±0.04 s).

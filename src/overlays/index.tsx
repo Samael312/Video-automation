@@ -1,6 +1,7 @@
 import React from 'react';
 import {AbsoluteFill, Img, interpolate, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import type {Theme} from '../styles/themes';
+import {splitEmoji} from '../lib/emoji';
 
 // ---------- Titulo de apertura ----------
 export const TITLE_DEFAULT_Y = 150;
@@ -109,7 +110,13 @@ export const Chat: React.FC<{messages: {text: string; side: 'left' | 'right'}[];
             [right ? 'borderBottomRightRadius' : 'borderBottomLeftRadius']: 8, background: right ? '#0A84FF' : '#E9E9EB', color: right ? '#fff' : '#111',
             fontFamily: theme.fonts.sans, fontWeight: 600, fontSize: 34, lineHeight: 1.25, boxShadow: '0 4px 16px rgba(0,0,0,.25)',
             transformOrigin: right ? 'bottom right' : 'bottom left', transform: `scale(${0.6 + 0.4 * s}) translateY(${(1 - s) * 18}px)`, opacity: Math.min(1, s * 1.4)}}>
-            {m.text}
+            {splitEmoji(m.text).map((p, k) =>
+              'emoji' in p ? (
+                <Img key={k} src={staticFile(`emoji/${p.emoji}.png`)} style={{width: '1.2em', height: '1.2em', verticalAlign: '-0.25em', margin: '0 2px'}} />
+              ) : (
+                <React.Fragment key={k}>{p.text}</React.Fragment>
+              ),
+            )}
           </div>
         );
       })}

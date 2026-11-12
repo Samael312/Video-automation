@@ -93,15 +93,21 @@ describe('validatePlan: item, chat y behind', () => {
   test('chat con 5 mensajes', () => has(ov(chat({messages: Array(5).fill({text: 'x', side: 'left'})})), 'messages'));
   test('chat con side inválido', () => has(ov(chat({messages: [{text: 'x', side: 'up'}]})), 'side'));
   test('chat con at fuera del overlay', () => has(ov(chat({messages: [{text: 'x', side: 'left', at: 7}]})), 'at'));
-  test('kind desconocido', () => has(ov({kind: 'sticker', start: 2, end: 3}), 'kind'));
+  test('chat con emoji que no está en public/emoji avisa cómo bajarlo', () =>
+    expect(validatePlan(ov(chat({messages: [{text: 'Hi 😀', side: 'left'}]})), {...ctx, knownEmojis: ['1f92b']}).join(' ')).toContain('npm run emoji -- 1f600'));
+  test('chat con emoji disponible es válido', () =>
+    expect(validatePlan(ov(chat({messages: [{text: 'Hi 😀', side: 'left'}]})), {...ctx, knownEmojis: ['1f600']})).toEqual([]));
+  test('kind desconocido',() => has(ov({kind: 'sticker', start: 2, end: 3}), 'kind'));
 
-  const noMatte = {...ctx, hasMatte: false};
-  const yesMatte = {...ctx, hasMatte: true};
+  const noMatte = {...ctx, matte: null};
+  const yesMatte = {...ctx, matte: {version: 1 as const, fps: 30, ranges: [[1.5, 4.2]] as [number, number][], top: {}}};
   test('behind sin matte avisa cómo generarlo', () =>
     expect(validatePlan(ov(item({behind: true})), noMatte).join(' ')).toContain('npm run matte'));
   test('title behind sin matte también', () =>
     expect(validatePlan({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2, behind: true}}, noMatte).join(' ')).toContain('matte'));
-  test('behind con matte es válido', () => expect(validatePlan(ov(item({behind: true})), yesMatte)).toEqual([]));
+  test('behind con matte que lo cubre es válido', () => expect(validatePlan(ov(item({behind: true})), yesMatte)).toEqual([]));
+  test('behind fuera de lo recortado pide volver a correr matte', () =>
+    expect(validatePlan(ov(item({behind: true, start: 4, end: 5})), yesMatte).join(' ')).toContain('vuelve a correr: npm run matte'));
   test('sin behind no exige matte', () => expect(validatePlan(ov(item()), noMatte)).toEqual([]));
 });
 

@@ -17,6 +17,7 @@ media/output/*
 public/*.mp4
 public/*.mov
 public/*.matte.webm
+public/*.matte.json
 public/*.transcript.json
 
 # Remotion / build / caches

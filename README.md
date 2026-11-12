@@ -26,7 +26,7 @@ docs/                Specs y planes
 
 ```bash
 npm install
-npm run edit -- media/input/video.mp4   # pipeline completo → media/output/edited/video_edited.mp4
+npm run edit -- media/input/video.mp4   # pipeline completo → media/output/edited/video_edited.mp4 (acepta .mov; la salida siempre es mp4)
 npm run validate -- video              # valida public/video.edit.json
 npm run render:plan -- video           # valida y renderiza con el plan
 npm run inspect -- video               # palabras con tiempos, por tramos

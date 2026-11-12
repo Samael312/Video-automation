@@ -3,7 +3,8 @@ import {Composition, staticFile} from 'remotion';
 import {Hello} from './compositions/Hello';
 import {Captions, CaptionsProps, Transcript} from './compositions/Captions';
 import {Edit, EditProps} from './Edit';
-import {defaultPlan, type EditPlan} from './lib/plan';
+import {defaultPlan, usesBehind, type EditPlan} from './lib/plan';
+import {matteInfoFile, type MatteInfo} from './lib/matte';
 import {quantizeKeeps, totalFrames} from './lib/cuts';
 import type {CutsFile} from './lib/types';
 
@@ -45,7 +46,10 @@ export const Root: React.FC = () => (
         const keeps = quantizeKeeps(rawKeeps, FPS);
         const planRes = await fetch(staticFile(`${name}.edit.json`));
         const plan: EditPlan = planRes.ok ? await planRes.json() : defaultPlan(props.videoSrc);
-        return {durationInFrames: totalFrames(keeps, FPS), props: {...props, transcript, keeps, plan}};
+        // behind: matte.json da la altura de la cabeza para colocar el texto solo
+        const matteRes = usesBehind(plan) ? await fetch(staticFile(matteInfoFile(props.videoSrc))) : null;
+        const matte: MatteInfo | null = matteRes?.ok ? await matteRes.json() : null;
+        return {durationInFrames: totalFrames(keeps, FPS), props: {...props, transcript, keeps, plan, matte}};
       }}
     />
   </>

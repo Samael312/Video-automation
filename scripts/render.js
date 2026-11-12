@@ -14,7 +14,7 @@ if (!arg) {
 }
 const base = path.basename(arg);
 const name = base.replace(/\.[^.]+$/, '');
-const publicVideo = /\.[^.]+$/.test(base) ? base : `${base}.mp4`;
+const publicVideo = `${name}.mp4`; // siempre el mp4 normalizado, aunque se pase X.mov
 const paths = outputPaths(root, name);
 const out = paths.final;
 const propsFile = paths.props;

@@ -1,4 +1,6 @@
 import type {Keep} from './cuts';
+import {behindSpans, matteCovers, type MatteInfo} from './matte';
+import {emojisIn} from './emoji';
 
 export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'generated'] as const;
 export type SceneType = (typeof SCENE_TYPES)[number];
@@ -33,8 +35,8 @@ export type EditPlan = {
 };
 
 /** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan.
- *  `hasMatte`: si se da, `behind: true` exige que exista public/<video>.matte.webm. */
-export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; hasMatte?: boolean};
+ *  `matte`: si se da (null = no existe), `behind: true` exige un matte que cubra esos tramos. */
+export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; matte?: MatteInfo | null};
 
 /** Archivo con la persona recortada (fondo transparente) que usa `behind`. */
 export const matteFile = (video: string) => video.replace(/\.[^.]+$/, '') + '.matte.webm';
@@ -196,15 +198,23 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
           if (m.at !== undefined && (!isNum(m.at) || m.at < (o.start as number) || m.at >= (o.end as number))) {
             e.push(`${tag}.messages[${j}]: at (${String(m.at)}) debe estar entre start y end del overlay`);
           }
+          for (const code of new Set(emojisIn(m.text))) {
+            if (ctx.knownEmojis && !ctx.knownEmojis.includes(code)) e.push(`${tag}.messages[${j}]: emoji ${code} no esta en public/emoji; bajalo con: npm run emoji -- ${code}`);
+          }
         });
       }
     });
   }
 
   // ----- behind: la persona delante del texto -----
-  const behind = (isObj(plan.title) && plan.title.behind === true) || (Array.isArray(plan.overlays) && plan.overlays.some((o) => isObj(o) && o.kind === 'item' && o.behind === true));
-  if (behind && ctx.hasMatte === false) {
-    e.push(`"behind" necesita la persona recortada: falta public/${matteFile(ctx.video)}; corre: npm run matte -- ${ctx.video.replace(/\.[^.]+$/, '')}`);
+  if (ctx.matte !== undefined && Array.isArray(plan.overlays)) {
+    // forma ya revisada arriba; aqui solo importan start/end/behind
+    const spans = behindSpans({title: isObj(plan.title) ? (plan.title as EditPlan['title']) : undefined, overlays: plan.overlays.filter(isObj) as Overlay[]});
+    const run = `npm run matte -- ${ctx.video.replace(/\.[^.]+$/, '')}`;
+    if (spans.length && !ctx.matte) e.push(`"behind" necesita la persona recortada: falta public/${matteFile(ctx.video)}; corre: ${run}`);
+    else if (spans.length && !matteCovers(ctx.matte, spans)) {
+      e.push(`"behind" cae fuera de lo recortado en public/${matteFile(ctx.video)} (cambiaste tiempos); vuelve a correr: ${run}`);
+    }
   }
   if (!Array.isArray(plan.sfx)) e.push('sfx debe ser una lista');
   else {

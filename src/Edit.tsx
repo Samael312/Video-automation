@@ -10,14 +10,16 @@ import {keywordEvents, zoomScale} from './lib/dynamics';
 import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
 import {matteFile, type EditPlan, type ItemOverlay, type Overlay} from './lib/plan';
+import {autoBehindY, type MatteInfo} from './lib/matte';
 import type {Transcript} from './lib/types';
 
-export type EditProps = {videoSrc: string; transcript: Transcript | null; keeps: Keep[]; plan: EditPlan};
+/** matte: public/<video>.matte.json (solo si el plan usa `behind`); da la altura automatica del texto. */
+export type EditProps = {videoSrc: string; transcript: Transcript | null; keeps: Keep[]; plan: EditPlan; matte?: MatteInfo | null};
 
 type Span = {start: number; end: number};
 
 /** Composicion generica: renderiza cualquier EditPlan. Los tiempos del plan son del video original. */
-export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) => {
+export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, matte = null}) => {
   const {fps} = useVideoConfig();
   const frame = useCurrentFrame();
   const theme = getTheme(plan.style);
@@ -44,7 +46,13 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
     const m = mapSpan(o);
     return m && m.kind === 'chat' ? {...m, messages: m.messages.map((x) => (x.at === undefined ? x : {...x, at: mapAt(x.at)}))} : m;
   };
-  const overlays = plan.overlays.map(mapOverlay).filter((x): x is Overlay => x !== null);
+  // behind sin y: altura automatica segun la cabeza (matte.json), con los tiempos originales
+  const autoY = (o: Overlay): Overlay =>
+    o.kind === 'item' && o.behind && o.y === undefined ? {...o, y: autoBehindY('item', matte, o.start, o.end)} : o;
+  const overlays = plan.overlays.map(autoY).map(mapOverlay).filter((x): x is Overlay => x !== null);
+  const titleY = plan.title
+    ? plan.title.y ?? (plan.title.behind ? autoBehindY('title', matte, plan.title.start, plan.title.end) ?? BEHIND_TITLE_Y : undefined)
+    : undefined;
   const vol = theme.sfxVolume;
   const hasEnd = plan.end !== undefined && Number.isFinite(endAt);
   const t = frame / fps;
@@ -71,7 +79,7 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
   );
   const titleEl = title && plan.title ? (
     <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>
-      <Title line1={plan.title.line1} line2={plan.title.line2} theme={theme} y={plan.title.y ?? (plan.title.behind ? BEHIND_TITLE_Y : undefined)} />
+      <Title line1={plan.title.line1} line2={plan.title.line2} theme={theme} y={titleY} />
     </Sequence>
   ) : null;
   const isBehind = (o: Overlay) => o.kind === 'item' && Boolean(o.behind);

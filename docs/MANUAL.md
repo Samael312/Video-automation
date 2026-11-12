@@ -26,7 +26,7 @@ La primera transcripción descarga el modelo WhisperX `medium` (~1.5 GB) y tarda
 
 ## 2. Flujo diario
 
-1. Copia el video grabado a `media/input/` (por ejemplo `media/input/IDIOM1.mp4`).
+1. Copia el video grabado a `media/input/` (por ejemplo `media/input/IDIOM1.mp4`). Sirve también `.mov` del iPhone (incluso HDR): se pasa solo a 720x1280, 30 fps y colores normales. El resultado siempre es `.mp4`.
 2. Abre Claude Code en la carpeta del proyecto.
 3. Escribe **una** de estas skills con la ruta del video:
 
@@ -87,9 +87,9 @@ Durante una escena la voz y los subtítulos siguen; solo se tapa la imagen.
 | label | palabra en serif con flecha | señalar una palabra u objeto |
 | emoji | emoji que entra con rebote | emoción de cada idea |
 | **item** | 1️⃣ + palabra que se escribe (arriba) | listas: "3 palabras que debes conocer" |
-| **chat** | burbujas tipo iMessage, una a una | diálogos en inglés |
+| **chat** | burbujas tipo iMessage, una a una (con emojis) | diálogos en inglés |
 
-**Texto detrás de la profe** (`behind`): el título o un ítem quedan *detrás* de su cabeza, como si ella estuviera delante del texto. Pídelo así: "pon el título detrás de ella". Claude corre `npm run matte -- NOMBRE` (recorta a la profe, ~3–4 min por cada 20 s de video, solo la primera vez) y ajusta la altura mirando el preview.
+**Texto detrás de la profe** (`behind`): el título o un ítem quedan *detrás* de su cabeza, como si ella estuviera delante del texto. Pídelo así: "pon el título detrás de ella". Claude corre `npm run matte -- NOMBRE` (recorta a la profe solo en esos momentos: ~10 s por cada segundo con texto detrás). La altura del texto se calcula sola según dónde está su cabeza; si hace falta, Claude la ajusta mirando el preview.
 
 Los subtítulos van en blanco, frase entera (estilo Ela), y se esconden solos mientras hay un ítem arriba.
 
@@ -125,7 +125,7 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run clean -- X` | borra temporales y hoja de preview de X |
 | `npm run clean -- --all` | deja `media/output` solo con `edited/` (los videos finales) |
 | `npm run reference -- V` (o `--all`) | analiza videos de `media/reference/`: hojas, cortes, ritmo, transcript |
-| `npm run matte -- X` | recorta a la profe (fondo transparente) para el texto detrás; ~3–4 min por 20 s |
+| `npm run matte -- X` | recorta a la profe (fondo transparente) solo en los tramos con `behind`; `--all` todo el video, `--force` rehace |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
@@ -194,6 +194,7 @@ Queda guardada para próximos videos. Puedes pedirlo directo: "haz una escena co
 | "escena cruza un corte" | la escena pisa un silencio cortado | acórtala al tramo (ver `inspect`) |
 | Título cortado en los bordes | texto muy largo | acórtalo (ver regla en `brand.md`) |
 | "behind necesita la persona recortada" | falta el matte | `npm run matte -- X` |
+| "behind cae fuera de lo recortado" | cambiaste tiempos del título/ítem | `npm run matte -- X` otra vez |
 | Texto detrás casi no se lee | la cabeza lo tapa de más | pide subirlo (menor `y`) |
 | El video final dura distinto que lo esperado | normal: se quitaron los silencios | `inspect` muestra la "Duración final" |
 | Las skills no aparecen en Claude Code | sesión abierta antes de crearlas | cierra y abre Claude Code |

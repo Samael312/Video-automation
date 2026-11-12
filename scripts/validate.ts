@@ -3,6 +3,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {defaultPlan, matteFile, validatePlan} from '../src/lib/plan';
+import {matteInfoFile, type MatteInfo} from '../src/lib/matte';
 import {themes} from '../src/styles/themes';
 import {GENERATED} from '../src/scenes/generated';
 import {knownEmojis, loadTranscriptAndKeeps, PUBLIC, readPublicJson, resolveVideo} from './common';
@@ -19,7 +20,7 @@ const errors = validatePlan(plan ?? defaultPlan(video), {
   knownStyles: Object.keys(themes),
   knownGenerated: Object.keys(GENERATED),
   knownEmojis: knownEmojis(),
-  hasMatte: fs.existsSync(path.join(PUBLIC, matteFile(video))),
+  matte: fs.existsSync(path.join(PUBLIC, matteFile(video))) ? readPublicJson<MatteInfo>(matteInfoFile(video)) : null,
 });
 if (errors.length) {
   console.error(`edit.json invalido (${errors.length} error${errors.length === 1 ? '' : 'es'}):`);

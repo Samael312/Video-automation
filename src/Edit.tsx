@@ -7,6 +7,7 @@ import {cutPoints, mapTimeNext, remapWords, type Keep} from './lib/cuts';
 import {buildPages} from './lib/captions';
 import {keywordEvents, zoomScale} from './lib/dynamics';
 import {TikTokCaptions} from './lib/TikTokCaptions';
+import {SceneLayer} from './lib/SceneLayer';
 import type {EditPlan} from './lib/plan';
 import type {Transcript} from './lib/types';
 
@@ -47,6 +48,8 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
       <AbsoluteFill style={{transform: `scale(${zoom})`}}>
         <CutVideo src={videoSrc} keeps={keeps} fps={fps} />
       </AbsoluteFill>
+
+      <SceneLayer scenes={plan.scenes} keeps={keeps} theme={theme} fps={fps} />
 
       {title && plan.title ? (
         <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>

@@ -15,7 +15,8 @@
     "validate": "tsx scripts/validate.ts",
     "render:plan": "node scripts/render.js",
     "inspect": "tsx scripts/inspect.ts",
-    "preview": "tsx scripts/preview.ts"
+    "preview": "tsx scripts/preview.ts",
+    "emoji": "tsx scripts/emoji.ts"
   },
   "keywords": [],
   "author": "",

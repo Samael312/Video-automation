@@ -48,6 +48,15 @@ describe('validatePlan: overlays y sfx', () => {
   test('overlay válido', () => expect(errs({...base(), overlays: [{kind: 'label', text: 'hi', start: 2, end: 3, x: 1, y: 1, dir: 'left'}]})).toEqual([]));
 });
 
+describe('validatePlan: title y end', () => {
+  test('title válido', () => expect(errs({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2}})).toEqual([]));
+  test('title sin line1', () => has({...base(), title: {line2: 'b', start: 0, end: 2}}, 'title'));
+  test('title con start no numérico', () => has({...base(), title: {line1: 'a', line2: 'b', start: '0', end: 2}}, 'title'));
+  test('end válido', () => expect(errs({...base(), end: {start: 17.7, line1: 'a', line2: 'b'}})).toEqual([]));
+  test('end sin line2', () => has({...base(), end: {start: 17.7, line1: 'a'}}, 'end'));
+  test('end con start en zona cortada', () => has({...base(), end: {start: 8.5, line1: 'a', line2: 'b'}}, 'cortada'));
+});
+
 describe('validatePlan: robustez (no lanza)', () => {
   const bad: unknown[] = [null, undefined, 42, 'x', {}, [], {...base(), scenes: 'x'}, {...base(), scenes: [null]},
     {...base(), scenes: [{type: 'translate', start: '2', end: 3, data: null}]}, {...base(), overlays: 5}, {...base(), sfx: [{at: 'x'}]}];

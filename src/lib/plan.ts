@@ -106,6 +106,17 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
     e.push('zoom debe tener peak, duration (numeros) y keywords (lista)');
   }
 
+  // ----- title y end (opcionales) -----
+  if (plan.title !== undefined) {
+    const t = plan.title;
+    if (!isObj(t) || !isStr(t.line1) || !isStr(t.line2) || !isNum(t.start) || !isNum(t.end)) e.push('title debe tener line1, line2 (texto) y start, end (numeros)');
+  }
+  if (plan.end !== undefined) {
+    const t = plan.end;
+    if (!isObj(t) || !isStr(t.line1) || !isStr(t.line2) || !isNum(t.start)) e.push('end debe tener line1, line2 (texto) y start (numero)');
+    else if (keepIndex(t.start, ctx.keeps) < 0) e.push(`end.start cae en zona cortada (${t.start}); muevelo a un tramo conservado`);
+  }
+
   // ----- escenas -----
   const ranges: {i: number; start: number; end: number}[] = [];
   if (!Array.isArray(plan.scenes)) e.push('scenes debe ser una lista');

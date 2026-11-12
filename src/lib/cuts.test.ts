@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {cutPoints, keepFrames, keptDuration, mapTime, remapWords, totalFrames, type Keep} from './cuts';
+import {cutPoints, keepFrames, mapTimeNext, keptDuration, mapTime, remapWords, totalFrames, type Keep} from './cuts';
 import type {Word} from './types';
 
 const keeps: Keep[] = [{start: 0.9, end: 2.1}, {start: 3.9, end: 5.1}];
@@ -34,4 +34,8 @@ describe('cuts', () => {
   test('keepFrames usa frames redondeados del original', () => expect(keepFrames({start: 0.9, end: 2.1}, 30)).toBe(36));
   test('totalFrames es la suma de keepFrames', () => expect(totalFrames(keeps, 30)).toBe(72));
   test('totalFrames con lista vacía es 0', () => expect(totalFrames([], 30)).toBe(0));
+  test('mapTimeNext antes del primer tramo es 0', () => expect(mapTimeNext(0, keeps)).toBe(0));
+  test('mapTimeNext en zona cortada salta al siguiente tramo', () => expect(mapTimeNext(3.0, keeps)).toBeCloseTo(1.2, 5));
+  test('mapTimeNext después del último tramo es la duración total', () => expect(mapTimeNext(9, keeps)).toBeCloseTo(2.4, 5));
+  test('mapTimeNext dentro de un tramo coincide con mapTime', () => expect(mapTimeNext(4.0, keeps)).toBeCloseTo(1.3, 5));
 });

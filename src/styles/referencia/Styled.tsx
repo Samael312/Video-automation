@@ -2,10 +2,12 @@ import React, {useMemo} from 'react';
 import {AbsoluteFill, Audio, Img, interpolate, Sequence, spring, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {loadFont as loadPlayfair} from '@remotion/google-fonts/PlayfairDisplay';
 import {loadFont as loadPoppins} from '@remotion/google-fonts/Poppins';
-import {CREAM, styledConfig as C} from './config';
-import type {Transcript, Word} from '../../lib/types';
+import {CREAM, styledConfig as C, type LabelCfg} from './config';
+import type {Transcript} from '../../lib/types';
 import {CutVideo} from '../../lib/CutVideo';
-import type {Keep} from '../../lib/cuts';
+import {mapTimeNext, remapWords, type Keep} from '../../lib/cuts';
+import {buildPages} from '../../lib/captions';
+import {TikTokCaptions} from '../../lib/TikTokCaptions';
 
 const playfair = loadPlayfair('normal', {weights: ['800']});
 const playfairI = loadPlayfair('italic', {weights: ['500']});
@@ -29,31 +31,6 @@ const Title: React.FC = () => {
     </AbsoluteFill>
   );
 };
-
-// ---------- Subtitulos por frases (arriba, pequenos) ----------
-type Chunk = {text: string; start: number; end: number};
-const makeChunks = (words: Word[], max: number): Chunk[] => {
-  const out: Chunk[] = [];
-  let cur: Word[] = [];
-  const flush = () => {
-    if (cur.length) out.push({text: cur.map((w) => w.word).join(' '), start: cur[0].start, end: cur[cur.length - 1].end});
-    cur = [];
-  };
-  for (const w of words) {
-    // pausa larga entre palabras = frase nueva (aunque el texto no tenga punto)
-    if (cur.length && w.start - cur[cur.length - 1].end > 0.4) flush();
-    cur.push(w);
-    if (cur.length >= max || /[.?!]$/.test(w.word) || (/,$/.test(w.word) && cur.length >= 3)) flush();
-  }
-  flush();
-  return out;
-};
-
-const Subtitle: React.FC<{text: string}> = ({text}) => (
-  <AbsoluteFill style={{alignItems: 'center', paddingTop: 285}}>
-    <div style={{fontFamily: SANS, fontWeight: 700, fontSize: 25, color: '#fff', textAlign: 'center', maxWidth: '84%', textShadow: '0 2px 10px rgba(0,0,0,.5)'}}>{text}</div>
-  </AbsoluteFill>
-);
 
 // ---------- Etiqueta serif + flecha discontinua ----------
 const Arrow: React.FC<{progress: number; dir: 'left' | 'right'}> = ({progress, dir}) => (
@@ -109,39 +86,48 @@ const EndCard: React.FC = () => {
 };
 
 // ---------- Composicion ----------
+type Span = {start: number; end: number};
+
 export const Styled: React.FC<StyledProps> = ({videoSrc, transcript, keeps}) => {
   const {fps} = useVideoConfig();
   const fr = (s: number) => Math.round(s * fps);
-  const chunks = useMemo(() => (transcript ? makeChunks(transcript.words, C.subtitles.maxWords) : []), [transcript]);
-  const endAt = C.end.start;
+  // Todo lo definido en config.ts esta en tiempo del video ORIGINAL; aqui se pasa al tiempo del video recortado.
+  const mapSpan = <T extends Span>(x: T): T | null => {
+    const start = mapTimeNext(x.start, keeps);
+    const end = mapTimeNext(x.end, keeps);
+    return end > start ? {...x, start, end} : null;
+  };
+  const mapAt = (t: number) => mapTimeNext(t, keeps);
+  const pages = useMemo(() => (transcript ? buildPages(remapWords(transcript.words, keeps), C.subtitles.maxWords) : []), [transcript, keeps]);
+  const subFrom = mapAt(C.subtitles.from);
+  const endAt = mapAt(C.end.start);
+  const visiblePages = pages.filter((p) => p.end > subFrom && p.start < endAt);
+  const title = mapSpan(C.title);
+  const labels = C.labels.map(mapSpan).filter((x): x is LabelCfg => x !== null);
+  const emojis = C.emojis.map(mapSpan).filter((x) => x !== null);
   const vol = C.sfx.volume;
+  const popAt = C.sfx.popAt.map(mapAt);
+  const swooshAt = C.sfx.swooshAt.map(mapAt);
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
       <CutVideo src={videoSrc} keeps={keeps} fps={fps} />
 
-      <Sequence from={fr(C.title.start)} durationInFrames={fr(C.title.end - C.title.start)}>
-        <Title />
-      </Sequence>
+      {title ? (
+        <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>
+          <Title />
+        </Sequence>
+      ) : null}
 
-      {chunks
-        .filter((c) => c.end > C.subtitles.from && c.start < endAt)
-        .map((c, i) => {
-          const s = Math.max(c.start, C.subtitles.from);
-          return (
-            <Sequence key={i} from={fr(s)} durationInFrames={Math.max(1, fr(Math.min(c.end + 0.25, endAt) - s))}>
-              <Subtitle text={c.text} />
-            </Sequence>
-          );
-        })}
+      <TikTokCaptions pages={visiblePages} highlight={C.subtitles.highlight} fontFamily={SANS} />
 
-      {C.labels.map((l, i) => (
+      {labels.map((l, i) => (
         <Sequence key={i} from={fr(l.start)} durationInFrames={fr(l.end - l.start)}>
           <Label text={l.text} x={l.x} y={l.y} dir={l.dir} />
         </Sequence>
       ))}
-      {C.emojis.map((e, i) => (
-        <Sequence key={i} from={fr(e.start)} durationInFrames={fr(e.end - e.start)}>
-          <Emoji file={e.file} x={e.x} y={e.y} size={e.size} />
+      {emojis.map((e, i) => (
+        <Sequence key={i} from={fr(e!.start)} durationInFrames={fr(e!.end - e!.start)}>
+          <Emoji file={e!.file} x={e!.x} y={e!.y} size={e!.size} />
         </Sequence>
       ))}
 
@@ -150,12 +136,12 @@ export const Styled: React.FC<StyledProps> = ({videoSrc, transcript, keeps}) => 
       </Sequence>
 
       {/* Efectos de sonido sintetizados (public/sfx) */}
-      {C.sfx.swooshAt.map((t, i) => (
+      {swooshAt.map((t, i) => (
         <Sequence key={`s${i}`} from={fr(t)}>
           <Audio src={staticFile('sfx/swoosh.wav')} volume={vol} />
         </Sequence>
       ))}
-      {C.sfx.popAt.map((t, i) => (
+      {popAt.map((t, i) => (
         <Sequence key={`p${i}`} from={fr(t)}>
           <Audio src={staticFile('sfx/pop.wav')} volume={vol} />
         </Sequence>

@@ -42,3 +42,14 @@ export const cutPoints = (keeps: Keep[]): number[] => {
 export const keepFrames = (k: Keep, fps: number): number => Math.round(k.end * fps) - Math.round(k.start * fps);
 
 export const totalFrames = (keeps: Keep[], fps: number): number => keeps.reduce((sum, k) => sum + keepFrames(k, fps), 0);
+
+/** Como mapTime, pero una zona cortada cae en el siguiente instante conservado (0 antes del primero, duracion total tras el ultimo). */
+export const mapTimeNext = (t: number, keeps: Keep[]): number => {
+  let offset = 0;
+  for (const k of keeps) {
+    if (t <= k.start) return offset;
+    if (t <= k.end) return offset + (t - k.start);
+    offset += k.end - k.start;
+  }
+  return offset;
+};

@@ -5,7 +5,7 @@ export type LabelCfg = {text: string; start: number; end: number; x: number; y: 
 
 export const styledConfig = {
   title: {line1: 'Sabias que??', line2: 'en inglés', start: 0, end: 2.8},
-  subtitles: {from: 2.8, maxWords: 5},
+  subtitles: {from: 2.8, maxWords: 5, highlight: CREAM},
   end: {start: 17.7, line1: '¿Te sirvió?', line2: '¿Qué otro dato conoces?'},
   // dir: 'right' = la flecha curva hacia la derecha-abajo; 'left' = hacia la izquierda-abajo
   labels: [

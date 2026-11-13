@@ -31,6 +31,7 @@ npm run validate -- video              # valida public/video.edit.json
 npm run render:plan -- video           # valida y renderiza con el plan
 npm run inspect -- video               # palabras con tiempos, por tramos
 npm run preview -- video               # hoja de capturas del plan
+npm run setup-audio -- --yes          # DeepFilterNet para limpiar la voz (una vez)
 npm run draft-motion -- video          # borrador de bloques/beats (estrategia motion)
 npm run emoji -- --3d 😱               # emoji 3D Fluent a public/emoji3d/
 npm test                           # vitest (lib TypeScript)

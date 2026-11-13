@@ -17,7 +17,8 @@
     "inspect": "tsx scripts/inspect.ts",
     "preview": "tsx scripts/preview.ts",
     "emoji": "tsx scripts/emoji.ts",
-    "draft-motion": "tsx scripts/draft-motion.ts"
+    "draft-motion": "tsx scripts/draft-motion.ts",
+    "setup-audio": ".venv\\Scripts\\python.exe scripts/setup_audio.py"
   },
   "keywords": [],
   "author": "",

@@ -26,10 +26,12 @@ export type EditPlan = {
   sfx: {at: number; name: SfxName}[];
   /** Solo strategy motion: bloques de motion graphics por beats (ver src/lib/motion.ts). */
   motion?: MotionPlan;
+  /** Musica de fondo (archivo en media/music/), con ducking bajo la voz. volume 0.02-0.4 (def. 0.12), duck 0-volume (def. 0.04). */
+  music?: {file: string; volume?: number; duck?: number};
 };
 
 /** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan. */
-export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; knownEmojis3d?: string[]};
+export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; knownEmojis3d?: string[]; knownMusic?: string[]};
 
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
@@ -176,6 +178,20 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       }
       if (keepIndex(s.at, ctx.keeps) < 0) e.push(`sfx[${i}]: cae en zona cortada (${s.at}); muevelo a un tramo conservado`);
     });
+  }
+
+  // ----- musica (opcional) -----
+  if (plan.music !== undefined) {
+    const m = plan.music;
+    if (!isObj(m) || !isStr(m.file)) e.push('music.file debe ser el nombre de una pista de media/music');
+    else {
+      if (ctx.knownMusic && !ctx.knownMusic.includes(m.file)) {
+        e.push(`music.file "${m.file}" no existe en media/music (disponibles: ${ctx.knownMusic.join(', ') || 'ninguna'})`);
+      }
+      const vol = m.volume === undefined ? 0.12 : m.volume;
+      if (!isNum(vol) || vol < 0.02 || vol > 0.4) e.push('music.volume debe estar entre 0.02 y 0.4');
+      else if (m.duck !== undefined && (!isNum(m.duck) || m.duck < 0 || m.duck > vol)) e.push(`music.duck debe estar entre 0 y volume (${vol})`);
+    }
   }
 
   // ----- motion (opcional) -----

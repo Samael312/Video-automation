@@ -10,6 +10,7 @@ import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
 import {MotionLayer} from './motion/MotionLayer';
 import {insideBlocks} from './motion/timing';
+import {MUSIC_DEFAULTS, musicVolume, speechSpans} from './lib/music';
 import type {EditPlan} from './lib/plan';
 import type {Transcript} from './lib/types';
 
@@ -19,7 +20,7 @@ type Span = {start: number; end: number};
 
 /** Composicion generica: renderiza cualquier EditPlan. Los tiempos del plan son del video original. */
 export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) => {
-  const {fps} = useVideoConfig();
+  const {fps, durationInFrames} = useVideoConfig();
   const frame = useCurrentFrame();
   const theme = getTheme(plan.style);
   const fr = (s: number) => Math.round(s * fps);
@@ -31,6 +32,7 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
   };
 
   const newWords = useMemo(() => (transcript ? remapWords(transcript.words, keeps) : []), [transcript, keeps]);
+  const spans = useMemo(() => speechSpans(newWords), [newWords]);
   const pages = useMemo(() => buildPages(newWords, plan.captions.maxWords), [newWords, plan.captions.maxWords]);
   const zoomEvents = useMemo(() => [...cutPoints(keeps), ...keywordEvents(newWords, plan.zoom.keywords)], [keeps, newWords, plan.zoom.keywords]);
   const zoom = zoomScale(frame / fps, zoomEvents, plan.zoom.peak, plan.zoom.duration);
@@ -76,6 +78,15 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
         <Sequence from={fr(endAt)}>
           <EndCard line1={plan.end.line1} line2={plan.end.line2} theme={theme} />
         </Sequence>
+      ) : null}
+
+      {/* Musica de fondo (copiada a public/music por render.js) con ducking bajo la voz */}
+      {plan.music ? (
+        <Audio
+          src={staticFile(`music/${plan.music.file}`)}
+          loop
+          volume={(f) => musicVolume(f / fps, spans, durationInFrames / fps, {volume: plan.music?.volume ?? MUSIC_DEFAULTS.volume, duck: plan.music?.duck ?? MUSIC_DEFAULTS.duck})}
+        />
       ) : null}
 
       {/* Efectos de sonido (public/sfx) */}

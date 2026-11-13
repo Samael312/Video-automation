@@ -17,6 +17,8 @@ media/output/*
 public/*.mp4
 public/*.mov
 public/*.transcript.json
+public/*.raw.wav
+public/music/
 
 # Remotion / build / caches
 out/

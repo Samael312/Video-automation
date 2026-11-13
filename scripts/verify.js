@@ -19,6 +19,7 @@ run('torch', `"${py}" -c "import torch;print(torch.__version__, 'cuda=' + str(to
 run('whisperx', `"${py}" -c "import whisperx;print('import ok')"`);
 run('faster-whisper', `"${py}" -c "import faster_whisper;print(faster_whisper.__version__)"`);
 run('remotion', 'npx remotion versions');
+run('deep-filter (limpieza de voz)', `"${py}" scripts/setup_audio.py --check`);
 if (full) {
   fs.mkdirSync(path.join(root, 'media', 'output'), {recursive: true});
   run('test video', 'ffmpeg -y -f lavfi -i testsrc=d=3:s=320x240:r=10 -f lavfi -i sine=f=440:d=3 -shortest media/output/test.mp4');

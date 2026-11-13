@@ -15,7 +15,8 @@ npm install
 python -m venv .venv
 .venv\Scripts\pip install -r pipeline\requirements.txt
 copy .env.example .env      # y pon tu HF_TOKEN (ver abajo)
-npm run verify              # revisa ffmpeg, venv y Remotion
+npm run setup-audio -- --yes   # descarga DeepFilterNet (~30 MB) para limpiar la voz
+npm run verify              # revisa ffmpeg, venv, Remotion y DeepFilterNet
 ```
 
 **`HF_TOKEN`**: token gratis de Hugging Face (huggingface.co → Settings → Access Tokens, tipo *read*). Hace falta para separar voces. Acepta también las condiciones del modelo `pyannote/speaker-diarization-community-1` en su página de Hugging Face. El `.env` no se sube a git; no lo compartas.
@@ -100,6 +101,25 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 
 ---
 
+## Audio: voz limpia y música
+
+**Voz limpia (automático).** `npm run edit` limpia la voz antes de transcribir: quita ruido, zumbido y algo de eco (DeepFilterNet), ecualiza suave y deja el volumen a -14 LUFS (nivel de TikTok). El audio original queda en `public/NOMBRE.raw.wav`; correrlo dos veces no limpia lo ya limpio. Para saltarlo: `--no-clean`. Lo que no arregla: grabar lejos del teléfono sin micrófono (un micrófono de solapa barato lo resuelve) y pájaros u otros silbidos.
+
+**Música de fondo.** Pon pistas en `media/music/` con el ánimo al inicio del nombre:
+
+| Ánimo | Ejemplo de nombre | Para |
+|---|---|---|
+| `curious` | `curious__pluck.mp3` | ¿Sabías que?, curiosidades |
+| `upbeat` | `upbeat__pop.mp3` | listas, tips rápidos |
+| `calm` | `calm__lofi.mp3` | pronunciación, explicación pausada |
+| `dramatic` | `dramatic__tension.mp3` | errores, giros |
+
+Usa solo música con licencia para redes (Pixabay Music, YouTube Audio Library o compradas). Claude elige la pista según el video; suena baja y baja aún más cuando habla la profe. Si vas a publicar con un sonido de TikTok (ayuda al alcance), renderiza sin música: `npm run render:plan -- NOMBRE --no-music`.
+
+**Volumen final.** Después de cada render se mide el volumen y, si hace falta, se ajusta a -14 LUFS sin tocar el video.
+
+---
+
 ## 5. Comandos (por si quieres hacerlo a mano)
 
 | Comando | Qué hace |
@@ -110,6 +130,8 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run validate -- X` | revisa `public/X.edit.json` y explica cada error |
 | `npm run preview -- X` | hoja de capturas `media/output/X_preview.png` (~20 s) |
 | `npm run render:plan -- X` | valida y renderiza `media/output/edited/X/X_edited.mp4` |
+| `npm run setup-audio -- --yes` | instala DeepFilterNet para limpiar la voz (`--check` solo revisa) |
+| `npm run render:plan -- X --no-music` | renderiza sin la música del plan |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
 | `npm run emoji -- --3d 😀` | descarga el emoji 3D (Microsoft Fluent) a `public/emoji3d/` para los beats de motion |
 | `npm run draft-motion -- X` | borrador de bloques y beats de motion en `public/X.edit.json` |

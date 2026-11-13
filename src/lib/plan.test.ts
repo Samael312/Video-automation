@@ -79,3 +79,18 @@ describe('validatePlan: robustez (no lanza)', () => {
     expect(errs(b).length).toBeGreaterThan(0);
   });
 });
+
+describe('validatePlan: music', () => {
+  const mctx: ValidateCtx = {...ctx, knownMusic: ['curious__a.mp3']};
+  const m = (music: unknown) => validatePlan({...base(), music}, mctx).join('\n');
+  test('plan sin music sigue valido', () => expect(validatePlan(base(), mctx)).toEqual([]));
+  test('music valida', () => expect(m({file: 'curious__a.mp3'})).toBe(''));
+  test('music valida con volume y duck', () => expect(m({file: 'curious__a.mp3', volume: 0.2, duck: 0.05})).toBe(''));
+  test('music inexistente', () => {
+    expect(m({file: 'nope.mp3'})).toContain('media/music');
+    expect(m({file: 'nope.mp3'})).toContain('curious__a.mp3');
+  });
+  test('volume fuera de rango', () => expect(m({file: 'curious__a.mp3', volume: 0.5})).toContain('volume'));
+  test('duck mayor que volume', () => expect(m({file: 'curious__a.mp3', duck: 0.2})).toContain('duck'));
+  test('music sin file', () => expect(m({volume: 0.1})).toContain('file'));
+});

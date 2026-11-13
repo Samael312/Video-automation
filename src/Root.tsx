@@ -36,7 +36,7 @@ export const Root: React.FC = () => (
       height={1280}
       fps={FPS}
       durationInFrames={FPS * 20}
-      defaultProps={{videoSrc: 'ACTUALLY.mp4', transcript: null, keeps: [], plan: defaultPlan('ACTUALLY.mp4')} as EditProps}
+      defaultProps={{videoSrc: 'ACTUALLY.mp4', transcript: null, keeps: [], plan: null} as unknown as EditProps}
       // Lee <video>.transcript.json, <video>.cuts.json (si falta: video completo) y <video>.edit.json (si falta: plan por defecto)
       calculateMetadata={async ({props}) => {
         const name = props.videoSrc.replace(/\.[^.]+$/, '');
@@ -45,8 +45,9 @@ export const Root: React.FC = () => (
         const rawKeeps = cutsRes.ok ? ((await cutsRes.json()) as CutsFile).keeps : [{start: 0, end: transcript.duration}];
         // Tramos alineados a frames: video, subtitulos, zoom y escenas comparten la misma linea de tiempo
         const keeps = quantizeKeeps(rawKeeps, FPS);
-        const planRes = await fetch(staticFile(`${name}.edit.json`));
-        const plan: EditPlan = planRes.ok ? await planRes.json() : defaultPlan(props.videoSrc);
+        // Si las props ya traen plan (p. ej. render --no-music), se usa ese; si no, public/<video>.edit.json
+        const planRes = props.plan ? null : await fetch(staticFile(`${name}.edit.json`));
+        const plan: EditPlan = props.plan ?? (planRes?.ok ? await planRes.json() : defaultPlan(props.videoSrc));
         return {durationInFrames: totalFrames(keeps, FPS), props: {...props, transcript, keeps, plan}};
       }}
     />

@@ -4,7 +4,7 @@ import {defaultPlan, validatePlan, type EditPlan} from '../src/lib/plan';
 import {motionShare, motionWarnings} from '../src/lib/motion';
 import {themes} from '../src/styles/themes';
 import {GENERATED} from '../src/scenes/generated';
-import {knownEmojis, knownEmojis3d, loadTranscriptAndKeeps, readPublicJson, resolveVideo} from './common';
+import {knownEmojis, knownEmojis3d, knownMusic, loadTranscriptAndKeeps, readPublicJson, resolveVideo} from './common';
 
 const {name, video} = resolveVideo(process.argv[2], 'npm run validate -- <video>');
 const {transcript, keeps} = loadTranscriptAndKeeps(name);
@@ -19,6 +19,7 @@ const ctx = {
   knownGenerated: Object.keys(GENERATED),
   knownEmojis: knownEmojis(),
   knownEmojis3d: knownEmojis3d(),
+  knownMusic: knownMusic(),
 };
 const errors = validatePlan(plan ?? defaultPlan(video), ctx);
 if (errors.length) {

@@ -40,7 +40,7 @@ La primera transcripción descarga el modelo WhisperX `medium` (~1.5 GB) y tarda
    - un **resumen** (gancho, escenas, overlays, cierre, duración), y
    - la **hoja de capturas** `media/output/IDIOM1_preview.png`.
 5. Revisa. Responde **"sí"** para renderizar o pide cambios (ver sección 4).
-6. Resultado: `media/output/IDIOM1_edited.mp4`, listo para subir.
+6. Resultado: `media/output/edited/IDIOM1_edited.mp4`, listo para subir.
 
 No hace falta llamar a `video-base`: cada skill la carga sola.
 
@@ -63,7 +63,7 @@ Transcribe, lee lo que dice la profe y detecta el formato. Te muestra la evidenc
 Sin escenas. Subtítulos rápidos, un label con flecha para cada palabra en inglés, otro con su traducción, un emoji por idea y zoom en las palabras clave. Ideal para videos cortos o cuando la profe actúa mucho.
 
 ### `/edit-motion` — las escenas explican
-Una escena animada por idea (ejemplo, error → corrección, pronunciación por sílabas, traducción). La profe aparece en el gancho, entre escenas (≥ 1 s) y en el cierre. Ideal para gramática, reglas y pronunciación.
+Estilo de `media/reference/motion/m_1.mp4`: **bloques** de motion graphics a pantalla completa (3–8 s) intercalados con la profe en cámara. Dentro de cada bloque, un plano nuevo cada ~1 s: texto que aparece al ritmo de la voz, la palabra clave en cursiva con resaltador crema, emojis 3D grandes, listas, tachados, tarjetas tipo reproductor o móvil. La profe sale en el gancho, entre bloques (≥ 1 s) y en el cierre. Los emojis y textos salen de lo que ella dice; la referencia solo da el estilo. Ideal para gramática, reglas, pronunciación y listas de palabras. Para ver los 8 layouts: `npm run studio` → composición `MotionGallery`.
 
 ### `/edit-mixed` — la profe cuenta, las escenas remarcan
 1 a 3 escenas en los momentos clave (traducción, falso amigo, ejemplo) y un **quiz** opcional al final. Entre escenas, labels y emojis. Ejemplo real: `public/ACTUALLY.edit.json`.
@@ -109,8 +109,10 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run inspect -- X` | lista cada palabra con su tiempo, por tramos y cortes |
 | `npm run validate -- X` | revisa `public/X.edit.json` y explica cada error |
 | `npm run preview -- X` | hoja de capturas `media/output/X_preview.png` (~20 s) |
-| `npm run render:plan -- X` | valida y renderiza `media/output/X_edited.mp4` |
+| `npm run render:plan -- X` | valida y renderiza `media/output/edited/X_edited.mp4` |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
+| `npm run emoji -- --3d 😀` | descarga el emoji 3D (Microsoft Fluent) a `public/emoji3d/` para los beats de motion |
+| `npm run draft-motion -- X` | borrador de bloques y beats de motion en `public/X.edit.json` |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
 | `npm run verify` | revisa ffmpeg, venv y Remotion |

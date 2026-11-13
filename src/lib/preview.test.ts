@@ -49,3 +49,14 @@ describe('previewFrames', () => {
     frames.forEach((f) => expect(f).toBeLessThan(total));
   });
 });
+
+describe('previewFrames: motion', () => {
+  test('una captura por beat al 60 %', () => {
+    const fr = previewFrames(
+      plan({motion: {blocks: [{start: 2, end: 6, bg: 'light', beats: [{at: 2, layout: 'word', key: 'a'}, {at: 3, layout: 'list', items: ['x', 'y']}]}]}}),
+      keeps, 30, total,
+    );
+    expect(fr).toContainEqual({frame: 48, label: 'bloque 0 beat 0: word a'});
+    expect(fr).toContainEqual({frame: 114, label: 'bloque 0 beat 1: list x'});
+  });
+});

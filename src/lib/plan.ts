@@ -1,4 +1,5 @@
-import type {Keep} from './cuts';
+import {keepIndexOf, type Keep} from './cuts';
+import {validateMotion, type MotionPlan} from './motion';
 
 export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'generated'] as const;
 export type SceneType = (typeof SCENE_TYPES)[number];
@@ -23,10 +24,12 @@ export type EditPlan = {
   overlays: Overlay[];
   scenes: Scene[];
   sfx: {at: number; name: SfxName}[];
+  /** Solo strategy motion: bloques de motion graphics por beats (ver src/lib/motion.ts). */
+  motion?: MotionPlan;
 };
 
 /** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan. */
-export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]};
+export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; knownEmojis3d?: string[]};
 
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
@@ -49,7 +52,7 @@ export const defaultPlan = (video: string): EditPlan => ({
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.length > 0;
-const keepIndex = (t: number, keeps: Keep[]): number => keeps.findIndex((k) => t >= k.start && t <= k.end);
+const keepIndex = keepIndexOf;
 const missingEmoji = (file: unknown, ctx: ValidateCtx): string | null =>
   ctx.knownEmojis && isStr(file) && !ctx.knownEmojis.includes(file)
     ? `emoji "${file}" no existe en public/emoji (disponibles: ${ctx.knownEmojis.join(', ') || 'ninguno'})`
@@ -173,6 +176,12 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       }
       if (keepIndex(s.at, ctx.keeps) < 0) e.push(`sfx[${i}]: cae en zona cortada (${s.at}); muevelo a un tramo conservado`);
     });
+  }
+
+  // ----- motion (opcional) -----
+  if (plan.motion !== undefined) {
+    const scenes = Array.isArray(plan.scenes) ? (plan.scenes.filter(isObj) as {start: number; end: number}[]) : [];
+    validateMotion(plan.motion, ctx, scenes).forEach((m) => e.push(m));
   }
   return e;
 };

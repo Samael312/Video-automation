@@ -63,3 +63,35 @@ Cada escena tapa a la profe con un fondo oscuro a pantalla completa; su voz y lo
 {"kind": "emoji", "file": "1f4da", "start": 8.0, "end": 10.4, "x": 570, "y": 560, "size": 110}
 ```
 Label = texto serif con flecha discontinua animada. Emoji = entra con rebote. `start` debe caer en un tramo conservado.
+
+## Motion (beats) — solo `strategy: "motion"`
+
+Campo `motion` del plan: **bloques** a pantalla completa (la profe no se ve, la voz sigue) con **beats** que cambian cada 0.5–2 s. Lo arma `npm run draft-motion -- NOMBRE`; la skill `edit-motion` lo enriquece. Tipos y validación: `src/lib/motion.ts`.
+
+```json
+"motion": {"blocks": [
+  {"start": 3.1, "end": 9.4, "bg": "light", "beats": [
+    {"at": 3.1, "layout": "word", "lead": "en la historia que te", "key": "plot twist"},
+    {"at": 4.0, "layout": "prop", "emoji": "1f631", "lead": "te deja en", "key": "shock"}
+  ]}
+]}
+```
+
+Reglas:
+- Bloque: dentro de **un solo TRAMO**, sin solaparse con otros bloques ni con `scenes`. `bg`: `light` o `dark`.
+- Beat: el primero en `at` = `block.start`; los `at` crecen; cada beat dura hasta el siguiente `at` (o el fin del bloque). Mínimo 0.4 s (error), recomendado ≤ 2.5 s (aviso).
+- Avisos: 3 layouts iguales seguidos, < 1 s de profe entre bloques, motion fuera de 50–80 %, bloque en el gancho (< 2.5 s) o después de `end.start`.
+- `emoji`: código en `public/emoji3d/` (`npm run emoji -- --3d 😱`).
+
+| layout | Muestra | JSON exacto (negrita = obligatorio en la descripción) |
+|---|---|---|
+| `word` | lead chico + **key** grande en cursiva con resaltador | `{"at": 0, "layout": "word", "lead": "parece una", "key": "tontería"}` |
+| `prop` | emoji 3D grande; texto arriba (`pos: "top"`) o abajo | `{"at": 0, "layout": "prop", "emoji": "1f631", "lead": "te deja en", "key": "shock", "pos": "top"}` — **emoji** |
+| `ring` | emoji en círculo discontinuo que gira | `{"at": 0, "layout": "ring", "emoji": "1f4d6", "lead": "un capítulo que", "key": "termina"}` — **emoji** |
+| `list` | pastillas numeradas; `active` resaltada | `{"at": 0, "layout": "list", "title": "3 palabras", "items": ["plot twist", "cliffhanger", "page turner"], "active": 0}` — **items** 2–5 |
+| `strike` | items tachados; el último queda en pie | `{"at": 0, "layout": "strike", "items": ["aburrido", "lento", "page turner"]}` — **items** 2–4 |
+| `swap` | **from** tachado → **to** | `{"at": 0, "layout": "swap", "lead": "plot twist =", "from": "plot twist", "to": "giro inesperado"}` |
+| `card` | tarjeta oscura de reproductor o móvil | `{"at": 0, "layout": "card", "frame": "player", "lead": "cuando un capítulo", "key": "cliffhanger"}` — **key**, **frame** |
+| `big` | una palabra o número enorme sobre negro | `{"at": 0, "layout": "big", "key": "3"}` — **key** |
+
+Galería para ver los 8 layouts: `npx remotion studio src/index.ts` → composición `MotionGallery`.

@@ -8,6 +8,8 @@ import {buildPages} from './lib/captions';
 import {keywordEvents, zoomScale} from './lib/dynamics';
 import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
+import {MotionLayer} from './motion/MotionLayer';
+import {insideBlocks} from './motion/timing';
 import type {EditPlan} from './lib/plan';
 import type {Transcript} from './lib/types';
 
@@ -36,7 +38,8 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
   const subFrom = mapAt(plan.captions.from ?? 0);
   const endAt = plan.end ? mapAt(plan.end.start) : Infinity;
   const subUntil = Math.min(plan.captions.until !== undefined ? mapAt(plan.captions.until) : Infinity, endAt);
-  const visiblePages = pages.filter((p) => p.end > subFrom && p.start < subUntil);
+  // Dentro de bloques de motion no hay subtitulos: el texto cinetico los reemplaza
+  const visiblePages = pages.filter((p) => p.end > subFrom && p.start < subUntil && !insideBlocks(p.start, plan.motion, keeps));
 
   const title = plan.title ? mapSpan(plan.title) : null;
   const overlays = plan.overlays.map(mapSpan).filter((x) => x !== null);
@@ -51,6 +54,7 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
 
       <SceneLayer scenes={plan.scenes} keeps={keeps} theme={theme} fps={fps} />
 
+
       {title && plan.title ? (
         <Sequence from={fr(title.start)} durationInFrames={fr(title.end - title.start)}>
           <Title line1={plan.title.line1} line2={plan.title.line2} theme={theme} />
@@ -64,6 +68,9 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
           {o!.kind === 'label' ? <Label text={o!.text} x={o!.x} y={o!.y} dir={o!.dir} theme={theme} /> : <Emoji file={o!.file} x={o!.x} y={o!.y} size={o!.size} />}
         </Sequence>
       ))}
+
+      {/* Motion encima de subtitulos y overlays: un bloque tapa todo menos el cierre */}
+      {plan.motion ? <MotionLayer motion={plan.motion} keeps={keeps} words={transcript?.words ?? []} theme={theme} fps={fps} /> : null}
 
       {hasEnd && plan.end ? (
         <Sequence from={fr(endAt)}>

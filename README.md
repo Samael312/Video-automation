@@ -26,11 +26,13 @@ docs/                Specs y planes
 
 ```bash
 npm install
-npm run edit -- media/input/video.mp4   # pipeline completo → media/output/video_edited.mp4
+npm run edit -- media/input/video.mp4   # pipeline completo → media/output/edited/video_edited.mp4
 npm run validate -- video              # valida public/video.edit.json
 npm run render:plan -- video           # valida y renderiza con el plan
 npm run inspect -- video               # palabras con tiempos, por tramos
 npm run preview -- video               # hoja de capturas del plan
+npm run draft-motion -- video          # borrador de bloques/beats (estrategia motion)
+npm run emoji -- --3d 😱               # emoji 3D Fluent a public/emoji3d/
 npm test                           # vitest (lib TypeScript)
 .venv\Scripts\python -m pytest pipeline/tests   # pytest (pipeline)
 npm run verify                     # revisa ffmpeg, venv, Remotion

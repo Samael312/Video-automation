@@ -3,6 +3,7 @@ import {Composition, staticFile} from 'remotion';
 import {Hello} from './compositions/Hello';
 import {Captions, CaptionsProps, Transcript} from './compositions/Captions';
 import {Edit, EditProps} from './Edit';
+import {GALLERY_FRAMES, MotionGallery} from './compositions/MotionGallery';
 import {defaultPlan, type EditPlan} from './lib/plan';
 import {quantizeKeeps, totalFrames} from './lib/cuts';
 import type {CutsFile} from './lib/types';
@@ -11,6 +12,7 @@ const FPS = 30;
 
 export const Root: React.FC = () => (
   <>
+    <Composition id="MotionGallery" component={MotionGallery} durationInFrames={GALLERY_FRAMES} fps={FPS} width={720} height={1280} />
     <Composition id="Hello" component={Hello} durationInFrames={90} fps={30} width={1080} height={1920} />
     <Composition
       id="Captions"

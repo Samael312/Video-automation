@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "video": "Plot_Twist_motion.mp4",
+  "style": "referencia",
+  "strategy": "motion",
+  "title": {"line1": "3 palabras", "line2": "de BookTok", "start": 0, "end": 2.6},
+  "end": {"start": 22.71, "line1": "Tu turno", "line2": "¿Tu último page turner?"},
+  "captions": {"maxWords": 4, "from": 2.6},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["Plot", "Cliffhanger,", "Page"]},
+  "overlays": [],
+  "scenes": [],
+  "sfx": [{"at": 0, "name": "swoosh"}],
+  "motion": {
+    "blocks": [
+      {"start": 2.6, "end": 6.3, "bg": "light", "beats": [
+        {"at": 2.6, "layout": "prop", "emoji": "1f440", "lead": "has", "key": "visto"},
+        {"at": 3.45, "layout": "big", "key": "3"},
+        {"at": 4.5, "layout": "ring", "emoji": "1f914", "lead": "y te has", "key": "preguntado"},
+        {"at": 5.4, "layout": "word", "lead": "qué significan", "key": "exactamente"}
+      ]},
+      {"start": 7.3, "end": 11.3, "bg": "dark", "beats": [
+        {"at": 7.3, "layout": "list", "title": "3 palabras", "items": ["plot twist", "cliffhanger", "page turner"], "active": 0},
+        {"at": 8.1, "layout": "swap", "from": "plot twist", "to": "giro inesperado"},
+        {"at": 9.3, "layout": "word", "lead": "en la", "key": "historia"},
+        {"at": 9.95, "layout": "prop", "emoji": "1f631", "lead": "que te deja en", "key": "shock"}
+      ]},
+      {"start": 13.0, "end": 17.4, "bg": "light", "beats": [
+        {"at": 13.0, "layout": "card", "frame": "player", "lead": "cuando un", "key": "capítulo"},
+        {"at": 14.1, "layout": "prop", "emoji": "1f4d6", "lead": "o un libro", "key": "termina"},
+        {"at": 15.0, "layout": "word", "lead": "en el punto más", "key": "tenso"},
+        {"at": 16.2, "layout": "ring", "emoji": "1f629", "lead": "y te deja", "key": "sufriendo"}
+      ]},
+      {"start": 19.3, "end": 22.6, "bg": "dark", "beats": [
+        {"at": 19.3, "layout": "word", "lead": "un libro tan", "key": "bueno"},
+        {"at": 20.3, "layout": "prop", "emoji": "1f4da", "lead": "no puedes parar de", "key": "pasar páginas", "pos": "bottom"},
+        {"at": 22.0, "layout": "list", "items": ["plot twist", "cliffhanger", "page turner"], "active": 2}
+      ]}
+    ]
+  }
+}

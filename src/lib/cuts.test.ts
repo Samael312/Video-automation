@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {cutPoints, keepFrames, mapTimeNext, quantizeKeeps, keptDuration, mapTime, remapWords, totalFrames, type Keep} from './cuts';
+import {cutPoints, keepFrames, mapTimeNext, originalAt, quantizeKeeps, keptDuration, mapTime, remapWords, totalFrames, type Keep} from './cuts';
 import type {Word} from './types';
 
 const keeps: Keep[] = [{start: 0.9, end: 2.1}, {start: 3.9, end: 5.1}];
@@ -61,4 +61,11 @@ describe('cuts', () => {
     keeps.forEach((k, i) => expect(keepFrames(q[i], 30)).toBe(keepFrames(k, 30)));
   });
   test('quantizeKeeps descarta tramos de menos de un frame', () => expect(quantizeKeeps([{start: 1.0, end: 1.01}, {start: 2, end: 3}], 30)).toHaveLength(1));
+});
+
+describe('originalAt (inverso de mapTimeNext)', () => {
+  const k2: Keep[] = [{start: 1, end: 8}, {start: 9, end: 19}];
+  test('0 -> inicio del primer tramo', () => expect(originalAt(0, k2)).toBeCloseTo(1, 5));
+  test('7.5 -> 9.5 en el segundo tramo', () => expect(originalAt(7.5, k2)).toBeCloseTo(9.5, 5));
+  test('mas alla del final -> fin del ultimo tramo', () => expect(originalAt(999, k2)).toBeCloseTo(19, 5));
 });

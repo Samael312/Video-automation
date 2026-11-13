@@ -62,3 +62,17 @@ export const quantizeKeeps = (keeps: Keep[], fps: number): Keep[] =>
   keeps
     .map((k) => ({start: Math.round(k.start * fps) / fps, end: Math.round(k.end * fps) / fps}))
     .filter((k) => k.end > k.start);
+
+/** Indice del tramo conservado que contiene `t` (tiempo original), o -1. */
+export const keepIndexOf = (t: number, keeps: Keep[]): number => keeps.findIndex((k) => t >= k.start && t <= k.end);
+
+/** Inverso de mapTimeNext: tiempo nuevo -> tiempo original (siempre dentro de un tramo conservado). */
+export const originalAt = (newT: number, keeps: Keep[]): number => {
+  let offset = 0;
+  for (const k of keeps) {
+    const len = k.end - k.start;
+    if (newT <= offset + len) return k.start + Math.max(0, newT - offset);
+    offset += len;
+  }
+  return keeps.length ? keeps[keeps.length - 1].end : 0;
+};

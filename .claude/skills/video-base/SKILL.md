@@ -10,6 +10,7 @@ Las skills de estrategia (`edit-captions`, `edit-motion`, `edit-mixed`) te manda
 Antes de empezar lee también:
 - `brand.md` (en esta carpeta): tono, ganchos y cierres de la profe.
 - `templates.md` (en esta carpeta): qué muestra cada plantilla de escena y su `data` exacto.
+- `caption.md` (en esta carpeta): caption y hashtags de TikTok que entregas con cada render (paso 7).
 
 ## Flujo (no te saltes pasos)
 
@@ -23,8 +24,9 @@ Antes de empezar lee también:
 3. **Planificar** — escribe `public/NOMBRE.edit.json` según la estrategia (ver "Escribir el plan").
 4. **Validar** — `npm run validate -- NOMBRE`. Corrige cada error con su mensaje y repite hasta `OK`. No sigas con errores.
 5. **Preview y pausa** — `npm run preview -- NOMBRE` genera `media/output/NOMBRE_preview.png`. Míralo (Read) y revisa que cada captura muestre lo que planeaste. Luego muestra al usuario el resumen (formato abajo) y la ruta de la hoja. **Para y espera su aprobación. No renderices sin un "sí" explícito.**
-6. **Render** — con aprobación: `npm run render:plan -- NOMBRE` → `media/output/edited/NOMBRE_edited.mp4`. Confirma con `ffprobe -v error -show_entries stream=codec_type,duration -of csv=p=0 media/output/edited/NOMBRE_edited.mp4` que hay video y audio con la misma duración (±0.04 s).
+6. **Render** — con aprobación: `npm run render:plan -- NOMBRE` → `media/output/edited/NOMBRE/NOMBRE_edited.mp4`. Confirma con `ffprobe -v error -show_entries stream=codec_type,duration -of csv=p=0 media/output/edited/NOMBRE/NOMBRE_edited.mp4` que hay video y audio con la misma duración (±0.04 s).
    Si el usuario pide cambios: edita el plan, vuelve al paso 4 y genera un preview nuevo.
+7. **Caption y hashtags (siempre, sin que te lo pidan)** — apenas termina el render, escribe `media/output/edited/NOMBRE/NOMBRE_caption.txt` (misma carpeta que el video) siguiendo `caption.md` (3 opciones, una recomendada, 4–6 hashtags) a partir de lo que dice la profe y del plan (título, palabras en inglés, CTA). En el mensaje final da la ruta del video, la del caption, y pega el caption recomendado con sus hashtags listo para copiar.
 
 ## Escribir el plan
 

@@ -1,5 +1,5 @@
 // Uso: node scripts/edit.js <video> [--model medium] [--gap 0.7] [--plan-only]
-// Normaliza -> transcribe -> corta silencios -> valida edit.json y renderiza (scripts/render.js) en media/output/edited/<nombre>_edited.mp4
+// Normaliza -> transcribe -> corta silencios -> valida edit.json y renderiza (scripts/render.js) en media/output/edited/<nombre>/<nombre>_edited.mp4
 // --plan-only: se detiene tras cortar silencios (lo usan las skills: luego inspect -> edit.json -> validate -> preview)
 const {execSync} = require('child_process');
 const fs = require('fs');
@@ -19,7 +19,7 @@ if (!video) {
 const name = path.basename(video).replace(/\.[^.]+$/, '');
 const publicVideo = `${name}.mp4`;
 const outDir = path.join(root, 'media', 'output');
-const out = path.join(outDir, 'edited', `${name}_edited.mp4`);
+const out = path.join(outDir, 'edited', name, `${name}_edited.mp4`);
 fs.mkdirSync(path.dirname(out), {recursive: true});
 
 const steps = [

@@ -64,7 +64,9 @@ Cada escena tapa a la profe con un fondo oscuro a pantalla completa; su voz y lo
 ```
 Label = texto serif con flecha discontinua animada. Emoji = entra con rebote. `start` debe caer en un tramo conservado.
 
-## Motion (beats) — solo `strategy: "motion"`
+## Motion (beats) — `strategy: "motion"` y `"voice"`
+
+En `voice` el formato es el mismo, pero los bloques cubren todo el video sin huecos (ver `edit-voice`).
 
 Campo `motion` del plan: **bloques** a pantalla completa (la profe no se ve, la voz sigue) con **beats** que cambian cada 0.5–2 s. Lo arma `npm run draft-motion -- NOMBRE`; la skill `edit-motion` lo enriquece. Tipos y validación: `src/lib/motion.ts`.
 

@@ -141,13 +141,9 @@ export const motionShare = (plan: EditPlan, keeps: Keep[]): number => {
   return covered / total;
 };
 
-/** Avisos de ritmo y proporcion del plan motion. Supone un plan ya valido. */
-export const motionWarnings = (plan: EditPlan, ctx: ValidateCtx): string[] => {
+/** Avisos por beat comunes a motion y voice: beats largos y 3 layouts iguales seguidos. */
+const beatWarnings = (blocks: Block[]): string[] => {
   const w: string[] = [];
-  const blocks = blocksOf(plan);
-  if (!blocks.length) return w;
-  const at = (t: number) => mapTimeNext(t, ctx.keeps);
-
   blocks.forEach((b, i) => {
     const tag = `bloque[${i}]`;
     beatSpans(b).forEach(({start, end}, j) => {
@@ -156,6 +152,59 @@ export const motionWarnings = (plan: EditPlan, ctx: ValidateCtx): string[] => {
     b.beats.forEach((beat, j) => {
       if (j >= 2 && b.beats[j - 1].layout === beat.layout && b.beats[j - 2].layout === beat.layout) w.push(`${tag}.beat[${j}]: 3 layouts iguales seguidos (${beat.layout}); alterna`);
     });
+  });
+  return w;
+};
+
+// ---------- strategy voice (100 % motion) ----------
+export const MAX_GAP = 0.1;
+
+/** Huecos (tiempo FINAL, > MAX_GAP) sin bloque. Ignora tramos conservados mas cortos que un beat: ahi no cabe un bloque. */
+export const voiceGaps = (blocks: Block[], keeps: Keep[]): {start: number; end: number}[] => {
+  const at = (t: number) => mapTimeNext(t, keeps);
+  let f = 0;
+  const covered = keeps.map((k) => {
+    const r = {start: f, end: f + (k.end - k.start), short: k.end - k.start < MIN_BEAT};
+    f = r.end;
+    return r;
+  }).filter((r) => r.short).map(({start, end}) => ({start, end}));
+  blocks.forEach((b) => covered.push({start: at(b.start), end: at(b.end)}));
+  covered.sort((x, y) => x.start - y.start);
+  const gaps: {start: number; end: number}[] = [];
+  let cur = 0;
+  covered.forEach((c) => {
+    if (c.start - cur > MAX_GAP) gaps.push({start: cur, end: c.start});
+    cur = Math.max(cur, c.end);
+  });
+  if (f - cur > MAX_GAP) gaps.push({start: cur, end: f});
+  return gaps;
+};
+
+/** Avisos de voice: los de beat + inicio en 0, ultimo oscuro, fondos alternos, title/end tapados. */
+export const voiceWarnings = (plan: EditPlan, ctx: ValidateCtx): string[] => {
+  const blocks = [...blocksOf(plan)].sort((x, y) => x.start - y.start);
+  const w = beatWarnings(blocks);
+  if (plan.title) w.push('title no se ve en voice (todo es motion); pon el gancho en el primer beat');
+  if (plan.end) w.push('end no se ve en voice (todo es motion); pon el CTA en el ultimo bloque');
+  if (!blocks.length) return w;
+  if (mapTimeNext(blocks[0].start, ctx.keeps) > MAX_GAP) w.push(`el primer bloque no empieza en 0 (${blocks[0].start}); el gancho va en el primer beat`);
+  if (blocks[blocks.length - 1].bg !== 'dark') w.push('el ultimo bloque deberia ser dark (CTA)');
+  blocks.forEach((b, i) => {
+    if (i >= 2 && blocks[i - 1].bg === b.bg && blocks[i - 2].bg === b.bg) w.push(`3 bloques seguidos con fondo ${b.bg} (bloques en ${blocks[i - 2].start}, ${blocks[i - 1].start}, ${b.start}); alterna`);
+  });
+  return w;
+};
+
+/** Avisos de ritmo y proporcion del plan motion (en voice delega en voiceWarnings). Supone un plan ya valido. */
+export const motionWarnings = (plan: EditPlan, ctx: ValidateCtx): string[] => {
+  if (plan.strategy === 'voice') return voiceWarnings(plan, ctx);
+  const blocks = blocksOf(plan);
+  if (!blocks.length) return [];
+  const w = beatWarnings(blocks);
+  const at = (t: number) => mapTimeNext(t, ctx.keeps);
+
+  blocks.forEach((b, i) => {
+    const tag = `bloque[${i}]`;
     if (at(b.start) < HOOK_SECONDS) w.push(`${tag}: empieza en el gancho (antes de ${HOOK_SECONDS} s finales); deja a la profe con el titulo`);
     if (plan.end && b.end > plan.end.start + 0.05) w.push(`${tag}: termina despues del cierre (end.start ${plan.end.start}); deja a la profe en el CTA`);
   });

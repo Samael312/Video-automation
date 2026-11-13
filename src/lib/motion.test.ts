@@ -1,6 +1,6 @@
 import {describe, expect, test} from 'vitest';
 import {defaultPlan, validatePlan, type EditPlan, type Scene, type ValidateCtx} from './plan';
-import {beatSpans, motionShare, motionWarnings, type Beat, type Block} from './motion';
+import {beatSpans, motionShare, motionWarnings, voiceGaps, type Beat, type Block} from './motion';
 
 const ctx: ValidateCtx = {
   video: 'v.mp4',
@@ -93,4 +93,35 @@ describe('motionShare y motionWarnings', () => {
       block({start: 9, end: 18, beats: [{at: 9, layout: 'word', key: 'a'}, {at: 11, layout: 'big', key: 'b'}, {at: 13, layout: 'word', key: 'c'}, {at: 15, layout: 'big', key: 'd'}, {at: 16.5, layout: 'word', key: 'e'}]})])).toContain('80'));
   test('bloque en el gancho', () => expect(warn([block({start: 2, end: 6, beats: words3(2).concat({at: 4, layout: 'word', key: 'c'})}), good()[1]])).toContain('gancho'));
   test('bloque despues del cierre', () => expect(warn(good(), {end: {start: 15, line1: 'x', line2: 'y'}})).toContain('cierre'));
+});
+
+describe('strategy voice', () => {
+  // keeps [0,5] + [6,10] -> finales 0-5 y 5-9
+  const vctx: ValidateCtx = {...ctx, duration: 10, keeps: [{start: 0, end: 5}, {start: 6, end: 10}]};
+  const vb = (start: number, end: number, bg: Block['bg'] = 'light'): Block => ({start, end, bg, beats: [{at: start, layout: 'word', key: 'a'}, {at: start + 1, layout: 'word', key: 'b'}]});
+  const vplan = (blocks: Block[], extra: Partial<EditPlan> = {}): EditPlan => ({...defaultPlan('v.mp4'), strategy: 'voice', motion: {blocks}, ...extra});
+  const verrs = (p: unknown) => validatePlan(p, vctx).join('\n');
+  const vwarn = (p: EditPlan, c: ValidateCtx = vctx) => motionWarnings(p, c).join('\n');
+
+  test('voice es valida con cobertura total', () => expect(validatePlan(vplan([vb(0, 5), vb(6, 10, 'dark')]), vctx)).toEqual([]));
+  test('hueco es error con el tramo', () => expect(verrs(vplan([vb(0, 4), vb(6, 10, 'dark')]))).toContain('hueco 4.0–5.0 s sin bloque'));
+  test('voice sin motion es error', () => expect(verrs({...defaultPlan('v.mp4'), strategy: 'voice'})).toContain('voice necesita motion.blocks'));
+  test('voiceGaps ignora tramos mas cortos que un beat', () => {
+    const keeps = [{start: 0, end: 5}, {start: 5.5, end: 5.8}, {start: 6, end: 10}];
+    expect(voiceGaps([vb(0, 5), vb(6, 10)], keeps)).toEqual([]);
+  });
+  test('sin avisos de gancho, profe ni % de motion', () => {
+    const w = vwarn(vplan([vb(0, 5), vb(6, 10, 'dark')]));
+    ['gancho', 'profe', 'motion cubre'].forEach((x) => expect(w).not.toContain(x));
+  });
+  test('aviso si no empieza en 0', () => expect(vwarn(vplan([vb(0.5, 5), vb(6, 10, 'dark')]))).toContain('no empieza en 0'));
+  test('aviso si el ultimo no es dark', () => expect(vwarn(vplan([vb(0, 5, 'dark'), vb(6, 10)]))).toContain('ultimo bloque deberia ser dark'));
+  test('aviso con 3 bloques seguidos del mismo fondo', () =>
+    expect(vwarn(vplan([vb(0, 2), vb(2, 4), vb(4, 5), vb(6, 10, 'dark')]))).toContain('3 bloques seguidos con fondo light'));
+  test('aviso si hay title', () =>
+    expect(vwarn(vplan([vb(0, 5), vb(6, 10, 'dark')], {title: {line1: 'a', line2: 'b', start: 0, end: 2}}))).toContain('title no se ve en voice'));
+  test('beat largo sigue avisando', () => {
+    const long: Block = {start: 0, end: 5, bg: 'light', beats: [{at: 0, layout: 'word', key: 'a'}]};
+    expect(vwarn(vplan([long, vb(6, 10, 'dark')]))).toContain('divide en dos beats');
+  });
 });

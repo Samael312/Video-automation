@@ -1,7 +1,7 @@
 # video-automation
 
 Automatiza la edición de TikToks (9:16) para una profe de inglés online: transcripción, cortes de silencio, subtítulos, transiciones y motion graphics.
-**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, problemas comunes).
+**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, `/edit-voice` (guion + nota de voz), problemas comunes).
 
 Diseño completo: [`docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md`](docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md).
 

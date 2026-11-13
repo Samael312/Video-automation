@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {beatFrames, blockFrames, cameraScale, insideBlocks, staggerDelays, tickFrames} from './timing';
+import {beatFrames, blockFrames, cameraScale, insideBlocks, staggerDelays, tickFrames, withUnderlay} from './timing';
 import type {Block} from '../lib/motion';
 import type {Keep} from '../lib/cuts';
 
@@ -35,4 +35,15 @@ describe('staggerDelays', () => {
     expect(d[2]).toBeLessThanOrEqual(Math.floor(18 * 0.4));
     expect(d[0]).toBeLessThan(d[1]);
   });
+});
+
+describe('withUnderlay', () => {
+  test('alarga un bloque si el siguiente empieza pegado (el wipe abre sobre el, no sobre el fondo vacio)', () =>
+    expect(withUnderlay([{from: 0, duration: 100}, {from: 100, duration: 50}], 8)).toEqual([{from: 0, duration: 108}, {from: 100, duration: 50}]));
+  test('tolera 1 frame de redondeo (y lo tapa)', () =>
+    expect(withUnderlay([{from: 0, duration: 100}, {from: 101, duration: 50}], 8)[0]!.duration).toBe(109));
+  test('no alarga si hay profe entre bloques', () =>
+    expect(withUnderlay([{from: 0, duration: 100}, {from: 130, duration: 50}], 8)[0]!.duration).toBe(100));
+  test('el ultimo no cambia y los nulos se respetan', () =>
+    expect(withUnderlay([{from: 0, duration: 10}, null, {from: 10, duration: 5}], 8)).toEqual([{from: 0, duration: 18}, null, {from: 10, duration: 5}]));
 });

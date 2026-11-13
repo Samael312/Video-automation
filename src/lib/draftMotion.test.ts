@@ -1,7 +1,7 @@
 import {describe, expect, test} from 'vitest';
 import {chunkWords, draftMotion} from './draftMotion';
 import {mapTimeNext, keepIndexOf, type Keep} from './cuts';
-import {beatSpans, motionShare, validateMotion} from './motion';
+import {beatSpans, motionShare, validateMotion, voiceGaps} from './motion';
 import {defaultPlan} from './plan';
 import type {Word} from './types';
 
@@ -74,5 +74,43 @@ describe('draftMotion', () => {
     const k: Keep[] = [{start: 0, end: 4}, {start: 5, end: 7.5}];
     const d = draftMotion([...mkWords(0, 4), ...mkWords(5, 7.5)], k, {from: 0, until: 7.5});
     d.blocks.forEach((b) => expect(b.end - b.start).toBeGreaterThanOrEqual(3));
+  });
+});
+
+describe('draftMotion full (voice)', () => {
+  // palabras de 0.3 s cada 0.35 s, punto cada 6
+  const mk = (from: number, to: number): Word[] => {
+    const out: Word[] = [];
+    for (let t = from, i = 1; t + 0.3 <= to; t += 0.35, i++) out.push({word: i % 6 === 0 ? `v${i}.` : `v${i}`, start: +t.toFixed(3), end: +(t + 0.3).toFixed(3), speaker: 'S'});
+    return out;
+  };
+  const run = (ks: Keep[]) => draftMotion(ks.flatMap((k) => mk(k.start, k.end)), ks, {from: ks[0].start, until: ks[ks.length - 1].end, full: true}).blocks;
+  const fk: Keep[] = [{start: 0, end: 12}, {start: 13, end: 20}];
+  const fb = run(fk);
+
+  test('cubre todo sin huecos', () => {
+    expect(voiceGaps(fb, fk)).toEqual([]);
+    expect(fb[0].start).toBe(0);
+    expect(fb[fb.length - 1].end).toBe(20);
+  });
+  test('bloques de 3 a 8 s en tramos largos', () => fb.forEach((b) => {
+    expect(b.end - b.start).toBeGreaterThanOrEqual(3);
+    expect(b.end - b.start).toBeLessThanOrEqual(8);
+  }));
+  test('tramo corto da un bloque corto', () => {
+    const ks: Keep[] = [{start: 0, end: 10}, {start: 11, end: 12.5}];
+    expect(run(ks).some((b) => b.start === 11 && b.end === 12.5)).toBe(true);
+    expect(voiceGaps(run(ks), ks)).toEqual([]);
+  });
+  test('fondos alternan y el ultimo es dark', () => {
+    expect(fb[fb.length - 1].bg).toBe('dark');
+    fb.slice(0, -1).forEach((b, i) => i > 0 && expect(b.bg).not.toBe(fb[i - 1].bg));
+  });
+  test('beats validos', () => expect(validateMotion({blocks: fb}, {video: 'v.mp4', duration: 20, keeps: fk, knownStyles: [], knownGenerated: []}, [])).toEqual([]));
+  test('un solo tramo largo', () => {
+    const ks: Keep[] = [{start: 0, end: 30}];
+    const bs = run(ks);
+    expect(voiceGaps(bs, ks)).toEqual([]);
+    expect(validateMotion({blocks: bs}, {video: 'v.mp4', duration: 30, keeps: ks, knownStyles: [], knownGenerated: []}, [])).toEqual([]);
   });
 });

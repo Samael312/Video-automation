@@ -3,7 +3,7 @@ import {MIN_BEAT, MIN_PROFE_GAP, type Beat, type Block, type MotionPlan} from '.
 import type {Word} from './types';
 
 /** `from`/`until`: segundos ORIGINALES donde puede haber motion (tras el gancho, antes del CTA). `target`: fraccion de la duracion final. */
-export type DraftOpts = {from: number; until: number; target?: number};
+export type DraftOpts = {from: number; until: number; target?: number; full?: boolean};
 
 const MIN_BLOCK = 3;
 const MAX_BLOCK = 8;
@@ -63,8 +63,50 @@ const buildBeats = (start: number, end: number, chunks: Word[][]): Beat[] => {
   return groups.map((g) => toBeat(+g.at.toFixed(3), g.ws));
 };
 
-/** Borrador: bloques de 3–8 s con beats `word` cada 2–4 palabras, repartidos para cubrir ~target de la duracion final. */
+/** Fin del proximo bloque en [cursor, end]: el ultimo fin de frase (o, si no hay, de palabra) que deje bloques de 3–8 s. */
+const nextCut = (words: Word[], cursor: number, end: number): number => {
+  const lo = cursor + MIN_BLOCK;
+  const hi = Math.min(cursor + MAX_BLOCK, end - MIN_BLOCK);
+  const cutAt = (k: number) => Math.min(words[k].end + PAD_OUT, words[k + 1]?.start ?? Infinity, end);
+  const fits = (k: number) => words[k].end >= cursor && cutAt(k) >= lo && cutAt(k) <= hi;
+  const idx = words.map((_, k) => k).filter(fits);
+  const clause = idx.filter((k) => endsClause(words[k]));
+  const pick = clause.length ? clause[clause.length - 1] : idx[idx.length - 1];
+  return pick !== undefined ? cutAt(pick) : hi;
+};
+
+/** strategy voice: bloques contiguos que cubren cada tramo conservado entero; fondos alternos y el ultimo oscuro. */
+const draftFull = (words: Word[], keeps: Keep[], opts: DraftOpts): MotionPlan => {
+  const spans: {start: number; end: number}[] = [];
+  keeps
+    .map((k) => ({start: Math.max(k.start, opts.from), end: Math.min(k.end, opts.until)}))
+    .filter((r) => r.end - r.start >= MIN_BEAT)
+    .forEach((r) => {
+      const ws = words.filter((w) => w.start >= r.start && w.end <= r.end);
+      let cursor = r.start;
+      while (r.end - cursor > MAX_BLOCK) {
+        const cut = nextCut(ws, cursor, r.end);
+        spans.push({start: cursor, end: cut});
+        cursor = cut;
+      }
+      spans.push({start: cursor, end: r.end});
+    });
+  const n = spans.length;
+  return {
+    blocks: spans.map(({start, end}, i) => {
+      const s = +start.toFixed(3);
+      const e = +end.toFixed(3);
+      const inside = words.filter((w) => w.start >= start && w.start < end);
+      const beats: Beat[] = inside.length ? buildBeats(s, e, chunkWords(inside)) : [{at: s, layout: 'word', key: '…'}];
+      return {start: s, end: e, bg: (n - 1 - i) % 2 === 0 ? 'dark' : 'light', beats};
+    }),
+  };
+};
+
+/** Borrador: bloques de 3–8 s con beats `word` cada 2–4 palabras, repartidos para cubrir ~target de la duracion final.
+ * Con `full` (strategy voice) cubre todo: ver draftFull. */
 export const draftMotion = (words: Word[], keeps: Keep[], opts: DraftOpts): MotionPlan => {
+  if (opts.full) return draftFull(words, keeps, opts);
   const target = opts.target ?? 0.65;
   const total = keptDuration(keeps);
   const ranges = keeps

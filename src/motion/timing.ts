@@ -51,3 +51,11 @@ export const staggerDelays = (n: number, durationInFrames: number, base: number,
   const s = n > 1 ? Math.min(step, Math.max(0, (lastAllowed - b) / (n - 1))) : 0;
   return Array.from({length: n}, (_, i) => Math.round(b + i * s));
 };
+
+type Span = {from: number; duration: number};
+/** Si el siguiente bloque empieza pegado (<= 1 frame), alarga este `hold` frames para que el wipe del siguiente abra sobre el y no sobre el fondo vacio (voice). */
+export const withUnderlay = (spans: (Span | null)[], hold: number): (Span | null)[] =>
+  spans.map((s, i) => {
+    const next = spans.slice(i + 1).find((x): x is Span => !!x);
+    return s && next && next.from - (s.from + s.duration) <= 1 ? {...s, duration: next.from - s.from + hold} : s;
+  });

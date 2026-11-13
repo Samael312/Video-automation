@@ -9,7 +9,7 @@ import {Background} from './Background';
 import {LAYOUT_UI} from './layouts';
 import {leadDelays} from './leadTiming';
 import {palette} from './palette';
-import {beatFrames, blockFrames, cameraScale, tickFrames} from './timing';
+import {beatFrames, blockFrames, cameraScale, tickFrames, withUnderlay} from './timing';
 import {beatSpans} from '../lib/motion';
 
 const WIPE_FRAMES = 8;
@@ -42,12 +42,14 @@ const BlockView: React.FC<{block: Block; keeps: Keep[]; words: Word[]; theme: Th
       <AbsoluteFill style={{transform: `scale(${cameraScale(f, duration, froms)})`}}>
         {beats.map((b, i) => {
           if (b.duration <= 0) return null;
+          const last = i === beats.length - 1; // el ultimo beat sigue visible si el bloque se alarga bajo el wipe del siguiente
+          const dur = last ? Math.max(b.duration, duration - b.from) : b.duration;
           const Layout = LAYOUT_UI[b.beat.layout];
           const text = b.beat.lead ?? b.beat.title ?? '';
           return (
-            <Sequence key={i} from={b.from} durationInFrames={b.duration}>
+            <Sequence key={i} from={b.from} durationInFrames={dur}>
               <BeatView>
-                <Layout beat={b.beat} theme={theme} pal={pal} dark={block.bg === 'dark'} durationInFrames={b.duration} leadDelays={leadDelays(text, words, spans[i].start, spans[i].end)} />
+                <Layout beat={b.beat} theme={theme} pal={pal} dark={block.bg === 'dark'} durationInFrames={dur} leadDelays={leadDelays(text, words, spans[i].start, spans[i].end)} />
               </BeatView>
             </Sequence>
           );
@@ -64,10 +66,12 @@ const BlockView: React.FC<{block: Block; keeps: Keep[]; words: Word[]; theme: Th
 };
 
 /** Bloques de motion a pantalla completa sobre el video (la voz sigue debajo). Entran con wipe circular, salen con corte seco. */
-export const MotionLayer: React.FC<{motion: MotionPlan; keeps: Keep[]; words: Word[]; theme: Theme; fps: number}> = ({motion, keeps, words, theme, fps}) => (
+export const MotionLayer: React.FC<{motion: MotionPlan; keeps: Keep[]; words: Word[]; theme: Theme; fps: number}> = ({motion, keeps, words, theme, fps}) => {
+  const frames = withUnderlay(motion.blocks.map((b) => blockFrames(b, keeps, fps)), WIPE_FRAMES);
+  return (
   <>
     {motion.blocks.map((b, i) => {
-      const fr = blockFrames(b, keeps, fps);
+      const fr = frames[i];
       if (!fr) return null;
       return (
         <Sequence key={i} from={fr.from} durationInFrames={fr.duration}>
@@ -76,4 +80,5 @@ export const MotionLayer: React.FC<{motion: MotionPlan; keeps: Keep[]; words: Wo
       );
     })}
   </>
-);
+  );
+};

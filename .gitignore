@@ -17,6 +17,7 @@ media/output/*
 public/*.mp4
 public/*.mov
 public/*.transcript.json
+public/*.transcript.whisper.json
 public/*.raw.wav
 public/music/
 

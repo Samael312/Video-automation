@@ -66,6 +66,13 @@ Sin escenas. Subtítulos rápidos, un label con flecha para cada palabra en ingl
 ### `/edit-motion` — las escenas explican
 Estilo de `media/reference/motion/m_1.mp4`: **bloques** de motion graphics a pantalla completa (3–8 s) intercalados con la profe en cámara. Dentro de cada bloque, un plano nuevo cada ~1 s: texto que aparece al ritmo de la voz, la palabra clave en cursiva con resaltador crema, emojis 3D grandes, listas, tachados, tarjetas tipo reproductor o móvil. La profe sale en el gancho, entre bloques (≥ 1 s) y en el cierre. Los emojis y textos salen de lo que ella dice; la referencia solo da el estilo. Ideal para gramática, reglas, pronunciación y listas de palabras. Para ver los 8 layouts: `npm run studio` → composición `MotionGallery`.
 
+### `/edit-voice` — guion + nota de voz, todo motion
+Para videos **sin cámara**. Pon en `media/input/` dos archivos con el mismo nombre:
+- `NOMBRE.txt`: el guion, solo lo que ella dice (sin indicaciones de edición).
+- `NOMBRE.m4a` (o `.mp3`, `.ogg`, `.opus`, `.wav`): la nota de voz leyéndolo, de una sola toma.
+
+`/edit-voice media/input/NOMBRE.m4a` convierte el audio en un video de fondo plano, limpia la voz, transcribe y **alinea con el guion**: el inglés queda escrito como en el guion y los tiempos salen de la voz. Si la voz no se parece al guion (menos de 70 % de coincidencia), se detiene y muestra las diferencias. Después arma bloques de motion seguidos de principio a fin (gancho y CTA incluidos), estilo `m_1`. Si un video con cámara trae `NOMBRE.txt` al lado, también se alinea con el guion.
+
 ### `/edit-mixed` — la profe cuenta, las escenas remarcan
 1 a 3 escenas en los momentos clave (traducción, falso amigo, ejemplo) y un **quiz** opcional al final. Entre escenas, labels y emojis. Ejemplo real: `public/ACTUALLY.edit.json`.
 
@@ -134,7 +141,10 @@ Usa solo música con licencia para redes (Pixabay Music, YouTube Audio Library o
 | `npm run render:plan -- X --no-music` | renderiza sin la música del plan |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
 | `npm run emoji -- --3d 😀` | descarga el emoji 3D (Microsoft Fluent) a `public/emoji3d/` para los beats de motion |
-| `npm run draft-motion -- X` | borrador de bloques y beats de motion en `public/X.edit.json` |
+| `npm run draft-motion -- X` | borrador de bloques y beats de motion en `public/X.edit.json` (con `strategy: "voice"` cubre todo el video) |
+| `npm run edit -- media/input/X.m4a --plan-only` | nota de voz: la pasa a video de fondo plano y sigue igual (alinea con `X.txt` si existe) |
+| `npm run script-align -- X [guion.txt]` | pone el texto del guion sobre los tiempos de la transcripción (original en `public/X.transcript.whisper.json`) |
+| `npm run audio-to-video -- audio.m4a public/X.mp4` | solo la conversión de audio a video 720×1280 |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
 | `npm run verify` | revisa ffmpeg, venv y Remotion |

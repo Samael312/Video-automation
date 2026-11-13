@@ -1,5 +1,5 @@
 import {keepIndexOf, type Keep} from './cuts';
-import {validateMotion, type MotionPlan} from './motion';
+import {validateMotion, voiceGaps, type Block, type MotionPlan} from './motion';
 
 export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'generated'] as const;
 export type SceneType = (typeof SCENE_TYPES)[number];
@@ -16,7 +16,7 @@ export type EditPlan = {
   version: 1;
   video: string;
   style: string;
-  strategy: 'captions' | 'motion' | 'mixed';
+  strategy: 'captions' | 'motion' | 'mixed' | 'voice';
   title?: {line1: string; line2: string; start: number; end: number};
   end?: {start: number; line1: string; line2: string};
   captions: {maxWords: number; from?: number; until?: number; emphasis?: string[]};
@@ -36,7 +36,7 @@ export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; known
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
 const SFX_NAMES: SfxName[] = ['pop', 'swoosh', 'tick', 'ding'];
-const STRATEGIES = ['captions', 'motion', 'mixed'];
+const STRATEGIES = ['captions', 'motion', 'mixed', 'voice'];
 
 export const defaultPlan = (video: string): EditPlan => ({
   version: 1,
@@ -198,6 +198,13 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
   if (plan.motion !== undefined) {
     const scenes = Array.isArray(plan.scenes) ? (plan.scenes.filter(isObj) as {start: number; end: number}[]) : [];
     validateMotion(plan.motion, ctx, scenes).forEach((m) => e.push(m));
+  }
+
+  // ----- voice: 100 % motion, sin huecos -----
+  if (plan.strategy === 'voice') {
+    const blocks = isObj(plan.motion) && Array.isArray(plan.motion.blocks) ? plan.motion.blocks : [];
+    if (!blocks.length) e.push('voice necesita motion.blocks (npm run draft-motion)');
+    else if (!e.length) voiceGaps(blocks as Block[], ctx.keeps).forEach((g) => e.push(`hueco ${g.start.toFixed(1)}–${g.end.toFixed(1)} s sin bloque (tiempo final); en voice todo es motion`));
   }
   return e;
 };

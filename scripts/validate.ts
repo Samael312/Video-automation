@@ -34,6 +34,6 @@ if (motionPlan?.motion) {
     console.warn(`AVISOS (${warnings.length}):`);
     warnings.forEach((w) => console.warn(`  - ${w}`));
   }
-  console.log(`motion: ${Math.round(motionShare(motionPlan, keeps) * 100)} % de la duracion final`);
+  console.log(motionPlan.strategy === 'voice' ? 'voice: motion cubre todo el video' : `motion: ${Math.round(motionShare(motionPlan, keeps) * 100)} % de la duracion final`);
 }
 console.log(`OK: ${name}.edit.json valido`);

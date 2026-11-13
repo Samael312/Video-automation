@@ -1,11 +1,11 @@
 ---
 name: video-base
-description: Tratado base para editar TikToks de la profe de inglés en este repo (flujo, esquema edit.json, reglas comunes, marca). La cargan las skills edit-captions, edit-motion, edit-mixed y edit-router; no se usa sola porque no elige estrategia.
+description: Tratado base para editar TikToks de la profe de inglés en este repo (flujo, esquema edit.json, reglas comunes, marca). La cargan las skills edit-captions, edit-motion, edit-mixed, edit-voice y edit-router; no se usa sola porque no elige estrategia.
 ---
 
 # video-base: flujo y reglas comunes de edición
 
-Las skills de estrategia (`edit-captions`, `edit-motion`, `edit-mixed`) te mandaron aquí. Sigue este flujo; la estrategia solo cambia **qué** pones en el paso 3.
+Las skills de estrategia (`edit-captions`, `edit-motion`, `edit-mixed`, `edit-voice`) te mandaron aquí. Sigue este flujo; la estrategia solo cambia **qué** pones en el paso 3.
 
 Antes de empezar lee también:
 - `brand.md` (en esta carpeta): tono, ganchos y cierres de la profe.
@@ -34,7 +34,7 @@ Esquema completo y reglas: `src/lib/plan.ts`. Ejemplo real (estrategia mixed): `
 
 ```json
 {
-  "version": 1, "video": "NOMBRE.mp4", "style": "referencia", "strategy": "captions|motion|mixed",
+  "version": 1, "video": "NOMBRE.mp4", "style": "referencia", "strategy": "captions|motion|mixed|voice",
   "title":   {"line1": "...", "line2": "...", "start": 0, "end": 2.8},
   "end":     {"start": 17.7, "line1": "...", "line2": "..."},
   "captions": {"maxWords": 5, "from": 2.8},
@@ -63,7 +63,7 @@ Reglas comunes (todas las estrategias):
 ## Resumen para el usuario (paso 5)
 
 ```
-Estrategia: <captions|motion|mixed> — <por qué en una frase>
+Estrategia: <captions|motion|mixed|voice> — <por qué en una frase>
 Gancho (0–Xs): "<title.line1> / <title.line2>"
 Escenas:
   1. <tipo> X.X–Y.Y s: <qué muestra>   ← mientras dice "<frase>"

@@ -41,7 +41,10 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan}) =
   const endAt = plan.end ? mapAt(plan.end.start) : Infinity;
   const subUntil = Math.min(plan.captions.until !== undefined ? mapAt(plan.captions.until) : Infinity, endAt);
   // Dentro de bloques de motion no hay subtitulos: el texto cinetico los reemplaza
-  const visiblePages = pages.filter((p) => p.end > subFrom && p.start < subUntil && !insideBlocks(p.start, plan.motion, keeps));
+  // Ninguna pagina invade el titulo ni el cierre: se recortan a [subFrom, subUntil] y las que casi no quedan se descartan
+  const visiblePages = pages
+    .filter((p) => p.end > subFrom + 0.05 && p.start < subUntil - 0.05 && !insideBlocks(p.start, plan.motion, keeps))
+    .map((p) => ({...p, start: Math.max(p.start, subFrom), end: Math.min(p.end, subUntil)}));
 
   const title = plan.title ? mapSpan(plan.title) : null;
   const overlays = plan.overlays.map(mapSpan).filter((x) => x !== null);

@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "video": "Make_DO.mp4",
+  "style": "referencia",
+  "strategy": "motion",
+  "title": {"line1": "¿Make o do?", "line2": "truco definitivo", "start": 0, "end": 3},
+  "end": {"start": 31.04, "line1": "¿Te sirvió?", "line2": "¿Qué otro dato conoces?"},
+  "captions": {"maxWords": 5, "from": 3},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["make", "do"]},
+  "overlays": [
+    {"kind": "emoji", "file": "1f528", "start": 6.8, "end": 8.25, "x": 570, "y": 560, "size": 110},
+    {"kind": "emoji", "file": "2705", "start": 16.25, "end": 17.8, "x": 130, "y": 560, "size": 110}
+  ],
+  "scenes": [
+    {"type": "generated", "start": 3.1, "end": 6.7, "data": {"component": "versus-intro", "props": {"a": "make", "b": "do", "aAt": 0.11, "bAt": 0.82, "bulbAt": 1.83, "stamp": "definitivo", "stampAt": 2.46}}},
+    {"type": "generated", "start": 8.3, "end": 15.1, "data": {"component": "make-factory", "props": {"word": "make", "notes": [{"text": "crear", "at": 0.1}, {"text": "fabricar", "at": 0.94}], "badge": "algo nuevo", "badgeAt": 2.08, "items": [{"emoji": "2615", "text": "a coffee", "at": 3.7}, {"emoji": "1f96a", "text": "a sandwich", "at": 4.9}, {"emoji": "1f32a", "text": "a mess", "at": 6.0}]}}},
+    {"type": "generated", "start": 17.85, "end": 25.85, "data": {"component": "do-checklist", "props": {"word": "do", "groups": [{"text": "acciones", "at": 0.11}, {"text": "rutinas", "at": 0.99}, {"text": "tareas", "at": 1.94}], "tasks": [{"text": "do homework", "at": 3.76}, {"text": "do the workout", "at": 4.88}, {"text": "do the dishes", "at": 6.2}], "switchAt": 2.94}}},
+    {"type": "generated", "start": 26.8, "end": 31.0, "data": {"component": "build-vs-run", "props": {"top": {"cond": "si lo construyes", "word": "make", "condAt": 0.11, "wordAt": 1.55}, "bottom": {"cond": "si lo ejecutas", "word": "do", "condAt": 2.13, "wordAt": 3.59}}}}
+  ],
+  "sfx": [
+    {"at": 0.05, "name": "swoosh"},
+    {"at": 3.92, "name": "pop"},
+    {"at": 5.56, "name": "ding"},
+    {"at": 6.8, "name": "pop"},
+    {"at": 12.1, "name": "tick"},
+    {"at": 13.3, "name": "tick"},
+    {"at": 14.5, "name": "tick"},
+    {"at": 16.25, "name": "pop"},
+    {"at": 22.06, "name": "tick"},
+    {"at": 23.18, "name": "tick"},
+    {"at": 24.5, "name": "ding"},
+    {"at": 28.3, "name": "pop"},
+    {"at": 30.35, "name": "pop"}
+  ]
+}

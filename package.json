@@ -39,6 +39,7 @@
     "@remotion/renderer": "4.0.543",
     "@remotion/shapes": "4.0.543",
     "@remotion/transitions": "4.0.543",
+    "gsap": "^3.15.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "remotion": "^4.0.543"

@@ -7,12 +7,23 @@ import {GALLERY_FRAMES, MotionGallery} from './compositions/MotionGallery';
 import {defaultPlan, type EditPlan} from './lib/plan';
 import {quantizeKeeps, totalFrames} from './lib/cuts';
 import type {CutsFile} from './lib/types';
+import {AbsoluteFill} from 'remotion';
+import {GsapDemo} from './scenes/generated/gsap-demo';
+import {referencia} from './styles/referencia/theme';
+
+/** Prueba aislada de la escena GSAP sobre fondo oscuro. */
+const GsapTest: React.FC = () => (
+  <AbsoluteFill style={{background: '#1b1b1b'}}>
+    <GsapDemo props={{}} theme={referencia} durationInFrames={90} />
+  </AbsoluteFill>
+);
 
 const FPS = 30;
 
 export const Root: React.FC = () => (
   <>
     <Composition id="MotionGallery" component={MotionGallery} durationInFrames={GALLERY_FRAMES} fps={FPS} width={720} height={1280} />
+    <Composition id="GsapTest" component={GsapTest} durationInFrames={90} fps={FPS} width={720} height={1280} />
     <Composition id="Hello" component={Hello} durationInFrames={90} fps={30} width={1080} height={1920} />
     <Composition
       id="Captions"

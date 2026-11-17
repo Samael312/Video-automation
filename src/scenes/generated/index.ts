@@ -1,6 +1,7 @@
 import type React from 'react';
 import type {Theme} from '../../styles/themes';
 import {Demo} from './demo';
+import {GsapDemo} from './gsap-demo';
 
 export type GeneratedProps = {props: Record<string, unknown>; theme: Theme; durationInFrames: number};
 
@@ -11,4 +12,5 @@ export type GeneratedProps = {props: Record<string, unknown>; theme: Theme; dura
  */
 export const GENERATED: Record<string, React.FC<GeneratedProps>> = {
   demo: Demo,
+  'gsap-demo': GsapDemo,
 };

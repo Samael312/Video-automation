@@ -1,0 +1,207 @@
+{
+  "version": 1,
+  "video": "PT_voice.mp4",
+  "style": "referencia",
+  "strategy": "voice",
+  "captions": {
+    "maxWords": 5
+  },
+  "zoom": {
+    "peak": 1.08,
+    "duration": 0.35,
+    "keywords": []
+  },
+  "overlays": [],
+  "scenes": [],
+  "sfx": [],
+  "motion": {
+    "blocks": [
+      {
+        "start": 0,
+        "end": 6.934,
+        "bg": "dark",
+        "beats": [
+          {
+            "at": 0,
+            "layout": "word",
+            "lead": "Si estás en el lado",
+            "key": "lector"
+          },
+          {
+            "at": 1.73,
+            "layout": "card",
+            "frame": "phone",
+            "lead": "de",
+            "key": "TikTok"
+          },
+          {
+            "at": 2.41,
+            "layout": "prop",
+            "emoji": "1f440",
+            "lead": "seguro has",
+            "key": "visto"
+          },
+          {
+            "at": 3.45,
+            "layout": "big",
+            "key": "3"
+          },
+          {
+            "at": 4.55,
+            "layout": "ring",
+            "emoji": "1f914",
+            "lead": "y te has",
+            "key": "preguntado"
+          },
+          {
+            "at": 5.4,
+            "layout": "word",
+            "lead": "qué significan",
+            "key": "exactamente"
+          }
+        ]
+      },
+      {
+        "start": 6.934,
+        "end": 11.356,
+        "bg": "light",
+        "beats": [
+          {
+            "at": 6.934,
+            "layout": "list",
+            "title": "3 palabras",
+            "items": [
+              "plot twist",
+              "cliffhanger",
+              "page turner"
+            ],
+            "active": 0
+          },
+          {
+            "at": 8.1,
+            "layout": "swap",
+            "from": "plot twist",
+            "to": "giro inesperado"
+          },
+          {
+            "at": 9.3,
+            "layout": "word",
+            "lead": "en la",
+            "key": "historia"
+          },
+          {
+            "at": 9.95,
+            "layout": "prop",
+            "emoji": "1f631",
+            "lead": "que te deja en",
+            "key": "shock"
+          }
+        ]
+      },
+      {
+        "start": 11.916,
+        "end": 17.479,
+        "bg": "dark",
+        "beats": [
+          {
+            "at": 11.916,
+            "layout": "list",
+            "title": "3 palabras",
+            "items": [
+              "plot twist",
+              "cliffhanger",
+              "page turner"
+            ],
+            "active": 1
+          },
+          {
+            "at": 13,
+            "layout": "card",
+            "frame": "player",
+            "lead": "cuando un",
+            "key": "capítulo"
+          },
+          {
+            "at": 14.1,
+            "layout": "prop",
+            "emoji": "1f4d6",
+            "lead": "o un libro",
+            "key": "termina"
+          },
+          {
+            "at": 15,
+            "layout": "word",
+            "lead": "en el punto más",
+            "key": "tenso"
+          },
+          {
+            "at": 16.2,
+            "layout": "ring",
+            "emoji": "1f629",
+            "lead": "y te deja",
+            "key": "sufriendo"
+          }
+        ]
+      },
+      {
+        "start": 18.179,
+        "end": 22.281,
+        "bg": "light",
+        "beats": [
+          {
+            "at": 18.179,
+            "layout": "list",
+            "title": "3 palabras",
+            "items": [
+              "plot twist",
+              "cliffhanger",
+              "page turner"
+            ],
+            "active": 2
+          },
+          {
+            "at": 19.3,
+            "layout": "word",
+            "lead": "un libro tan",
+            "key": "bueno"
+          },
+          {
+            "at": 20.3,
+            "layout": "prop",
+            "emoji": "1f4da",
+            "lead": "no puedes parar de",
+            "key": "pasar páginas",
+            "pos": "bottom"
+          }
+        ]
+      },
+      {
+        "start": 22.281,
+        "end": 27.483,
+        "bg": "dark",
+        "beats": [
+          {
+            "at": 22.281,
+            "layout": "ring",
+            "emoji": "1f914",
+            "lead": "¿Cuál fue el último",
+            "key": "libro"
+          },
+          {
+            "at": 23.6,
+            "layout": "word",
+            "lead": "que te pareció un total",
+            "key": "page turner"
+          },
+          {
+            "at": 25.84,
+            "layout": "card",
+            "frame": "player",
+            "lead": "El mío fue",
+            "key": "Onyx Storm"
+          }
+        ]
+      }
+    ]
+  }
+}

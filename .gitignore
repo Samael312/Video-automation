@@ -19,6 +19,9 @@ public/*.mov
 public/*.matte.webm
 public/*.matte.json
 public/*.transcript.json
+public/*.transcript.whisper.json
+public/*.raw.wav
+public/music/
 
 # Remotion / build / caches
 out/

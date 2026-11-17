@@ -1,6 +1,7 @@
-import type {Keep} from './cuts';
+import {keepIndexOf, type Keep} from './cuts';
 import {behindSpans, matteCovers, type MatteInfo} from './matte';
 import {emojisIn} from './emoji';
+import {validateMotion, voiceGaps, type Block, type MotionPlan} from './motion';
 
 export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'generated'] as const;
 export type SceneType = (typeof SCENE_TYPES)[number];
@@ -24,7 +25,7 @@ export type EditPlan = {
   version: 1;
   video: string;
   style: string;
-  strategy: 'captions' | 'motion' | 'mixed';
+  strategy: 'captions' | 'motion' | 'mixed' | 'voice';
   title?: {line1: string; line2: string; start: number; end: number; y?: number; behind?: boolean};
   end?: {start: number; line1: string; line2: string};
   captions: {maxWords: number; from?: number; until?: number; emphasis?: string[]};
@@ -32,11 +33,25 @@ export type EditPlan = {
   overlays: Overlay[];
   scenes: Scene[];
   sfx: {at: number; name: SfxName}[];
+  /** Solo strategy motion: bloques de motion graphics por beats (ver src/lib/motion.ts). */
+  motion?: MotionPlan;
+  /** Musica de fondo (archivo en media/music/), con ducking bajo la voz. volume 0.02-0.4 (def. 0.12), duck 0-volume (def. 0.04). */
+  music?: {file: string; volume?: number; duck?: number};
 };
 
 /** `knownEmojis` (nombres de public/emoji/*.png sin extension): si se da, se comprueba que los emojis existan.
  *  `matte`: si se da (null = no existe), `behind: true` exige un matte que cubra esos tramos. */
-export type ValidateCtx = {video: string; duration: number; keeps: Keep[]; knownStyles: string[]; knownGenerated: string[]; knownEmojis?: string[]; matte?: MatteInfo | null};
+export type ValidateCtx = {
+  video: string;
+  duration: number;
+  keeps: Keep[];
+  knownStyles: string[];
+  knownGenerated: string[];
+  knownEmojis?: string[];
+  knownEmojis3d?: string[];
+  knownMusic?: string[];
+  matte?: MatteInfo | null;
+};
 
 /** Archivo con la persona recortada (fondo transparente) que usa `behind`. */
 export const matteFile = (video: string) => video.replace(/\.[^.]+$/, '') + '.matte.webm';
@@ -46,7 +61,7 @@ export const usesBehind = (plan: Pick<EditPlan, 'title' | 'overlays'>): boolean 
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
 const SFX_NAMES: SfxName[] = ['pop', 'swoosh', 'tick', 'ding'];
-const STRATEGIES = ['captions', 'motion', 'mixed'];
+const STRATEGIES = ['captions', 'motion', 'mixed', 'voice'];
 
 export const defaultPlan = (video: string): EditPlan => ({
   version: 1,
@@ -64,7 +79,7 @@ export const defaultPlan = (video: string): EditPlan => ({
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null && !Array.isArray(x);
 const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
 const isStr = (x: unknown): x is string => typeof x === 'string' && x.length > 0;
-const keepIndex = (t: number, keeps: Keep[]): number => keeps.findIndex((k) => t >= k.start && t <= k.end);
+const keepIndex = keepIndexOf;
 const missingEmoji = (file: unknown, ctx: ValidateCtx): string | null =>
   ctx.knownEmojis && isStr(file) && !ctx.knownEmojis.includes(file)
     ? `emoji "${file}" no existe en public/emoji (disponibles: ${ctx.knownEmojis.join(', ') || 'ninguno'})`
@@ -224,6 +239,33 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       }
       if (keepIndex(s.at, ctx.keeps) < 0) e.push(`sfx[${i}]: cae en zona cortada (${s.at}); muevelo a un tramo conservado`);
     });
+  }
+
+  // ----- musica (opcional) -----
+  if (plan.music !== undefined) {
+    const m = plan.music;
+    if (!isObj(m) || !isStr(m.file)) e.push('music.file debe ser el nombre de una pista de media/music');
+    else {
+      if (ctx.knownMusic && !ctx.knownMusic.includes(m.file)) {
+        e.push(`music.file "${m.file}" no existe en media/music (disponibles: ${ctx.knownMusic.join(', ') || 'ninguna'})`);
+      }
+      const vol = m.volume === undefined ? 0.12 : m.volume;
+      if (!isNum(vol) || vol < 0.02 || vol > 0.4) e.push('music.volume debe estar entre 0.02 y 0.4');
+      else if (m.duck !== undefined && (!isNum(m.duck) || m.duck < 0 || m.duck > vol)) e.push(`music.duck debe estar entre 0 y volume (${vol})`);
+    }
+  }
+
+  // ----- motion (opcional) -----
+  if (plan.motion !== undefined) {
+    const scenes = Array.isArray(plan.scenes) ? (plan.scenes.filter(isObj) as {start: number; end: number}[]) : [];
+    validateMotion(plan.motion, ctx, scenes).forEach((m) => e.push(m));
+  }
+
+  // ----- voice: 100 % motion, sin huecos -----
+  if (plan.strategy === 'voice') {
+    const blocks = isObj(plan.motion) && Array.isArray(plan.motion.blocks) ? plan.motion.blocks : [];
+    if (!blocks.length) e.push('voice necesita motion.blocks (npm run draft-motion)');
+    else if (!e.length) voiceGaps(blocks as Block[], ctx.keeps).forEach((g) => e.push(`hueco ${g.start.toFixed(1)}–${g.end.toFixed(1)} s sin bloque (tiempo final); en voice todo es motion`));
   }
   return e;
 };

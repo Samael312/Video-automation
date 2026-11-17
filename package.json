@@ -9,7 +9,7 @@
     "verify": "node scripts/verify.js",
     "verify:full": "node scripts/verify.js --full",
     "render:captions": "remotion render src/index.ts Captions media/output/captions.mp4",
-    "render:edit": "remotion render src/index.ts Edit media/output/edited/ACTUALLY_edited.mp4",
+    "render:edit": "remotion render src/index.ts Edit media/output/edited/ACTUALLY/ACTUALLY_edited.mp4",
     "test": "vitest run",
     "edit": "node scripts/edit.js",
     "validate": "tsx scripts/validate.ts",
@@ -19,7 +19,11 @@
     "emoji": "tsx scripts/emoji.ts",
     "clean": "node scripts/clean.js",
     "reference": "tsx scripts/reference.ts",
-    "matte": "node scripts/matte.js"
+    "matte": "node scripts/matte.js",
+    "draft-motion": "tsx scripts/draft-motion.ts",
+    "script-align": "tsx scripts/script-align.ts",
+    "audio-to-video": "tsx scripts/audio-to-video.ts",
+    "setup-audio": ".venv\\Scripts\\python.exe scripts/setup_audio.py"
   },
   "keywords": [],
   "author": "",
@@ -38,6 +42,7 @@
     "@remotion/renderer": "4.0.543",
     "@remotion/shapes": "4.0.543",
     "@remotion/transitions": "4.0.543",
+    "gsap": "^3.15.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "remotion": "^4.0.543"

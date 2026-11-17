@@ -11,6 +11,9 @@ import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
 import {matteFile, type EditPlan, type ItemOverlay, type Overlay} from './lib/plan';
 import {autoBehindY, type MatteInfo} from './lib/matte';
+import {MotionLayer} from './motion/MotionLayer';
+import {insideBlocks} from './motion/timing';
+import {MUSIC_DEFAULTS, musicVolume, speechSpans} from './lib/music';
 import type {Transcript} from './lib/types';
 
 /** matte: public/<video>.matte.json (solo si el plan usa `behind`); da la altura automatica del texto. */
@@ -20,7 +23,7 @@ type Span = {start: number; end: number};
 
 /** Composicion generica: renderiza cualquier EditPlan. Los tiempos del plan son del video original. */
 export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, matte = null}) => {
-  const {fps} = useVideoConfig();
+  const {fps, durationInFrames} = useVideoConfig();
   const frame = useCurrentFrame();
   const theme = getTheme(plan.style);
   const fr = (s: number) => Math.round(s * fps);
@@ -32,6 +35,7 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
   };
 
   const newWords = useMemo(() => (transcript ? remapWords(transcript.words, keeps) : []), [transcript, keeps]);
+  const spans = useMemo(() => speechSpans(newWords), [newWords]);
   const pages = useMemo(() => buildPages(newWords, plan.captions.maxWords), [newWords, plan.captions.maxWords]);
   const zoomEvents = useMemo(() => [...cutPoints(keeps), ...keywordEvents(newWords, plan.zoom.keywords)], [keeps, newWords, plan.zoom.keywords]);
   const zoom = zoomScale(frame / fps, zoomEvents, plan.zoom.peak, plan.zoom.duration);
@@ -39,7 +43,11 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
   const subFrom = mapAt(plan.captions.from ?? 0);
   const endAt = plan.end ? mapAt(plan.end.start) : Infinity;
   const subUntil = Math.min(plan.captions.until !== undefined ? mapAt(plan.captions.until) : Infinity, endAt);
-  const visiblePages = pages.filter((p) => p.end > subFrom && p.start < subUntil);
+  // Dentro de bloques de motion no hay subtitulos: el texto cinetico los reemplaza
+  // Ninguna pagina invade el titulo ni el cierre: se recortan a [subFrom, subUntil] y las que casi no quedan se descartan
+  const visiblePages = pages
+    .filter((p) => p.end > subFrom + 0.05 && p.start < subUntil - 0.05 && !insideBlocks(p.start, plan.motion, keeps))
+    .map((p) => ({...p, start: Math.max(p.start, subFrom), end: Math.min(p.end, subUntil)}));
 
   const title = plan.title ? mapSpan(plan.title) : null;
   const mapOverlay = (o: Overlay): Overlay | null => {
@@ -109,10 +117,22 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
 
       {overlays.map((o, i) => (isBehind(o) ? null : renderOverlay(o, i)))}
 
+      {/* Motion encima de subtitulos y overlays: un bloque tapa todo menos el cierre */}
+      {plan.motion ? <MotionLayer motion={plan.motion} keeps={keeps} words={transcript?.words ?? []} theme={theme} fps={fps} /> : null}
+
       {hasEnd && plan.end ? (
         <Sequence from={fr(endAt)}>
           <EndCard line1={plan.end.line1} line2={plan.end.line2} theme={theme} />
         </Sequence>
+      ) : null}
+
+      {/* Musica de fondo (copiada a public/music por render.js) con ducking bajo la voz */}
+      {plan.music ? (
+        <Audio
+          src={staticFile(`music/${plan.music.file}`)}
+          loop
+          volume={(f) => musicVolume(f / fps, spans, durationInFrames / fps, {volume: plan.music?.volume ?? MUSIC_DEFAULTS.volume, duck: plan.music?.duck ?? MUSIC_DEFAULTS.duck})}
+        />
       ) : null}
 
       {/* Efectos de sonido (public/sfx) */}

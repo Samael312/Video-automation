@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "video": "I_WISH.mp4",
+  "style": "referencia",
+  "strategy": "mixed",
+  "title": {"line1": "No digas wish", "line2": "di hope", "start": 0, "end": 2.9},
+  "end": {"start": 19.7, "line1": "Guárdalo", "line2": "para practicar después"},
+  "captions": {"maxWords": 5, "from": 2.9},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["wish", "Wish", "hope"]},
+  "overlays": [
+    {"kind": "emoji", "file": "1f91e", "start": 1.2, "end": 2.9, "x": 570, "y": 560, "size": 110},
+    {"kind": "emoji", "file": "1f54a", "start": 10.75, "end": 12.75, "x": 130, "y": 560, "size": 120},
+    {"kind": "emoji", "file": "1f516", "start": 19.8, "end": 21.5, "x": 570, "y": 560, "size": 110}
+  ],
+  "scenes": [
+    {"type": "generated", "start": 2.97, "end": 5.3, "data": {"component": "scribble-swap", "props": {"no": "wish", "yes": "hope", "noAt": 0.78, "yesAt": 1.98}}},
+    {"type": "generated", "start": 6.05, "end": 9.85, "data": {"component": "dream-bubble", "props": {"word": "wish", "wordAt": 0.04, "items": [{"text": "deseos imposibles", "at": 1.5}, {"text": "fantasías", "at": 3.13}]}}},
+    {"type": "generated", "start": 12.82, "end": 19.2, "data": {"component": "flip-card", "props": {"front": [{"text": "espero que tengas un buen día", "at": 1.18}, {"text": "espero que te vaya bien", "at": 2.76}], "back": [{"text": "I", "at": 4.94}, {"text": "hope", "at": 5.04}, {"text": "you", "at": 5.34}, {"text": "have", "at": 5.44}, {"text": "a", "at": 5.66}, {"text": "great", "at": 5.7}, {"text": "day.", "at": 6.0}], "key": "hope", "flipAt": 4.08}}}
+  ],
+  "sfx": [
+    {"at": 0.05, "name": "swoosh"},
+    {"at": 1.2, "name": "pop"},
+    {"at": 5.25, "name": "ding"},
+    {"at": 10.75, "name": "pop"},
+    {"at": 16.9, "name": "swoosh"},
+    {"at": 18.1, "name": "ding"},
+    {"at": 19.8, "name": "pop"}
+  ]
+}

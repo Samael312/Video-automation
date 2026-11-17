@@ -19,6 +19,7 @@ run('torch', `"${py}" -c "import torch;print(torch.__version__, 'cuda=' + str(to
 run('whisperx', `"${py}" -c "import whisperx;print('import ok')"`);
 run('faster-whisper', `"${py}" -c "import faster_whisper;print(faster_whisper.__version__)"`);
 run('remotion', 'npx remotion versions');
+run('deep-filter (limpieza de voz)', `"${py}" scripts/setup_audio.py --check`);
 if (full) {
   const tmp = 'media/output/work/verify';
   fs.mkdirSync(path.join(root, tmp), {recursive: true});

@@ -1,7 +1,7 @@
 # video-automation
 
 Automatiza la edición de TikToks (9:16) para una profe de inglés online: transcripción, cortes de silencio, subtítulos, transiciones y motion graphics.
-**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, problemas comunes).
+**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, `/edit-voice` (guion + nota de voz), problemas comunes).
 
 Diseño completo: [`docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md`](docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md).
 
@@ -26,11 +26,14 @@ docs/                Specs y planes
 
 ```bash
 npm install
-npm run edit -- media/input/video.mp4   # pipeline completo → media/output/edited/video_edited.mp4 (acepta .mov; la salida siempre es mp4)
+npm run edit -- media/input/video.mp4   # pipeline completo → media/output/edited/video/video_edited.mp4 (acepta .mov; la salida siempre es mp4)
 npm run validate -- video              # valida public/video.edit.json
 npm run render:plan -- video           # valida y renderiza con el plan
 npm run inspect -- video               # palabras con tiempos, por tramos
 npm run preview -- video               # hoja de capturas del plan
+npm run setup-audio -- --yes          # DeepFilterNet para limpiar la voz (una vez)
+npm run draft-motion -- video          # borrador de bloques/beats (estrategia motion)
+npm run emoji -- --3d 😱               # emoji 3D Fluent a public/emoji3d/
 npm test                           # vitest (lib TypeScript)
 .venv\Scripts\python -m pytest pipeline/tests   # pytest (pipeline)
 npm run verify                     # revisa ffmpeg, venv, Remotion

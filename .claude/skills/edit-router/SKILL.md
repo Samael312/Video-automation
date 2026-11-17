@@ -1,11 +1,14 @@
 ---
 name: edit-router
-description: Mira un video de la profe de inglés, detecta de qué formato es (¿Sabías que?, gramática, pronunciación, idioms, vocabulario...) y recomienda la estrategia de edición para TikTok (edit-captions, edit-motion o edit-mixed). Úsala cuando no sepas qué estilo usar. Uso: /edit-router media/input/VIDEO.mp4
+description: Mira un video de la profe de inglés, detecta de qué formato es (¿Sabías que?, gramática, pronunciación, idioms, vocabulario...) y recomienda la estrategia de edición para TikTok (edit-captions, edit-motion, edit-mixed o edit-voice). Úsala cuando no sepas qué estilo usar. Uso: /edit-router media/input/VIDEO.mp4
 ---
 
 # edit-router: elige la estrategia
 
 No edita nada por sí sola: clasifica, recomienda, espera tu "sí" y luego sigue con la skill elegida.
+
+## 0. ¿Solo audio?
+Si la entrada es una nota de voz (`.m4a`, `.mp3`, `.ogg`, `.opus`, `.wav`), no hay cámara: la única estrategia es **`edit-voice`** (necesita el guion `NOMBRE.txt` al lado). Carga `edit-voice` y síguela desde su paso 1; no clasifiques.
 
 ## 1. Transcribir y ver
 Haz los pasos 1 y 2 de la skill `video-base` (carga `video-base`):

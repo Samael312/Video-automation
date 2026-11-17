@@ -1,5 +1,5 @@
 // Rutas de salida y limpieza de residuos.
-// media/output/edited/<n>_edited.mp4   video final (nunca se borra)
+// media/output/edited/<n>/<n>_edited.mp4   video final y su <n>_caption.txt (nunca se borran)
 // media/output/<n>_preview.png         hoja de preview (se borra al renderizar bien)
 // media/output/work/<n>/               temporales: props del render, capturas del preview
 const fs = require('fs');
@@ -11,8 +11,8 @@ const outputPaths = (root, name) => {
   const out = outputDir(root);
   const work = path.join(out, 'work', name);
   return {
-    finalDir: path.join(out, 'edited'),
-    final: path.join(out, 'edited', `${name}_edited.mp4`),
+    finalDir: path.join(out, 'edited', name),
+    final: path.join(out, 'edited', name, `${name}_edited.mp4`),
     sheet: path.join(out, `${name}_preview.png`),
     work,
     props: path.join(work, 'props.json'),

@@ -3,15 +3,28 @@ import {Composition, staticFile} from 'remotion';
 import {Hello} from './compositions/Hello';
 import {Captions, CaptionsProps, Transcript} from './compositions/Captions';
 import {Edit, EditProps} from './Edit';
+import {GALLERY_FRAMES, MotionGallery} from './compositions/MotionGallery';
 import {defaultPlan, usesBehind, type EditPlan} from './lib/plan';
 import {matteInfoFile, type MatteInfo} from './lib/matte';
 import {quantizeKeeps, totalFrames} from './lib/cuts';
 import type {CutsFile} from './lib/types';
+import {AbsoluteFill} from 'remotion';
+import {GsapDemo} from './scenes/generated/gsap-demo';
+import {referencia} from './styles/referencia/theme';
+
+/** Prueba aislada de la escena GSAP sobre fondo oscuro. */
+const GsapTest: React.FC = () => (
+  <AbsoluteFill style={{background: '#1b1b1b'}}>
+    <GsapDemo props={{}} theme={referencia} durationInFrames={90} />
+  </AbsoluteFill>
+);
 
 const FPS = 30;
 
 export const Root: React.FC = () => (
   <>
+    <Composition id="MotionGallery" component={MotionGallery} durationInFrames={GALLERY_FRAMES} fps={FPS} width={720} height={1280} />
+    <Composition id="GsapTest" component={GsapTest} durationInFrames={90} fps={FPS} width={720} height={1280} />
     <Composition id="Hello" component={Hello} durationInFrames={90} fps={30} width={1080} height={1920} />
     <Composition
       id="Captions"
@@ -35,7 +48,7 @@ export const Root: React.FC = () => (
       height={1280}
       fps={FPS}
       durationInFrames={FPS * 20}
-      defaultProps={{videoSrc: 'ACTUALLY.mp4', transcript: null, keeps: [], plan: defaultPlan('ACTUALLY.mp4')} as EditProps}
+      defaultProps={{videoSrc: 'ACTUALLY.mp4', transcript: null, keeps: [], plan: null} as unknown as EditProps}
       // Lee <video>.transcript.json, <video>.cuts.json (si falta: video completo) y <video>.edit.json (si falta: plan por defecto)
       calculateMetadata={async ({props}) => {
         const name = props.videoSrc.replace(/\.[^.]+$/, '');
@@ -44,8 +57,9 @@ export const Root: React.FC = () => (
         const rawKeeps = cutsRes.ok ? ((await cutsRes.json()) as CutsFile).keeps : [{start: 0, end: transcript.duration}];
         // Tramos alineados a frames: video, subtitulos, zoom y escenas comparten la misma linea de tiempo
         const keeps = quantizeKeeps(rawKeeps, FPS);
-        const planRes = await fetch(staticFile(`${name}.edit.json`));
-        const plan: EditPlan = planRes.ok ? await planRes.json() : defaultPlan(props.videoSrc);
+        // Si las props ya traen plan (p. ej. render --no-music), se usa ese; si no, public/<video>.edit.json
+        const planRes = props.plan ? null : await fetch(staticFile(`${name}.edit.json`));
+        const plan: EditPlan = props.plan ?? (planRes?.ok ? await planRes.json() : defaultPlan(props.videoSrc));
         // behind: matte.json da la altura de la cabeza para colocar el texto solo
         const matteRes = usesBehind(plan) ? await fetch(staticFile(matteInfoFile(props.videoSrc))) : null;
         const matte: MatteInfo | null = matteRes?.ok ? await matteRes.json() : null;

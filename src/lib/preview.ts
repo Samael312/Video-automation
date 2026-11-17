@@ -1,6 +1,7 @@
 import {mapTimeNext, type Keep} from './cuts';
 import type {EditPlan} from './plan';
 import {sceneFrames} from './scenes';
+import {beatFrames, blockFrames} from '../motion/timing';
 
 export type PreviewFrame = {frame: number; label: string};
 
@@ -20,6 +21,14 @@ export const previewFrames = (plan: EditPlan, keeps: Keep[], fps: number, total:
   plan.scenes.forEach((s, i) => {
     const fr = sceneFrames(s.start, s.end, keeps, fps);
     if (fr) out.push({frame: clamp(fr.from + fr.duration / 2), label: `escena ${i}: ${s.type}`});
+  });
+  (plan.motion?.blocks ?? []).forEach((b, i) => {
+    const bf = blockFrames(b, keeps, fps);
+    if (!bf) return;
+    beatFrames(b, keeps, fps).forEach((x, j) => {
+      const what = x.beat.key ?? x.beat.items?.[0] ?? x.beat.from ?? '';
+      if (x.duration > 0) out.push({frame: clamp(bf.from + x.from + AT * x.duration), label: `bloque ${i} beat ${j}: ${x.beat.layout} ${what}`.trim()});
+    });
   });
   plan.overlays.forEach((o) => {
     if (o.kind === 'label') out.push({frame: at(o.start, o.end), label: `label: ${o.text}`});

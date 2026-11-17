@@ -15,7 +15,8 @@ npm install
 python -m venv .venv
 .venv\Scripts\pip install -r pipeline\requirements.txt
 copy .env.example .env      # y pon tu HF_TOKEN (ver abajo)
-npm run verify              # revisa ffmpeg, venv y Remotion
+npm run setup-audio -- --yes   # descarga DeepFilterNet (~30 MB) para limpiar la voz
+npm run verify              # revisa ffmpeg, venv, Remotion y DeepFilterNet
 ```
 
 **`HF_TOKEN`**: token gratis de Hugging Face (huggingface.co → Settings → Access Tokens, tipo *read*). Hace falta para separar voces. Acepta también las condiciones del modelo `pyannote/speaker-diarization-community-1` en su página de Hugging Face. El `.env` no se sube a git; no lo compartas.
@@ -40,7 +41,7 @@ La primera transcripción descarga el modelo WhisperX `medium` (~1.5 GB) y tarda
    - un **resumen** (gancho, escenas, overlays, cierre, duración), y
    - la **hoja de capturas** `media/output/IDIOM1_preview.png`.
 5. Revisa. Responde **"sí"** para renderizar o pide cambios (ver sección 4).
-6. Resultado: `media/output/edited/IDIOM1_edited.mp4`, listo para subir. Al terminar se borran solos los temporales y la hoja de preview.
+6. Resultado: la carpeta `media/output/edited/IDIOM1/` con `IDIOM1_edited.mp4`, listo para subir, y `IDIOM1_caption.txt` con el caption (3 opciones) y los hashtags para TikTok. Claude te pega el recomendado al terminar. Al terminar se borran solos los temporales y la hoja de preview.
 
 No hace falta llamar a `video-base`: cada skill la carga sola.
 
@@ -63,7 +64,14 @@ Transcribe, lee lo que dice la profe y detecta el formato. Te muestra la evidenc
 Sin escenas. Subtítulos rápidos, un label con flecha para cada palabra en inglés, otro con su traducción, un emoji por idea y zoom en las palabras clave. Ideal para videos cortos o cuando la profe actúa mucho.
 
 ### `/edit-motion` — las escenas explican
-Una escena animada por idea (ejemplo, error → corrección, pronunciación por sílabas, traducción). La profe aparece en el gancho, entre escenas (≥ 1 s) y en el cierre. Ideal para gramática, reglas y pronunciación.
+Estilo de `media/reference/motion/m_1.mp4`: **bloques** de motion graphics a pantalla completa (3–8 s) intercalados con la profe en cámara. Dentro de cada bloque, un plano nuevo cada ~1 s: texto que aparece al ritmo de la voz, la palabra clave en cursiva con resaltador crema, emojis 3D grandes, listas, tachados, tarjetas tipo reproductor o móvil. La profe sale en el gancho, entre bloques (≥ 1 s) y en el cierre. Los emojis y textos salen de lo que ella dice; la referencia solo da el estilo. Ideal para gramática, reglas, pronunciación y listas de palabras. Para ver los 8 layouts: `npm run studio` → composición `MotionGallery`.
+
+### `/edit-voice` — guion + nota de voz, todo motion
+Para videos **sin cámara**. Pon en `media/input/` dos archivos con el mismo nombre:
+- `NOMBRE.txt`: el guion, solo lo que ella dice (sin indicaciones de edición).
+- `NOMBRE.m4a` (o `.mp3`, `.ogg`, `.opus`, `.wav`): la nota de voz leyéndolo, de una sola toma.
+
+`/edit-voice media/input/NOMBRE.m4a` convierte el audio en un video de fondo plano, limpia la voz, transcribe y **alinea con el guion**: el inglés queda escrito como en el guion y los tiempos salen de la voz. Si la voz no se parece al guion (menos de 70 % de coincidencia), se detiene y muestra las diferencias. Después arma bloques de motion seguidos de principio a fin (gancho y CTA incluidos), estilo `m_1`. Si un video con cámara trae `NOMBRE.txt` al lado, también se alinea con el guion.
 
 ### `/edit-mixed` — la profe cuenta, las escenas remarcan
 1 a 3 escenas en los momentos clave (traducción, falso amigo, ejemplo) y un **quiz** opcional al final. Entre escenas, labels y emojis. Ejemplo real: `public/ACTUALLY.edit.json`.
@@ -112,6 +120,25 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 
 ---
 
+## Audio: voz limpia y música
+
+**Voz limpia (automático).** `npm run edit` limpia la voz antes de transcribir: quita ruido, zumbido y algo de eco (DeepFilterNet), ecualiza suave y deja el volumen a -14 LUFS (nivel de TikTok). El audio original queda en `public/NOMBRE.raw.wav`; correrlo dos veces no limpia lo ya limpio. Para saltarlo: `--no-clean`. Lo que no arregla: grabar lejos del teléfono sin micrófono (un micrófono de solapa barato lo resuelve) y pájaros u otros silbidos.
+
+**Música de fondo.** Pon pistas en `media/music/` con el ánimo al inicio del nombre:
+
+| Ánimo | Ejemplo de nombre | Para |
+|---|---|---|
+| `curious` | `curious__pluck.mp3` | ¿Sabías que?, curiosidades |
+| `upbeat` | `upbeat__pop.mp3` | listas, tips rápidos |
+| `calm` | `calm__lofi.mp3` | pronunciación, explicación pausada |
+| `dramatic` | `dramatic__tension.mp3` | errores, giros |
+
+Usa solo música con licencia para redes (Pixabay Music, YouTube Audio Library o compradas). Claude elige la pista según el video; suena baja y baja aún más cuando habla la profe. Si vas a publicar con un sonido de TikTok (ayuda al alcance), renderiza sin música: `npm run render:plan -- NOMBRE --no-music`.
+
+**Volumen final.** Después de cada render se mide el volumen y, si hace falta, se ajusta a -14 LUFS sin tocar el video.
+
+---
+
 ## 5. Comandos (por si quieres hacerlo a mano)
 
 | Comando | Qué hace |
@@ -121,12 +148,19 @@ Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te gust
 | `npm run inspect -- X` | lista cada palabra con su tiempo, por tramos y cortes |
 | `npm run validate -- X` | revisa `public/X.edit.json` y explica cada error |
 | `npm run preview -- X` | hoja de capturas `media/output/X_preview.png` (~20 s) |
-| `npm run render:plan -- X` | valida y renderiza `media/output/edited/X_edited.mp4` y borra sus temporales |
+| `npm run render:plan -- X` | valida y renderiza `media/output/edited/X/X_edited.mp4` y borra sus temporales |
+| `npm run render:plan -- X --no-music` | renderiza sin la música del plan |
 | `npm run clean -- X` | borra temporales y hoja de preview de X |
 | `npm run clean -- --all` | deja `media/output` solo con `edited/` (los videos finales) |
 | `npm run reference -- V` (o `--all`) | analiza videos de `media/reference/`: hojas, cortes, ritmo, transcript |
 | `npm run matte -- X` | recorta a la profe (fondo transparente) solo en los tramos con `behind`; `--all` todo el video, `--force` rehace |
+| `npm run setup-audio -- --yes` | instala DeepFilterNet para limpiar la voz (`--check` solo revisa) |
 | `npm run emoji -- 😀` | descarga un emoji Noto a `public/emoji/` |
+| `npm run emoji -- --3d 😀` | descarga el emoji 3D (Microsoft Fluent) a `public/emoji3d/` para los beats de motion |
+| `npm run draft-motion -- X` | borrador de bloques y beats de motion en `public/X.edit.json` (con `strategy: "voice"` cubre todo el video) |
+| `npm run edit -- media/input/X.m4a --plan-only` | nota de voz: la pasa a video de fondo plano y sigue igual (alinea con `X.txt` si existe) |
+| `npm run script-align -- X [guion.txt]` | pone el texto del guion sobre los tiempos de la transcripción (original en `public/X.transcript.whisper.json`) |
+| `npm run audio-to-video -- audio.m4a public/X.mp4` | solo la conversión de audio a video 720×1280 |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |
 | `npm test` | tests de TypeScript |
 | `npm run verify` | revisa ffmpeg, venv y Remotion |

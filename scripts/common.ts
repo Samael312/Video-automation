@@ -44,3 +44,15 @@ export const loadTranscriptAndKeeps = (name: string): {transcript: Transcript; k
 
 export const knownEmojis = (): string[] =>
   fs.readdirSync(path.join(PUBLIC, 'emoji')).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, ''));
+
+/** Emojis 3D disponibles (public/emoji3d/*.png); [] si la carpeta no existe. */
+export const MUSIC_DIR = path.join(ROOT, 'media', 'music');
+
+/** Pistas de musica disponibles (media/music/*.mp3|wav|m4a); [] si la carpeta no existe. */
+export const knownMusic = (): string[] =>
+  fs.existsSync(MUSIC_DIR) ? fs.readdirSync(MUSIC_DIR).filter((f) => /\.(mp3|wav|m4a)$/i.test(f)) : [];
+
+export const knownEmojis3d = (): string[] => {
+  const dir = path.join(PUBLIC, 'emoji3d');
+  return fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')) : [];
+};

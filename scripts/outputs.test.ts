@@ -19,7 +19,7 @@ afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
 describe('outputPaths', () => {
   it('pone el video final en media/output/edited y lo temporal en media/output/work/<n>', () => {
     const p = outputPaths(root, 'ACTUALLY');
-    expect(p.final).toBe(path.join(root, 'media', 'output', 'edited', 'ACTUALLY_edited.mp4'));
+    expect(p.final).toBe(path.join(root, 'media', 'output', 'edited', 'ACTUALLY', 'ACTUALLY_edited.mp4'));
     expect(p.sheet).toBe(path.join(root, 'media', 'output', 'ACTUALLY_preview.png'));
     expect(p.props.startsWith(path.join(root, 'media', 'output', 'work', 'ACTUALLY'))).toBe(true);
     expect(p.stills.startsWith(path.join(root, 'media', 'output', 'work', 'ACTUALLY'))).toBe(true);

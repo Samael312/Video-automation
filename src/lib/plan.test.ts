@@ -115,3 +115,18 @@ describe('validatePlan: title.y', () => {
   test('y no numérico', () => has({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2, y: 'alto'}}, 'title.y'));
   test('y numérico es válido', () => expect(errs({...base(), title: {line1: 'a', line2: 'b', start: 0, end: 2, y: 300}})).toEqual([]));
 });
+
+describe('validatePlan: music', () => {
+  const mctx: ValidateCtx = {...ctx, knownMusic: ['curious__a.mp3']};
+  const m = (music: unknown) => validatePlan({...base(), music}, mctx).join('\n');
+  test('plan sin music sigue valido', () => expect(validatePlan(base(), mctx)).toEqual([]));
+  test('music valida', () => expect(m({file: 'curious__a.mp3'})).toBe(''));
+  test('music valida con volume y duck', () => expect(m({file: 'curious__a.mp3', volume: 0.2, duck: 0.05})).toBe(''));
+  test('music inexistente', () => {
+    expect(m({file: 'nope.mp3'})).toContain('media/music');
+    expect(m({file: 'nope.mp3'})).toContain('curious__a.mp3');
+  });
+  test('volume fuera de rango', () => expect(m({file: 'curious__a.mp3', volume: 0.5})).toContain('volume'));
+  test('duck mayor que volume', () => expect(m({file: 'curious__a.mp3', duck: 0.2})).toContain('duck'));
+  test('music sin file', () => expect(m({volume: 0.1})).toContain('file'));
+});

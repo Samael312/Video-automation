@@ -78,7 +78,7 @@ No necesita video. Pídelo en lenguaje normal:
 - `/edit-script quiero hacer videos de temática navideña`
 - `/edit-script dame 10 guiones para 10 videos`
 
-Claude reparte la temática en subtemas y formatos distintos (vocabulario, error común, falso amigo, idiom, quiz...) y deja en `media/input/` un `NOMBRE.txt` por guion y un `PLAN_*.md` con gancho (3 variantes), estrategia, duración y caption de cada uno. Los guiones se escriben conociendo lo que la edición puede hacer (escenas, hook en pantalla, listas, quiz, etc.). Luego graba la nota de voz con el mismo nombre y usa `/edit-voice`.
+Claude reparte la temática en subtemas y formatos distintos (vocabulario, error común, falso amigo, idiom, quiz...) y crea **una carpeta por plan** en `media/input/<PLAN>/` (por ejemplo `media/input/NAVIDAD/`) con un `NOMBRE.txt` por guion, un `PLAN.md` legible y un `plan.json` con el formato, largo, gancho (3 variantes), estrategia, duración y caption de cada uno. Los guiones se escriben conociendo lo que la edición puede hacer (escenas, hook en pantalla, listas, quiz, etc.). Por defecto los guiones son cortos (15-25 s). Pide **más largos** para 30-45 s o 45-65 s: `/edit-script 5 guiones de gramática, más largos` o `... de un minuto`. Luego graba la nota de voz con el mismo nombre del guion y déjala **dentro de la misma carpeta del plan**; usa `/edit-voice media/input/<PLAN>/NOMBRE.m4a`.
 
 ### `/edit-mixed` — la profe cuenta, las escenas remarcan
 1 a 3 escenas en los momentos clave (traducción, falso amigo, ejemplo) y un **quiz** opcional al final. Entre escenas, labels y emojis. Ejemplo real: `public/ACTUALLY.edit.json`.
@@ -133,6 +133,37 @@ En la pausa del preview, dile a Claude en palabras normales. Ejemplos:
 Claude edita el plan, lo valida y te da una hoja nueva. Repite hasta que te guste y di "sí".
 
 ¿Quieres tocar el plan tú? Es `public/NOMBRE.edit.json`. Los tiempos son segundos del video **original** (los que imprime `npm run inspect`). Después corre `npm run validate -- NOMBRE` y `npm run render:plan -- NOMBRE`.
+
+---
+
+## Web local de guiones (sin terminal)
+
+Para generar guiones con botones, sin escribir comandos.
+
+**Requisitos (una sola vez):** Node.js y Claude Code instalados, y haber **iniciado sesión en Claude Code** una vez en ese PC. Después, `npm install` en esta carpeta.
+
+**Uso:** doble clic en `Iniciar-web.bat` (o `npm run web`). Se abre `http://localhost:3000` en el navegador. Deja la ventana negra abierta mientras la uses; ciérrala para apagar la web.
+
+1. Escribe el tema (o déjalo vacío para temas variados), elige cuántos guiones y qué tan largos.
+2. Pulsa **Generar guiones** y espera 1-2 minutos (hay un botón **Cancelar**).
+3. Al terminar se abre la **carpeta del plan** con todos sus guiones, en el orden sugerido de publicación. Haz clic en un guion para verlo **en grande**: el texto, el formato, la estrategia de edición, los 3 ganchos y el caption con hashtags, cada uno con su botón **Copiar**. Con las flechas ← → pasas al guion anterior o siguiente. En la portada, "Mis planes" lista todas las carpetas.
+
+**Qué sesión de Claude usa:** la web busca sola una sesión iniciada, en este orden: (1) la variable `CLAUDE_CONFIG_DIR` si ya está definida, (2) `~/.claude-personal`, (3) `~/.claude` (la normal) y (4) `~/.claude-work`. Al arrancar, la ventana negra dice qué perfil encontró (`Perfil de Claude: personal`). En el PC de la profe, con una sola instalación normal de Claude Code, usa `~/.claude` sin configurar nada.
+
+Los planes quedan en carpetas dentro de `media/input/` (no se suben a git). La web solo responde en tu propio PC (`127.0.0.1`) y solo hace una generación a la vez.
+
+### Editar el video desde la web
+En cada guion hay un botón **Editar video** que abre un asistente por pasos (Subir → Preparar → Plan → Revisar → Render → Listo):
+1. **Subir** el audio (nota de voz) o el video grabado de ese guion. Una nota de voz solo se edita con el estilo "voz" y usa el guion como texto.
+2. **Elegir el estilo** (captions, motion, mixed o voz) o pulsar **Recomiéndame** para que Claude lo sugiera. Luego **Empezar edición**: la web prepara el audio, transcribe y Claude arma el plan (tarda varios minutos).
+3. **Revisar** el preview con el resumen. **Aprobar y renderizar**, o escribir los cambios con tus palabras ("cambia el gancho", "quita la música") y se regenera el preview.
+4. **Listo**: ves el video, lo descargas y copias el caption con hashtags.
+
+Si algo falla o necesita algo de ti (por ejemplo, el audio no coincide con el guion), la web lo dice con un aviso claro y guarda un **registro** ("Ver registro"). Si se interrumpe (se cerró la ventana negra), se reintenta desde la misma pantalla. "Mis videos" lista todos los videos terminados.
+
+**Requisitos del PC para editar video** (la web los revisa y avisa cuáles faltan, con el paso para arreglarlos): `.venv` con las dependencias de `pipeline/requirements.txt`, ffmpeg y ffprobe, `HF_TOKEN` en `.env`, DeepFilterNet (`npm run setup-audio -- --yes`) y Claude Code con la sesión iniciada. Generar guiones no necesita nada de esto.
+
+Claude trabaja con una lista corta de permisos: puede leer y editar el plan de edición (`public/<NOMBRE>.edit.json`) y correr solo `inspect`, `validate`, `preview`, `draft-motion`, `matte` y `emoji`. No puede tocar el código, `.env` ni borrar archivos; el render lo corre la web, no Claude. Contrato técnico de la API: `docs/WEB_API.md`.
 
 ---
 

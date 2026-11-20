@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Guiones para TikTok · tuprofemaria</title>
+  <link rel="icon" href="/logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="blob blob-a" aria-hidden="true"></div>
+  <div class="blob blob-b" aria-hidden="true"></div>
+
+  <nav class="barra">
+    <div class="barra-in">
+      <a class="marca-link" href="#/">
+        <span class="logo"><img src="/logo.png" alt="" width="32" height="32" /></span>
+        <span class="marca">tuprofemaria</span>
+      </a>
+      <a class="nav-link" id="nav-planes" href="#/">Mis planes</a>
+      <a class="nav-link" id="nav-videos" href="#/videos">Mis videos</a>
+    </div>
+  </nav>
+
+  <div id="aviso" class="aviso" hidden></div>
+
+  <!-- ===== inicio: formulario + planes (carpetas) ===== -->
+  <div class="contenedor" id="vista-inicio">
+    <header class="hero">
+      <span class="insignia">✨ Asistente de guiones</span>
+      <h1>Guiones para <span class="grad">TikTok</span></h1>
+      <p>Dime de qué quieres hacer videos y te escribo los guiones, listos para grabar.</p>
+    </header>
+
+    <form id="form" class="panel">
+      <div class="campo">
+        <label class="etiqueta" for="tema">¿De qué tema?</label>
+        <input id="tema" type="text" maxlength="300" placeholder="Navidad, gramática básica, viajes… (vacío = temas variados)" autocomplete="off" />
+      </div>
+
+      <div class="fila">
+        <div class="campo">
+          <span class="etiqueta">¿Cuántos?</span>
+          <div class="contador">
+            <button type="button" id="menos" aria-label="Menos">−</button>
+            <output id="cantidad" aria-live="polite">5</output>
+            <button type="button" id="mas" aria-label="Más">+</button>
+          </div>
+        </div>
+        <div class="campo">
+          <span class="etiqueta">¿Qué tan largos?</span>
+          <div class="chips" id="largo">
+            <label><input type="radio" name="largo" value="corto" checked /><span>Cortos<small>15-25 s</small></span></label>
+            <label><input type="radio" name="largo" value="medio" /><span>Medios<small>30-45 s</small></span></label>
+            <label><input type="radio" name="largo" value="largo" /><span>Largos<small>45-65 s</small></span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="acciones">
+        <button id="generar" type="submit" class="primario">Generar guiones</button>
+        <button id="cancelar" type="button" class="secundario" hidden>Cancelar</button>
+      </div>
+      <p id="progreso" class="progreso" role="status" hidden></p>
+    </form>
+
+    <section>
+      <div class="titulo-seccion">
+        <h2>Mis planes</h2>
+        <button id="recargar" type="button" class="secundario">Actualizar</button>
+      </div>
+      <div id="planes" class="rejilla"></div>
+    </section>
+  </div>
+
+  <!-- ===== carpeta de un plan: todos sus guiones ===== -->
+  <div class="contenedor" id="vista-carpeta" hidden>
+    <a class="volver" href="#/">← Mis planes</a>
+    <header class="cab-carpeta">
+      <div>
+        <span class="insignia" id="carpeta-meta"></span>
+        <h1 id="carpeta-titulo"></h1>
+        <p id="carpeta-tema"></p>
+      </div>
+      <button id="ver-plan" type="button" class="secundario" hidden>Ver plan completo</button>
+    </header>
+    <div id="carpeta-orden" class="orden" hidden></div>
+    <div id="plan-md" class="panel plan" hidden></div>
+    <div id="guiones" class="rejilla"></div>
+  </div>
+
+  <!-- ===== asistente: editar un video ===== -->
+  <div class="contenedor" id="vista-video" hidden>
+    <div id="video-cont"></div>
+  </div>
+
+  <!-- ===== biblioteca de videos terminados ===== -->
+  <div class="contenedor" id="vista-videos" hidden>
+    <header class="hero">
+      <span class="insignia">🎬 Biblioteca</span>
+      <h1>Mis <span class="grad">videos</span></h1>
+      <p>Los videos que ya están listos para publicar.</p>
+    </header>
+    <div id="videos-lista" class="rejilla rejilla-videos"></div>
+  </div>
+
+  <!-- ===== visor grande de un guion ===== -->
+  <div id="visor" class="visor" hidden role="dialog" aria-modal="true" aria-labelledby="visor-titulo">
+    <div class="visor-caja">
+      <div class="visor-barra">
+        <div class="visor-titulo">
+          <h2 id="visor-titulo"></h2>
+          <div id="visor-tags"></div>
+        </div>
+        <div class="visor-nav">
+          <button type="button" id="visor-prev" class="secundario" aria-label="Guion anterior">←</button>
+          <span id="visor-pos"></span>
+          <button type="button" id="visor-next" class="secundario" aria-label="Guion siguiente">→</button>
+          <button type="button" id="visor-cerrar" class="secundario" aria-label="Cerrar">✕</button>
+        </div>
+      </div>
+      <div class="visor-cuerpo">
+        <section class="visor-guion">
+          <div class="visor-sub">
+            <h3>Guion</h3>
+            <span class="visor-acciones">
+              <span id="visor-estado"></span>
+              <a id="visor-editar" class="secundario enlace" href="#/" hidden>Editar video</a>
+              <button type="button" id="visor-copiar" class="secundario">Copiar guion</button>
+            </span>
+          </div>
+          <p id="visor-texto" class="guion-grande"></p>
+        </section>
+        <aside id="visor-info" class="visor-info"></aside>
+      </div>
+    </div>
+  </div>
+
+  <script src="/video.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

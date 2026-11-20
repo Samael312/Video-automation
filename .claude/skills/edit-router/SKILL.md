@@ -38,6 +38,8 @@ Ajustes:
 - Muchos pasos o ejemplos seguidos (> 3 ideas) → inclina a `edit-motion`.
 
 ## 3. Recomendar y esperar
+
+> **Modo web:** si el prompt dice que corre en la aplicación web, no esperes respuesta ni edites nada: termina con una última línea `RECOMENDACION: <captions|motion|mixed|voice> | <una frase de evidencia>`. En terminal, sigue como abajo.
 Muestra al usuario, corto:
 ```
 Formato: <formato>

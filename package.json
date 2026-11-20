@@ -23,6 +23,7 @@
     "draft-motion": "tsx scripts/draft-motion.ts",
     "script-align": "tsx scripts/script-align.ts",
     "audio-to-video": "tsx scripts/audio-to-video.ts",
+    "web": "node web/server.js",
     "setup-audio": ".venv\\Scripts\\python.exe scripts/setup_audio.py"
   },
   "keywords": [],

@@ -8,6 +8,7 @@ node_modules/
 !.env.example
 
 # Medios (pesados y regenerables): se conserva solo la estructura
+# media/input/ incluye los guiones (NOMBRE.txt) y los PLAN_*.md de /edit-script: no se versionan
 media/input/*
 media/reference/*
 media/output/*

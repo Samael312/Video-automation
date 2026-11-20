@@ -14,6 +14,8 @@ Antes de empezar lee también:
 
 ## Flujo (no te saltes pasos)
 
+> **Modo web:** si el prompt dice que corre dentro de la aplicación web, nadie lee la terminal: no hagas preguntas, salta el paso 1 si el prompt dice que ya está hecho, detente tras el preview del paso 5 (sin renderizar; el render y el caption los dispara la app) y termina con una línea `RESUMEN:` seguida del resumen, o con `NECESITA_ACCION: <texto para la profe>` si falta algo. En terminal, todo sigue igual.
+
 `<video>` es el archivo que te dio el usuario (normalmente `media/input/NOMBRE.mp4`; también vale `.mov` de iPhone, incluso HDR); `NOMBRE` es su nombre sin extensión. Todo lo demás usa `NOMBRE` y la salida siempre es mp4.
 
 1. **Preparar** — `npm run edit -- media/input/NOMBRE.mp4 --plan-only`

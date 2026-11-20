@@ -12,9 +12,10 @@ Antes de escribir, lee `.claude/skills/video-base/brand.md` (público, tono, gan
 Contexto: la cuenta estuvo inactiva mucho tiempo, así que importa publicar con constancia (3-5 videos por semana) y que cada video se vea distinto. Por eso variar formatos, ganchos y estilo de edición es parte del trabajo.
 
 ## 1. Entender la petición (sin preguntar de más)
-La entrada es lenguaje libre. Saca dos cosas:
+La entrada es lenguaje libre. Saca tres cosas:
 - **Temática**: "navideña", "viajes", "trabajo"... Si no hay, usa una mezcla de temas útiles y variados (comida, trabajo, viajes, redes, emociones).
 - **Cantidad**: "10 guiones", "6 videos". Si no hay, **5**.
+- **Largo**: por defecto **corto**. Si dice "más largos", "largos", "medios", "de 30 segundos", "de un minuto", "con más explicación", etc., usa **medio** o **largo** (ver tabla en el paso 3). Si pide algo concreto ("de 40 segundos"), elige el modo más cercano. Un mismo pedido puede mezclar largos ("3 cortos y 2 largos"); si no lo dice, todos del mismo modo.
 
 Decide y entrega. Solo pregunta si falta algo que no puedes suponer (por ejemplo, nada de contexto y el usuario pide algo ambiguo).
 
@@ -58,23 +59,65 @@ Ejemplo, "temática navideña" con 6 guiones: vocabulario navideño (3 palabras)
 
 ## 3. Estructura de cada guion
 - **Gancho (primeros 2 s)**: una frase corta que provoca curiosidad o corrige un error. Nunca saludo ni presentación. Debe funcionar también escrita en pantalla (≤ 40 caracteres si se puede).
-- **Desarrollo**: 1-3 ideas, frases cortas, un ejemplo en inglés.
+- **Desarrollo**: frases cortas y un ejemplo en inglés por idea; cuántas ideas depende del largo (tabla de abajo).
 - **Open loop** cuando encaje: promete algo que se resuelve al final ("al final te digo el error más típico").
 - **CTA** al final, de `brand.md` ("¿Cuál conocías?", "Escribe una frase con ella").
-- **Longitud**: 40-65 palabras (15-25 s hablados). Nunca más de 80.
+- **Longitud** (una persona habla ~2.5 palabras por segundo; nunca te pases del máximo del modo):
+
+| Modo | Palabras | Duración | Ideas / ejemplos | Cuándo |
+|---|---|---|---|---|
+| **corto** (defecto) | 40-65 (máx. 80) | 15-25 s | 1-3 ideas, 1 ejemplo por idea | casi siempre; rinde mejor para alcance |
+| **medio** | 80-110 (máx. 125) | 30-45 s | 3-4 ideas, 2 ejemplos por idea | reglas con matices, comparaciones, historias |
+| **largo** | 120-160 (máx. 175) | 45-65 s | 4-6 ideas, un mini-resumen o repaso al final | explicaciones completas, listas de 5 |
+
+  En `medio` y `largo` el ritmo importa más: **vuelve a enganchar a mitad del video** con una frase que renueve la curiosidad ("ahora viene lo importante", "y este es el error que casi nadie nota"), alterna ideas y ejemplos (nada de bloques largos de una sola idea), usa más escenas (hasta 4-5 en `largo`, siempre separadas por la profe en cámara o un cambio de ritmo) y deja el open loop abierto hasta casi el final. La lista numerada puede llegar a 5 ítems. No alargues repitiendo: añade ideas, ejemplos o un repaso útil.
 - **Solo lo que ella dice**: sin indicaciones de edición, sin "(pausa)", sin emojis, sin títulos. Un párrafo corto por idea. El inglés bien escrito; el español neutro y cercano, como en `brand.md`.
 - No inventes datos. Si no estás seguro de una etimología o un uso, no lo incluyas.
 
 ## 4. Archivos que entregas
-Ponlos en `media/input/` (créala si no existe):
-- `NOMBRE.txt` por guion. `NOMBRE` en MAYÚSCULAS con guion bajo, sin acentos, corto y único (`NAVIDAD_3_PALABRAS`). Antes de escribir, revisa que no exista ya ese nombre en `media/input/`, `public/*.edit.json` ni `public/*.txt`; si existe, usa otro. No sobrescribas.
-- `PLAN_SEMANA.md` (o `PLAN_<TEMA>.md`), una tabla con una fila por video: nombre del archivo, formato, gancho, estrategia recomendada (`edit-voice`, `edit-mixed`, `edit-captions` o `edit-motion`) y duración estimada. Si el archivo ya existe, agrega el nuevo bloque debajo con un título nuevo, no lo reemplaces.
+Cada petición crea **una carpeta de plan** dentro de `media/input/`, con todo adentro:
 
-Cada fila trae además **3 variantes de gancho** (A/B/C) para que el usuario elija o pruebe, y el **caption recomendado con 4-6 hashtags** según `caption.md`.
+```
+media/input/<PLAN>/
+  plan.json          datos del plan (lo lee la web local; ver esquema)
+  PLAN.md            el mismo plan legible: tabla, orden de publicación, ganchos y captions
+  <NOMBRE>.txt       un guion por video
+```
+
+- **`<PLAN>`** = nombre de la carpeta: la temática en MAYÚSCULAS con guion bajo, sin acentos ni espacios, corto (`NAVIDAD`, `GRAMATICA`; si la temática es variada, `VARIADOS_<AAAAMMDD>`). Si ya existe una carpeta con ese nombre, usa `<PLAN>_2`, `<PLAN>_3`…: **nunca escribas en una carpeta existente ni sobrescribas nada**.
+- **`<NOMBRE>.txt`** = el guion de un video, en MAYÚSCULAS con guion bajo, sin acentos, corto (`NAVIDAD_3_PALABRAS`). Debe ser **único en todo `media/input/`** (el pipeline guarda sus archivos por este nombre): antes de escribir, busca en todas las subcarpetas de `media/input/`, en `public/*.edit.json` y en `public/*.txt`; si existe, usa otro.
+- **`plan.json`** (JSON válido, sin comentarios; un objeto por video en `videos`, y `orden` con los `nombre` en el orden de publicación recomendado):
+
+```json
+{
+  "titulo": "Navidad",
+  "tema": "videos de temática navideña",
+  "creado": "2026-11-20",
+  "orden": ["NAVIDAD_QUIZ_RENO", "NAVIDAD_3_PALABRAS"],
+  "videos": [
+    {
+      "nombre": "NAVIDAD_3_PALABRAS",
+      "formato": "Vocabulario con número",
+      "largo": "corto",
+      "gancho": "Tres palabras de Navidad que casi nadie te enseña.",
+      "ganchos": ["Gancho A (el elegido)", "Gancho B", "Gancho C"],
+      "estrategia": "edit-voice",
+      "duracion": "~18 s",
+      "caption": "El caption recomendado, sin los hashtags.",
+      "hashtags": ["#inglés", "#aprenderinglés", "#navidad", "#vocabulario"],
+      "notas": "Lo que conviene revisar o tener en cuenta al grabar (opcional)."
+    }
+  ]
+}
+```
+
+- **`PLAN.md`**: tabla con una fila por video (nombre del archivo, formato, **largo** —corto, medio o largo—, gancho, estrategia recomendada —`edit-voice`, `edit-mixed`, `edit-captions` o `edit-motion`— y duración estimada), el orden sugerido de publicación, los 3 ganchos de cada video y su caption con hashtags, y las notas.
+
+Cada video trae **3 variantes de gancho** (A/B/C) para que el usuario elija o pruebe, y un **caption recomendado con 4-6 hashtags** según `caption.md`. Todo lo que pongas en `plan.json` debe coincidir con `PLAN.md` y con el guion.
 
 ## 5. Mensaje final
-Muestra la tabla del plan y los guiones completos, sin repetirlos en prosa. Indica qué sigue por video:
-- Guion con nota de voz → `/edit-voice media/input/NOMBRE.m4a` (la nota de voz debe llamarse como el guion).
-- Con cámara → `/edit-router media/input/NOMBRE.mp4` (el `.txt` al lado ayuda al alineado).
+Di el nombre de la carpeta creada, muestra la tabla del plan y los guiones completos, sin repetirlos en prosa. Indica qué sigue por video:
+- Guion con nota de voz → deja la nota de voz **dentro de la misma carpeta del plan**, con el nombre del guion, y usa `/edit-voice media/input/<PLAN>/NOMBRE.m4a`.
+- Con cámara → el video en esa misma carpeta (`/edit-router media/input/<PLAN>/NOMBRE.mp4`); el `.txt` al lado ayuda al alineado.
 
-Si el usuario pide cambios ("más corto", "cambia el gancho del 3", "otro formato para el 5"), edita solo ese archivo y su fila.
+Si el usuario pide cambios ("más corto", "cambia el gancho del 3", "otro formato para el 5"), edita solo ese archivo y su entrada en `plan.json` y `PLAN.md`.

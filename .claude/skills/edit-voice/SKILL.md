@@ -13,7 +13,7 @@ Todo el video es motion: bloques de 3–8 s **seguidos, sin huecos**, con beats 
 **La referencia `m_1` da solo el estilo.** Emojis, objetos y textos salen **del guion**: lo que ella dice en ese beat.
 
 ## Paso 1 (reemplaza al de video-base)
-1. Comprueba que existe el guion `media/input/NOMBRE.txt` (mismo nombre que el audio, misma carpeta). Si falta, **para** y dile al usuario: "falta el guion NOMBRE.txt junto al audio".
+1. Comprueba que existe el guion `media/input/.../NOMBRE.txt` (mismo nombre que el audio, misma carpeta; los guiones de `/edit-script` viven en `media/input/<PLAN>/`). Si falta, **para** y dile al usuario: "falta el guion NOMBRE.txt junto al audio".
 2. `npm run edit -- media/input/NOMBRE.m4a --plan-only`. Convierte el audio en `public/NOMBRE.mp4` (fondo plano), limpia la voz, transcribe, **alinea con el guion** y corta silencios.
 3. Lee la línea `coincidencia X %` del paso "alinear con guion". Si el paso falla con "el audio no parece leer este guion", para y muéstrale al usuario las diferencias: o el guion no es de este audio, o ella improvisó.
 4. `npm run inspect -- NOMBRE` como siempre. El texto ya viene del guion (inglés bien escrito).

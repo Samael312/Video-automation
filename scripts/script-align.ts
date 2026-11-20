@@ -10,7 +10,20 @@ import {PUBLIC, ROOT, resolveVideo} from './common';
 type TranscriptFile = {words: Word[]; segments?: {start: number; end: number; text: string}[]} & Record<string, unknown>;
 
 const {name} = resolveVideo(process.argv[2], 'npm run script-align -- <video> [guion.txt]');
-const scriptPath = process.argv[3] ?? path.join(ROOT, 'media', 'input', `${name}.txt`);
+// Por defecto busca <nombre>.txt en media/input/ y, si no esta ahi, en sus subcarpetas (cada plan de /edit-script vive en su carpeta)
+const findScript = (dir: string, file: string): string | null => {
+  if (!fs.existsSync(dir)) return null;
+  const direct = path.join(dir, file);
+  if (fs.existsSync(direct)) return direct;
+  for (const d of fs.readdirSync(dir, {withFileTypes: true})) {
+    if (d.isDirectory()) {
+      const hit = findScript(path.join(dir, d.name), file);
+      if (hit) return hit;
+    }
+  }
+  return null;
+};
+const scriptPath = process.argv[3] ?? findScript(path.join(ROOT, 'media', 'input'), `${name}.txt`) ?? path.join(ROOT, 'media', 'input', `${name}.txt`);
 if (!fs.existsSync(scriptPath)) {
   console.error(`falta el guion ${scriptPath}`);
   process.exit(1);

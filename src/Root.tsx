@@ -4,6 +4,7 @@ import {Hello} from './compositions/Hello';
 import {Captions, CaptionsProps, Transcript} from './compositions/Captions';
 import {Edit, EditProps} from './Edit';
 import {GALLERY_FRAMES, MotionGallery} from './compositions/MotionGallery';
+import {SCENE_GALLERY_FRAMES, SceneGallery} from './compositions/SceneGallery';
 import {defaultPlan, usesBehind, type EditPlan} from './lib/plan';
 import {matteInfoFile, type MatteInfo} from './lib/matte';
 import {quantizeKeeps, totalFrames} from './lib/cuts';
@@ -24,6 +25,7 @@ const FPS = 30;
 export const Root: React.FC = () => (
   <>
     <Composition id="MotionGallery" component={MotionGallery} durationInFrames={GALLERY_FRAMES} fps={FPS} width={720} height={1280} />
+    <Composition id="SceneGallery" component={SceneGallery} durationInFrames={SCENE_GALLERY_FRAMES} fps={FPS} width={720} height={1280} />
     <Composition id="GsapTest" component={GsapTest} durationInFrames={90} fps={FPS} width={720} height={1280} />
     <Composition id="Hello" component={Hello} durationInFrames={90} fps={30} width={1080} height={1920} />
     <Composition

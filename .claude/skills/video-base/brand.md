@@ -22,6 +22,9 @@ Estilo `referencia`: serif elegante (Playfair) + crema `#FCF4B0` para lo destaca
 
 Elige el que encaje con lo que dice la profe en los primeros segundos. `line1` corta (≤ 14 caracteres), `line2` en cursiva crema (≤ 18). Más largo se sale de la pantalla.
 
+## Hook (`hook`, opcional)
+Frase grande de ≤ 40 caracteres en los primeros 1.5–2 s, antes del título: "No digas esto", "Estás diciendo esto mal", "3 errores que cometes", "Nadie te enseña esto". Provoca curiosidad o corrige un error; nunca saludo. Después entra el `title` con el tema.
+
 ## Cierres (`end`)
 - "¿Te sirvió?" / "¿Qué otro dato conoces?"
 - "¿Lo sabías?" / "Cuéntame en comentarios"

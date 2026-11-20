@@ -2,7 +2,7 @@ import React from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame} from 'remotion';
 import type {Keep} from './cuts';
 import type {Scene} from './plan';
-import {sceneEnvelope, sceneFrames} from './scenes';
+import {sceneEnvelope, sceneFrames, transitionStyle} from './scenes';
 import type {Theme} from '../styles/themes';
 import {TEMPLATES} from '../templates';
 import {GENERATED} from '../scenes/generated';
@@ -17,7 +17,7 @@ const SceneFrame: React.FC<{scene: Scene; duration: number; theme: Theme}> = ({s
   const Generated = scene.type === 'generated' ? GENERATED[String(scene.data.component)] : undefined;
   const props = (scene.data.props ?? {}) as Record<string, unknown>;
   return (
-    <AbsoluteFill style={{backgroundColor: theme.sceneBg, opacity: env, transform: `translateY(${(1 - env) * 60}px)`}}>
+    <AbsoluteFill style={{backgroundColor: theme.sceneBg, ...transitionStyle(scene.transition, env)}}>
       {Template ? <Template data={scene.data} theme={theme} durationInFrames={duration} /> : null}
       {Generated ? <Generated props={props} theme={theme} durationInFrames={duration} /> : null}
     </AbsoluteFill>

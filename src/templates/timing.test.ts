@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {fitFontSize, litSyllables, quizPhase, wordsVisible} from './timing';
+import {fitFontSize, litSyllables, quizPhase, wordsVisible, itemsShown, revealWords} from './timing';
 
 describe('fitFontSize', () => {
   test('texto corto conserva el tamaño base', () => expect(fitFontSize('hi', 600, 80)).toBe(80));
@@ -66,4 +66,28 @@ describe('litSyllables', () => {
     }
   });
   test('sin sílabas', () => expect(litSyllables(10, 150, 0)).toBe(0));
+});
+
+describe('revealWords', () => {
+  test('nada antes del 45 %, todas al 85 %', () => {
+    expect(revealWords(0, 100, 4)).toBe(0);
+    expect(revealWords(44, 100, 4)).toBe(0);
+    expect(revealWords(85, 100, 4)).toBe(4);
+    expect(revealWords(100, 100, 4)).toBe(4);
+  });
+  test('sin palabras o duracion 0', () => {
+    expect(revealWords(10, 100, 0)).toBe(0);
+    expect(revealWords(10, 0, 3)).toBe(0);
+  });
+});
+
+describe('itemsShown', () => {
+  test('el primero sale en el frame 0 y todos al final', () => {
+    expect(itemsShown(0, 100, 3)).toBe(1);
+    expect(itemsShown(100, 100, 3)).toBe(3);
+  });
+  test('crece de forma pareja', () => {
+    expect(itemsShown(30, 100, 3)).toBe(2);
+    expect(itemsShown(60, 100, 3)).toBe(3);
+  });
 });

@@ -1,18 +1,19 @@
 import React, {useMemo} from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {getTheme} from './styles/themes';
-import {Chat, Emoji, EndCard, FRAMES_PER_CHAR, Item, ITEM_DEFAULT_Y, Label, Title} from './overlays';
+import {Chat, Emoji, EndCard, FRAMES_PER_CHAR, Hook, Item, ITEM_DEFAULT_Y, Label, Title} from './overlays';
 import {BEHIND_ITEM_Y, BEHIND_TITLE_Y, captionsVisible, chatTimes} from './lib/overlayTiming';
 import {CutVideo} from './lib/CutVideo';
 import {cutPoints, mapTimeNext, remapWords, type Keep} from './lib/cuts';
 import {buildPages} from './lib/captions';
-import {keywordEvents, zoomScale} from './lib/dynamics';
+import {cutFxState, keywordEvents, punchScale, zoomScale} from './lib/dynamics';
 import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
 import {matteFile, type EditPlan, type ItemOverlay, type Overlay} from './lib/plan';
 import {autoBehindY, type MatteInfo} from './lib/matte';
 import {MotionLayer} from './motion/MotionLayer';
 import {insideBlocks} from './motion/timing';
+import {KEYWORD_SFX, overlaySfx, thinEvents, TITLE_SFX, type AutoSfxEvent} from './lib/autoSfx';
 import {MUSIC_DEFAULTS, musicVolume, speechSpans} from './lib/music';
 import type {Transcript} from './lib/types';
 
@@ -37,8 +38,17 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
   const newWords = useMemo(() => (transcript ? remapWords(transcript.words, keeps) : []), [transcript, keeps]);
   const spans = useMemo(() => speechSpans(newWords), [newWords]);
   const pages = useMemo(() => buildPages(newWords, plan.captions.maxWords), [newWords, plan.captions.maxWords]);
-  const zoomEvents = useMemo(() => [...cutPoints(keeps), ...keywordEvents(newWords, plan.zoom.keywords)], [keeps, newWords, plan.zoom.keywords]);
-  const zoom = zoomScale(frame / fps, zoomEvents, plan.zoom.peak, plan.zoom.duration);
+  const punchMode = plan.zoom.mode === 'punch';
+  const cuts = useMemo(() => cutPoints(keeps), [keeps]);
+  // pulse: pulso en cada corte y palabra clave. punch: el corte alterna 1 / punch y se queda; las palabras clave siguen pulsando.
+  const zoomEvents = useMemo(() => [...(punchMode ? [] : cuts), ...keywordEvents(newWords, plan.zoom.keywords)], [punchMode, cuts, newWords, plan.zoom.keywords]);
+  const zoom = Math.max(
+    zoomScale(frame / fps, zoomEvents, plan.zoom.peak, plan.zoom.duration),
+    punchMode ? punchScale(frame / fps, cuts, plan.zoom.punch ?? 1.12) : 1,
+  );
+
+  const fx = cutFxState(frame / fps, cuts, plan.cutFx);
+  const videoStyle = {transform: `translate(${fx.dx.toFixed(1)}px, ${fx.dy.toFixed(1)}px) scale(${zoom})`, filter: fx.filter};
 
   const subFrom = mapAt(plan.captions.from ?? 0);
   const endAt = plan.end ? mapAt(plan.end.start) : Infinity;
@@ -90,13 +100,40 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
       <Title line1={plan.title.line1} line2={plan.title.line2} theme={theme} y={titleY} />
     </Sequence>
   ) : null;
+  const hookEnd = plan.hook ? mapAt(plan.hook.end) : 0;
+  const hookEl = plan.hook && hookEnd > 0 ? (
+    <Sequence from={0} durationInFrames={fr(hookEnd)}>
+      <Hook text={plan.hook.text} theme={theme} />
+    </Sequence>
+  ) : null;
   const isBehind = (o: Overlay) => o.kind === 'item' && Boolean(o.behind);
+
+  // Sonidos automaticos (tiempos del video final). Se omiten dentro de bloques de motion (ya traen los suyos)
+  // y cerca de un sfx manual del plan; `autoSfx: false` los apaga.
+  const autoEvents: AutoSfxEvent[] =
+    plan.autoSfx === false
+      ? []
+      : thinEvents(
+          [
+            ...overlays.flatMap((o): AutoSfxEvent[] =>
+              o.kind === 'chat' ? chatTimes(o).map((at) => ({at, ...overlaySfx('chat')})) : [{at: o.start, ...overlaySfx(o.kind)}],
+            ),
+            ...(plan.cutFx === 'glitch' ? cuts.map((at) => ({at, name: 'glitch' as const, volume: 0.5})) : []),
+            ...(plan.cutFx === 'shake' ? cuts.map((at) => ({at, name: 'hit' as const, volume: 0.3})) : []),
+            ...(hookEnd > 0 ? [{at: 0, ...TITLE_SFX}] : []),
+            ...(title ? [{at: title.start, ...TITLE_SFX}] : []),
+            ...keywordEvents(newWords, plan.zoom.keywords).map((at) => ({at, ...KEYWORD_SFX})),
+          ].filter((e) => !insideBlocks(e.at, plan.motion, keeps)),
+          plan.sfx.map((s) => mapAt(s.at)),
+        );
 
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
-      <AbsoluteFill style={{transform: `scale(${zoom})`}}>
+      <AbsoluteFill style={videoStyle}>
         <CutVideo src={videoSrc} keeps={keeps} fps={fps} />
       </AbsoluteFill>
+
+      {fx.flash > 0 ? <AbsoluteFill style={{backgroundColor: '#fff', opacity: fx.flash}} /> : null}
 
       <SceneLayer scenes={plan.scenes} keeps={keeps} theme={theme} fps={fps} />
 
@@ -104,12 +141,13 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
       {behindTitle ? titleEl : null}
       {overlays.map((o, i) => (isBehind(o) ? renderOverlay(o, i) : null))}
       {behindOn ? (
-        <AbsoluteFill style={{transform: `scale(${zoom})`}}>
+        <AbsoluteFill style={videoStyle}>
           <CutVideo src={matteFile(videoSrc)} keeps={keeps} fps={fps} cutSfx={null} transparent />
         </AbsoluteFill>
       ) : null}
 
       {behindTitle ? null : titleEl}
+      {hookEl}
 
       {captionsBlocked ? null : (
         <TikTokCaptions pages={visiblePages} highlight={theme.highlight} fontFamily={theme.fonts.sans} fontSize={theme.captionFontSize} top={theme.captionTop} karaoke={theme.captionKaraoke} />
@@ -136,6 +174,11 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
       ) : null}
 
       {/* Efectos de sonido (public/sfx) */}
+      {autoEvents.map((s, i) => (
+        <Sequence key={`auto${i}`} from={fr(s.at)}>
+          <Audio src={staticFile(`sfx/${s.name}.wav`)} volume={vol * s.volume} />
+        </Sequence>
+      ))}
       {plan.sfx.map((s, i) => (
         <Sequence key={`sfx${i}`} from={fr(mapAt(s.at))}>
           <Audio src={staticFile(`sfx/${s.name}.wav`)} volume={vol} />

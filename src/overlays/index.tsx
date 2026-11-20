@@ -9,11 +9,39 @@ export const Title: React.FC<{line1: string; line2: string; theme: Theme; y?: nu
   const f = useCurrentFrame();
   const {fps} = useVideoConfig();
   const l2 = interpolate(f, [0.35 * fps, 0.35 * fps + 7], [0, 1], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  // linea 1 entra con un pop (escala con rebote + aparicion rapida) para que el titulo "golpee" desde el primer frame
+  const pop = spring({frame: f, fps, config: {damping: 10, stiffness: 220}});
+  const a1 = interpolate(f, [0, 3], [0, 1], {extrapolateRight: 'clamp'});
   return (
     <AbsoluteFill style={{alignItems: 'center', paddingTop: y}}>
-      <div style={{fontFamily: theme.fonts.serif, fontWeight: 800, fontSize: 92, color: '#fff', lineHeight: 1.05, textShadow: '0 4px 20px rgba(0,0,0,.35)'}}>{line1}</div>
+      <div style={{fontFamily: theme.fonts.serif, fontWeight: 800, fontSize: 92, color: '#fff', lineHeight: 1.05, textShadow: '0 4px 20px rgba(0,0,0,.35)',
+        opacity: a1, transform: `scale(${0.7 + 0.3 * pop})`}}>{line1}</div>
       <div style={{fontFamily: theme.fonts.serifItalic, fontStyle: 'italic', fontWeight: 500, fontSize: 84, color: theme.cream, lineHeight: 1,
         opacity: l2, transform: `translateY(${(1 - l2) * 34}px)`, textShadow: '0 4px 20px rgba(0,0,0,.35)'}}>{line2}</div>
+    </AbsoluteFill>
+  );
+};
+
+// ---------- Gancho: frase grande sobre el video oscurecido (primeros segundos) ----------
+const HOOK_FADE_FRAMES = 6;
+export const Hook: React.FC<{text: string; theme: Theme}> = ({text, theme}) => {
+  const f = useCurrentFrame();
+  const {fps, durationInFrames} = useVideoConfig();
+  const words = text.split(/\s+/).filter(Boolean);
+  const out = interpolate(f, [durationInFrames - HOOK_FADE_FRAMES, durationInFrames], [1, 0], {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'});
+  const scrim = interpolate(f, [0, 4], [0, 0.55], {extrapolateRight: 'clamp'}) * out;
+  return (
+    <AbsoluteFill style={{justifyContent: 'center', alignItems: 'center', backgroundColor: `rgba(0,0,0,${scrim})`}}>
+      <div style={{display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '4px 22px', maxWidth: '86%', opacity: out}}>
+        {words.map((w, i) => {
+          const s = spring({frame: f - i * 3, fps, config: {damping: 11, stiffness: 200}});
+          const last = i === words.length - 1;
+          return (
+            <span key={i} style={{fontFamily: theme.fonts.sans, fontWeight: 700, fontSize: 96, lineHeight: 1.1, color: last ? theme.cream : '#fff', textAlign: 'center',
+              textShadow: '0 6px 24px rgba(0,0,0,.5)', display: 'inline-block', transform: `scale(${0.5 + 0.5 * Math.min(1.15, s)})`, opacity: Math.min(1, s * 2)}}>{w}</span>
+          );
+        })}
+      </div>
     </AbsoluteFill>
   );
 };

@@ -130,3 +130,36 @@ describe('validatePlan: music', () => {
   test('duck mayor que volume', () => expect(m({file: 'curious__a.mp3', duck: 0.2})).toContain('duck'));
   test('music sin file', () => expect(m({volume: 0.1})).toContain('file'));
 });
+
+describe('validatePlan: hook y zoom', () => {
+  test('hook válido', () => expect(errs({...base(), hook: {text: 'No digas esto', end: 1.8}})).toEqual([]));
+  test('hook sin texto', () => has({...base(), hook: {text: '', end: 1.5}}, 'hook'));
+  test('hook demasiado largo en tiempo', () => has({...base(), hook: {text: 'hola', end: 3}}, 'hook.end'));
+  test('hook con texto largo', () => has({...base(), hook: {text: 'x'.repeat(41), end: 2}}, 'caracteres'));
+  test('hook cae en zona cortada', () => has({...base(), hook: {text: 'hola', end: 0.5}}, 'zona cortada'));
+  test('titulo solapado con el hook', () =>
+    has({...base(), hook: {text: 'hola', end: 2}, title: {line1: 'a', line2: 'b', start: 1, end: 3}}, 'solapa'));
+  test('zoom.mode punch válido', () => expect(errs({...base(), zoom: {peak: 1.08, duration: 0.35, keywords: [], mode: 'punch', punch: 1.15}})).toEqual([]));
+  test('zoom.mode inválido', () => has({...base(), zoom: {peak: 1.08, duration: 0.35, keywords: [], mode: 'spin' as never}}, 'zoom.mode'));
+  test('zoom.punch fuera de rango', () => has({...base(), zoom: {peak: 1.08, duration: 0.35, keywords: [], mode: 'punch', punch: 2}}, 'zoom.punch'));
+});
+
+describe('validatePlan: plantillas nuevas', () => {
+  const sc = (type: Scene['type'], data: Record<string, unknown>) => withScenes(scene({type, data}));
+  test('before-after válida', () => expect(errs(sc('before-after', {before: "I'm tired", after: "I'm exhausted"}))).toEqual([]));
+  test('before-after sin after', () => has(sc('before-after', {before: 'x'}), 'after'));
+  test('versus válida', () => expect(errs(sc('versus', {left: 'lift', right: 'elevator', leftLabel: 'UK', rightLabel: 'US'}))).toEqual([]));
+  test('versus sin right', () => has(sc('versus', {left: 'x'}), 'right'));
+  test('listen válida', () => expect(errs(sc('listen', {phrase: 'What are you up to'}))).toEqual([]));
+  test('listen sin phrase', () => has(sc('listen', {}), 'phrase'));
+  test('countdown válida', () => expect(errs(sc('countdown', {title: '3 errores', items: ['a', 'b', 'c']}))).toEqual([]));
+  test('countdown con 1 item', () => has(sc('countdown', {items: ['a']}), 'items'));
+  test('countdown con 6 items', () => has(sc('countdown', {items: ['a', 'b', 'c', 'd', 'e', 'f']}), 'items'));
+});
+
+describe('validatePlan: transiciones y cutFx', () => {
+  test('transition válida', () => expect(errs(withScenes(scene({transition: 'wipe'})))).toEqual([]));
+  test('transition inválida', () => has(withScenes(scene({transition: 'spin' as never})), 'transition'));
+  test('cutFx válido', () => expect(errs({...base(), cutFx: 'glitch'})).toEqual([]));
+  test('cutFx inválido', () => has({...base(), cutFx: 'boom'}, 'cutFx'));
+});

@@ -3,7 +3,7 @@ import {behindSpans, matteCovers, type MatteInfo} from './matte';
 import {emojisIn} from './emoji';
 import {validateMotion, voiceGaps, type Block, type MotionPlan} from './motion';
 
-export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'generated'] as const;
+export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'before-after', 'versus', 'listen', 'countdown', 'generated'] as const;
 export type SceneType = (typeof SCENE_TYPES)[number];
 
 export type LabelOverlay = {kind: 'label'; text: string; start: number; end: number; x: number; y: number; dir: 'left' | 'right'};
@@ -17,8 +17,14 @@ export type Overlay = LabelOverlay | EmojiOverlay | ItemOverlay | ChatOverlay;
 export const OVERLAY_KINDS = ['label', 'emoji', 'item', 'chat'] as const;
 export const MAX_CHAT_MESSAGES = 4;
 
-export type Scene = {type: SceneType; start: number; end: number; data: Record<string, unknown>};
-export type SfxName = 'pop' | 'swoosh' | 'tick' | 'ding';
+export const SCENE_TRANSITIONS = ['fade-slide', 'slide-left', 'slide-right', 'wipe', 'zoom', 'flip'] as const;
+export type SceneTransition = (typeof SCENE_TRANSITIONS)[number];
+export const CUT_FX = ['none', 'flash', 'shake', 'glitch'] as const;
+export type CutFx = (typeof CUT_FX)[number];
+
+/** `transition`: como entra y sale la escena (defecto fade-slide). */
+export type Scene = {type: SceneType; start: number; end: number; data: Record<string, unknown>; transition?: SceneTransition};
+export type SfxName = 'pop' | 'swoosh' | 'tick' | 'ding' | 'pop2' | 'whoosh2' | 'hit' | 'riser' | 'glitch' | 'message' | 'success';
 
 /** Plan de edicion v1. Todos los tiempos son segundos del video ORIGINAL. */
 export type EditPlan = {
@@ -29,10 +35,17 @@ export type EditPlan = {
   title?: {line1: string; line2: string; start: number; end: number; y?: number; behind?: boolean};
   end?: {start: number; line1: string; line2: string};
   captions: {maxWords: number; from?: number; until?: number; emphasis?: string[]};
-  zoom: {peak: number; duration: number; keywords: string[]};
+  /** mode 'pulse' (defecto): pulso en cada corte y palabra clave. 'punch': jump-cut, alterna 1 y `punch` (def. 1.12) en cada corte y se queda; las palabras clave siguen pulsando. */
+  zoom: {peak: number; duration: number; keywords: string[]; mode?: 'pulse' | 'punch'; punch?: number};
+  /** Gancho de los primeros segundos: frase grande sobre el video oscurecido, desde el segundo 0 hasta `end` (original). Max HOOK_MAX_SECONDS. */
+  hook?: {text: string; end: number};
   overlays: Overlay[];
   scenes: Scene[];
   sfx: {at: number; name: SfxName}[];
+  /** Efecto en cada corte del video: flash (destello blanco), shake (temblor) o glitch (temblor + color). Defecto none. */
+  cutFx?: CutFx;
+  /** Sonidos automaticos al aparecer overlays, titulo y palabras clave. Por defecto activo; `false` lo apaga. */
+  autoSfx?: boolean;
   /** Solo strategy motion: bloques de motion graphics por beats (ver src/lib/motion.ts). */
   motion?: MotionPlan;
   /** Musica de fondo (archivo en media/music/), con ducking bajo la voz. volume 0.02-0.4 (def. 0.12), duck 0-volume (def. 0.04). */
@@ -58,9 +71,11 @@ export const matteFile = (video: string) => video.replace(/\.[^.]+$/, '') + '.ma
 export const usesBehind = (plan: Pick<EditPlan, 'title' | 'overlays'>): boolean =>
   Boolean(plan.title?.behind) || plan.overlays.some((o) => o.kind === 'item' && o.behind);
 
+export const HOOK_MAX_SECONDS = 2.5;
+export const HOOK_MAX_CHARS = 40;
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
-const SFX_NAMES: SfxName[] = ['pop', 'swoosh', 'tick', 'ding'];
+const SFX_NAMES: SfxName[] = ['pop', 'swoosh', 'tick', 'ding', 'pop2', 'whoosh2', 'hit', 'riser', 'glitch', 'message', 'success'];
 const STRATEGIES = ['captions', 'motion', 'mixed', 'voice'];
 
 export const defaultPlan = (video: string): EditPlan => ({
@@ -123,6 +138,18 @@ const validateSceneData = (type: SceneType, data: unknown, ctx: ValidateCtx): st
       }
       break;
     }
+    case 'before-after':
+      needStr('before', 'after');
+      break;
+    case 'versus':
+      needStr('left', 'right');
+      break;
+    case 'listen':
+      needStr('phrase');
+      break;
+    case 'countdown':
+      if (!Array.isArray(data.items) || data.items.length < 2 || data.items.length > 5 || !data.items.every(isStr)) out.push('data.items debe tener de 2 a 5 textos');
+      break;
     case 'generated':
       if (!isStr(data.component)) out.push('falta data.component');
       else if (!ctx.knownGenerated.includes(data.component)) {
@@ -145,6 +172,23 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
   if (!isObj(plan.captions) || !isNum(plan.captions.maxWords)) e.push('captions.maxWords debe ser un numero');
   if (!isObj(plan.zoom) || !isNum(plan.zoom.peak) || !isNum(plan.zoom.duration) || !Array.isArray(plan.zoom.keywords)) {
     e.push('zoom debe tener peak, duration (numeros) y keywords (lista)');
+  } else {
+    if (plan.zoom.mode !== undefined && plan.zoom.mode !== 'pulse' && plan.zoom.mode !== 'punch') e.push('zoom.mode debe ser "pulse" o "punch"');
+    if (plan.zoom.punch !== undefined && (!isNum(plan.zoom.punch) || plan.zoom.punch < 1 || plan.zoom.punch > 1.3)) e.push('zoom.punch debe ser un numero entre 1 y 1.3');
+  }
+
+  if (plan.cutFx !== undefined && !(CUT_FX as readonly string[]).includes(plan.cutFx as string)) e.push(`cutFx debe ser uno de: ${CUT_FX.join(', ')}`);
+
+  // ----- hook (opcional) -----
+  if (plan.hook !== undefined) {
+    const h = plan.hook;
+    if (!isObj(h) || !isStr(h.text) || !isNum(h.end)) e.push('hook debe tener text (texto) y end (numero, segundos)');
+    else {
+      if (h.text.length > HOOK_MAX_CHARS) e.push(`hook.text tiene ${h.text.length} caracteres; maximo ${HOOK_MAX_CHARS}`);
+      if (h.end <= 0 || h.end > HOOK_MAX_SECONDS) e.push(`hook.end debe estar entre 0 y ${HOOK_MAX_SECONDS} s`);
+      else if (keepIndex(h.end - 0.01, ctx.keeps) < 0) e.push(`hook.end cae en zona cortada (${h.end}); muevelo a un tramo conservado`);
+      if (isObj(plan.title) && isNum(plan.title.start) && plan.title.start < h.end - 0.05) e.push(`title.start (${plan.title.start}) se solapa con el hook (termina en ${h.end}); empieza el titulo al terminar el hook`);
+    }
   }
 
   // ----- title y end (opcionales) -----
@@ -168,6 +212,7 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       if (!isObj(s)) return void e.push(`${tag}: debe ser un objeto`);
       if (!(SCENE_TYPES as readonly string[]).includes(s.type as string)) e.push(`${tag}: tipo desconocido "${String(s.type)}"`);
       else validateSceneData(s.type as SceneType, s.data, ctx).forEach((m) => e.push(`${tag} (${String(s.type)}): ${m}`));
+      if (s.transition !== undefined && !(SCENE_TRANSITIONS as readonly string[]).includes(s.transition as string)) e.push(`${tag}: transition debe ser una de: ${SCENE_TRANSITIONS.join(', ')}`);
       if (!isNum(s.start) || !isNum(s.end)) return void e.push(`${tag}: start y end deben ser numeros`);
       if (s.start >= s.end) return void e.push(`${tag}: start (${s.start}) debe ser menor que end (${s.end})`);
       if (s.start < 0 || s.end > ctx.duration) e.push(`${tag}: queda fuera del video (0..${ctx.duration})`);

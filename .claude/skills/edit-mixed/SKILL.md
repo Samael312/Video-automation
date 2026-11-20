@@ -18,6 +18,10 @@ description: Edita un video de la profe de inglés para TikTok mezclando la prof
   - "X no es Y" → `false-friend`
   - "X significa Y" → `translate`
   - idiom / phrasal verb con ejemplo → `example`
+  - "en vez de X, di Y" (mejora, no error) → `before-after`; error claro → `mistake`
+  - "en inglés británico X, en americano Y" / A o B → `versus`
+  - "escucha esto: ..." (reto de oído) → `listen`
+  - "3 palabras/errores/frases" → `countdown` (una sola escena) o un `item` por cada una
 - **Quiz de cierre (opcional)**: si la idea principal se puede preguntar ("¿qué significa X?"), un `quiz` de 3–4 s antes del CTA, con la respuesta revelándose cuando la profe la dice. Cuenta como una de las 3 escenas. Los distractores: la traducción falsa obvia (el falso amigo) y una plausible.
 - **Entre escenas, la profe con overlays**: labels con flecha para las palabras en inglés que no tienen escena y emojis para la emoción.
 - **Varias palabras/ideas** ("3 palabras…"): gancho de lista numerada + un `item` por cada una cuando la profe la nombra (el `item` puede ir antes de su escena).

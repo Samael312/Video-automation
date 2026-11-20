@@ -7,6 +7,10 @@ import {Mistake} from './mistake';
 import {Example} from './example';
 import {Pronounce} from './pronounce';
 import {Quiz} from './quiz';
+import {BeforeAfter} from './before-after';
+import {Versus} from './versus';
+import {Listen} from './listen';
+import {Countdown} from './countdown';
 
 export type TemplateProps<D> = {data: D; theme: Theme; durationInFrames: number};
 
@@ -18,4 +22,8 @@ export const TEMPLATES: Record<Exclude<SceneType, 'generated'>, React.FC<Templat
   example: Example,
   pronounce: Pronounce,
   quiz: Quiz,
+  'before-after': BeforeAfter,
+  versus: Versus,
+  listen: Listen,
+  countdown: Countdown,
 };

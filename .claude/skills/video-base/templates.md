@@ -10,7 +10,14 @@ Cada escena tapa a la profe con un fondo oscuro a pantalla completa; su voz y lo
 | `mistake` | ❌ frase mal tachada → ✅ frase bien | corrige un error típico | 3–4 s |
 | `example` | oración que aparece palabra por palabra, clave resaltada | da un ejemplo de uso | 3–5 s |
 | `quiz` | pregunta, 2–3 opciones, cuenta regresiva, respuesta | (cierre) quieres que el público piense y comente | 3–5 s |
+| `before-after` | frase normal ⬇ misma idea como nativo (no es un error) | mejora una frase: "en vez de very tired, di exhausted" | 3–4 s |
+| `versus` | dos opciones frente a frente con VS | compara dos formas (UK/US, formal/informal, A o B) | 2–4 s |
+| `listen` | ondas de sonido ("Escucha") y luego la frase se revela palabra a palabra | reto de oído: dice una frase rápida y luego la explica | 3–5 s |
+| `countdown` | lista numerada en cuenta regresiva (3, 2, 1) con título | "3 palabras/errores/frases": todos los ítems en una sola escena | 3–6 s |
 | `generated` | componente propio en `src/scenes/generated/` | ninguna de las anteriores sirve | 1–8 s |
+
+## Transición de la escena (`transition`, opcional)
+Campo de la escena, junto a `type`: `"transition": "wipe"`. Valores: `fade-slide` (defecto, aparece subiendo), `slide-left` / `slide-right` (entra y sale por el lado), `wipe` (círculo que se abre desde el centro), `zoom` (crece desde pequeña), `flip` (gira como una tarjeta). Varía entre escenas del mismo video (no repitas la misma dos veces seguidas) y usa `wipe` o `zoom` en revelaciones, `slide-*` en comparaciones (`versus`, `before-after`).
 
 ## `data` exacto (campos obligatorios en negrita en la descripción)
 
@@ -49,6 +56,30 @@ Cada escena tapa a la profe con un fondo oscuro a pantalla completa; su voz y lo
  "data": {"question": "¿Qué significa \"embarrassed\"?", "options": ["Embarazada", "Avergonzado", "Emocionado"], "answer": 1, "countdown": 2}}
 ```
 **question**, **options** (2 o 3), **answer** (índice desde 0); `countdown` 1–10 (default 3). La respuesta se revela en los últimos 1.5 s: haz coincidir ese momento con cuando la profe la dice.
+
+```json
+{"type": "before-after", "start": 6.0, "end": 9.5,
+ "data": {"before": "I'm very tired", "after": "I'm exhausted", "beforeLabel": "Normal", "afterLabel": "Nativo ✨"}}
+```
+**before**, **after**; las etiquetas son opcionales. A diferencia de `mistake`, aquí la frase de arriba no es un error: solo suena básica.
+
+```json
+{"type": "versus", "start": 6.0, "end": 9.0,
+ "data": {"left": "lift", "right": "elevator", "leftLabel": "Reino Unido", "rightLabel": "Estados Unidos"}}
+```
+**left**, **right**; etiquetas opcionales. No uses emojis de bandera (Chrome en Windows los dibuja como letras).
+
+```json
+{"type": "listen", "start": 3.0, "end": 7.0,
+ "data": {"phrase": "What are you up to", "hint": "¿Qué haces?"}}
+```
+**phrase**; `hint` opcional (traducción, sale al final). Las ondas suenan durante el primer 45 % y la frase se revela entre el 45 % y el 85 %: haz coincidir el reveal con cuando la profe la explica.
+
+```json
+{"type": "countdown", "start": 4.0, "end": 9.0,
+ "data": {"title": "3 palabras de Navidad", "items": ["stocking", "ornament", "wrapping paper"]}}
+```
+**items** (2 a 5 textos, en el orden en que los dice; se numeran de mayor a menor); `title` opcional. Los ítems entran repartidos de forma pareja: elige la duración para que coincida con el ritmo de la profe.
 
 ```json
 {"type": "generated", "start": 4.0, "end": 6.0,

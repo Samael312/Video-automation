@@ -22,6 +22,19 @@ export const quizPhase = (frame: number, fps: number, durationInFrames: number, 
   return {optionsShown, revealed, secondsLeft: revealed ? 0 : Math.max(0, Math.min(countdown, remaining))};
 };
 
+/** Cuantas de `n` palabras estan reveladas: empiezan al 45 % de la escena y terminan al 85 %. */
+export const revealWords = (frame: number, durationInFrames: number, n: number): number => {
+  if (n <= 0 || durationInFrames <= 0) return 0;
+  const p = (frame - durationInFrames * 0.45) / (durationInFrames * 0.4);
+  return Math.max(0, Math.min(n, Math.ceil(p * n)));
+};
+
+/** Cuantos de `n` items ya entraron: repartidos parejo en el primer 85 % de la escena (el primero en el frame 0). */
+export const itemsShown = (frame: number, durationInFrames: number, n: number): number => {
+  if (n <= 0 || durationInFrames <= 0) return 0;
+  return Math.max(0, Math.min(n, Math.floor((frame / (durationInFrames * 0.85)) * n) + 1));
+};
+
 /** Cuantas de `n` silabas estan iluminadas: se encienden una a una entre el 10 % y el 70 % de la escena. */
 export const litSyllables = (frame: number, durationInFrames: number, n: number): number => {
   if (n <= 0 || durationInFrames <= 0) return 0;

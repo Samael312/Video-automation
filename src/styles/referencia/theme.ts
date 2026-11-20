@@ -25,7 +25,7 @@ export const referencia: Theme = {
   highlight: '#FCF4B0',
   fonts: {serif: playfair.fontFamily, serifItalic: playfairI.fontFamily, sans: poppins.fontFamily},
   captionTop: 285,
-  captionFontSize: 25,
+  captionFontSize: 32, // antes 25: muy chico para TikTok en movil
   captionKaraoke: false, // Ela: frase entera en blanco (ela_1, ela_2, ela_3)
   keycap: '#4A90E2', // Ela: 1️⃣ 2️⃣ 3️⃣ azul (ela_2 4 s, ela_3 6 s)
   sceneBg: '#1c1712',

@@ -64,7 +64,7 @@ Transcribe, lee lo que dice la profe y detecta el formato. Te muestra la evidenc
 Sin escenas. Subtítulos rápidos, un label con flecha para cada palabra en inglés, otro con su traducción, un emoji por idea y zoom en las palabras clave. Ideal para videos cortos o cuando la profe actúa mucho.
 
 ### `/edit-motion` — las escenas explican
-Estilo de `media/reference/motion/m_1.mp4`: **bloques** de motion graphics a pantalla completa (3–8 s) intercalados con la profe en cámara. Dentro de cada bloque, un plano nuevo cada ~1 s: texto que aparece al ritmo de la voz, la palabra clave en cursiva con resaltador crema, emojis 3D grandes, listas, tachados, tarjetas tipo reproductor o móvil. La profe sale en el gancho, entre bloques (≥ 1 s) y en el cierre. Los emojis y textos salen de lo que ella dice; la referencia solo da el estilo. Ideal para gramática, reglas, pronunciación y listas de palabras. Para ver los 8 layouts: `npm run studio` → composición `MotionGallery`.
+Estilo de `media/reference/motion/m_1.mp4`: **bloques** de motion graphics a pantalla completa (3–8 s) intercalados con la profe en cámara. Dentro de cada bloque, un plano nuevo cada ~1 s: texto que aparece al ritmo de la voz, la palabra clave en cursiva con resaltador crema, emojis 3D grandes, listas, tachados, tarjetas tipo reproductor o móvil. La profe sale en el gancho, entre bloques (≥ 1 s) y en el cierre. Los emojis y textos salen de lo que ella dice; la referencia solo da el estilo. Ideal para gramática, reglas, pronunciación y listas de palabras. Para ver los 8 layouts: `npm run studio` → composición `MotionGallery`. Para ver las plantillas de escena (mixed): composición `SceneGallery`.
 
 ### `/edit-voice` — guion + nota de voz, todo motion
 Para videos **sin cámara**. Pon en `media/input/` dos archivos con el mismo nombre:
@@ -72,6 +72,13 @@ Para videos **sin cámara**. Pon en `media/input/` dos archivos con el mismo nom
 - `NOMBRE.m4a` (o `.mp3`, `.ogg`, `.opus`, `.wav`): la nota de voz leyéndolo, de una sola toma.
 
 `/edit-voice media/input/NOMBRE.m4a` convierte el audio en un video de fondo plano, limpia la voz, transcribe y **alinea con el guion**: el inglés queda escrito como en el guion y los tiempos salen de la voz. Si la voz no se parece al guion (menos de 70 % de coincidencia), se detiene y muestra las diferencias. Después arma bloques de motion seguidos de principio a fin (gancho y CTA incluidos), estilo `m_1`. Si un video con cámara trae `NOMBRE.txt` al lado, también se alinea con el guion.
+
+### `/edit-script` — genera los guiones
+No necesita video. Pídelo en lenguaje normal:
+- `/edit-script quiero hacer videos de temática navideña`
+- `/edit-script dame 10 guiones para 10 videos`
+
+Claude reparte la temática en subtemas y formatos distintos (vocabulario, error común, falso amigo, idiom, quiz...) y deja en `media/input/` un `NOMBRE.txt` por guion y un `PLAN_*.md` con gancho (3 variantes), estrategia, duración y caption de cada uno. Los guiones se escriben conociendo lo que la edición puede hacer (escenas, hook en pantalla, listas, quiz, etc.). Luego graba la nota de voz con el mismo nombre y usa `/edit-voice`.
 
 ### `/edit-mixed` — la profe cuenta, las escenas remarcan
 1 a 3 escenas en los momentos clave (traducción, falso amigo, ejemplo) y un **quiz** opcional al final. Entre escenas, labels y emojis. Ejemplo real: `public/ACTUALLY.edit.json`.
@@ -85,9 +92,18 @@ Para videos **sin cámara**. Pon en `media/input/` dos archivos con el mismo nom
 | `mistake` | ❌ frase mal tachada → ✅ frase bien |
 | `example` | oración palabra por palabra con la clave resaltada |
 | `quiz` | pregunta, opciones, cuenta regresiva y respuesta |
+| `before-after` | frase normal → misma idea como nativo |
+| `versus` | dos opciones frente a frente (UK/US, formal/informal) |
+| `listen` | reto de oído: ondas de sonido y la frase se revela |
+| `countdown` | lista numerada en cuenta regresiva (3, 2, 1) |
 | `generated` | una escena nueva que Claude programa para ese video |
 
 Durante una escena la voz y los subtítulos siguen; solo se tapa la imagen.
+
+### Transiciones y efectos
+- **Entrada/salida de cada escena** (`transition` en la escena): `fade-slide` (defecto), `slide-left`, `slide-right`, `wipe`, `zoom`, `flip`.
+- **Efecto en cada corte** (`cutFx` en el plan): `flash`, `shake` o `glitch`. Por defecto no hay.
+- **Zoom estilo jump-cut** (`zoom.mode: "punch"`) y **gancho** (`hook`): ver `video-base`.
 
 ### Otros elementos (sin tapar a la profe)
 | Elemento | Qué muestra | Ideal para |

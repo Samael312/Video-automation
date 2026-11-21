@@ -165,15 +165,15 @@ function hasSession(dir, home) {
 
 /**
  * Elige la carpeta de configuracion de Claude Code con sesion iniciada, por prioridad:
- * 1) CLAUDE_CONFIG_DIR ya definida en el entorno, 2) ~/.claude-personal, 3) ~/.claude (la normal), 4) ~/.claude-work.
+ * 1) CLAUDE_CONFIG_DIR ya definida en el entorno, 2) ~/.claude-work (claude-w), 3) ~/.claude-personal, 4) ~/.claude (la normal).
  * Devuelve {dir, profile}; dir es null si no hace falta definirla (o no se encontro ninguna sesion).
  */
 function detectClaudeConfig(home = os.homedir(), env = process.env) {
   if (env.CLAUDE_CONFIG_DIR) return {dir: env.CLAUDE_CONFIG_DIR, profile: 'entorno'};
   const candidatos = [
+    ['work', path.join(home, '.claude-work')],
     ['personal', path.join(home, '.claude-personal')],
     ['normal', path.join(home, '.claude')],
-    ['work', path.join(home, '.claude-work')],
   ];
   for (const [profile, dir] of candidatos) {
     if (hasSession(dir, home)) return {dir: profile === 'normal' ? null : dir, profile};

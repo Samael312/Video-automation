@@ -176,6 +176,8 @@ async function mostrarCarpeta(nombre) {
 
   const lista = $('guiones');
   lista.replaceChildren();
+  const extra = $('carpeta-extra');
+  extra.replaceChildren(panelGenerarEnPlan(datos.name, () => mostrarCarpeta(datos.name)));
   datos.guiones.forEach((g, i) => {
     const info = g.info;
     const fase = (g.estado && g.estado.fase) || 'sin_grabar';
@@ -192,7 +194,7 @@ async function mostrarCarpeta(nombre) {
       ),
     );
     abrir.addEventListener('click', () => abrirVisor(i));
-    const pie = el('div', {className: 'guion-pie'}, badgeFase(fase), NOMBRE_OK.test(g.nombre) ? el('a', {className: 'secundario pequeno enlace', href: rutaVideo(datos.name, g.nombre), textContent: 'Editar video'}) : null);
+    const pie = el('div', {className: 'guion-pie'}, badgeFase(fase), NOMBRE_OK.test(g.nombre) ? el('a', {className: 'secundario pequeno enlace', href: `${rutaVideo(datos.name, g.nombre)}?m=editar`, textContent: 'Editar video'}) : null);
     lista.append(el('article', {className: 'guion-tarjeta'}, abrir, pie));
     if (!orden.hidden) orden.append(el('button', {type: 'button', className: 'chip-orden', textContent: `${i + 1}. ${g.nombre}`, onclick: () => abrirVisor(i)}));
   });
@@ -223,7 +225,7 @@ function abrirVisor(i) {
   $('visor-estado').replaceChildren(badgeFase(faseV));
   const editar = $('visor-editar');
   editar.hidden = !NOMBRE_OK.test(g.nombre);
-  editar.href = rutaVideo(carpetaActual.name, g.nombre);
+  editar.href = `${rutaVideo(carpetaActual.name, g.nombre)}?m=editar`;
   $('visor-pos').textContent = `${i + 1} / ${carpetaActual.guiones.length}`;
   $('visor-prev').disabled = i === 0;
   $('visor-next').disabled = i === carpetaActual.guiones.length - 1;
@@ -258,6 +260,7 @@ function abrirVisor(i) {
     }
     if (info.notas) lateral.append(bloque('Notas', el('p', {textContent: info.notas})));
   }
+  if (NOMBRE_OK.test(carpetaActual.name) && NOMBRE_OK.test(g.nombre)) lateral.append(panelRetroGuion(carpetaActual.name, g.nombre));
   $('visor').hidden = false;
   document.body.classList.add('sin-scroll');
   $('visor-cerrar').focus();
@@ -280,14 +283,15 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowRight') abrirVisor(visorIdx + 1);
 });
 
-// ---------- rutas (#/ y #/p/NOMBRE) ----------
+// ---------- rutas ----------
+// #/ y #/p/PLAN = Guiones · #/desde-guion · #/editar · #/audio · #/p/PLAN/v/NOMBRE[?m=editar|audio|guion] · #/videos
 async function ruta() {
   cerrarVisor();
   salirVideo();
-  const h = location.hash;
-  let mv = /^#\/p\/([^/]+)\/v\/([^/]+)$/.exec(h);
-  let m = mv ? null : /^#\/p\/([^/]+)$/.exec(h);
-  const lib = h === '#/videos';
+  const [camino, query = ''] = location.hash.split('?');
+  const modoQ = new URLSearchParams(query).get('m');
+  let mv = /^#\/p\/([^/]+)\/v\/([^/]+)$/.exec(camino);
+  let m = mv ? null : /^#\/p\/([^/]+)$/.exec(camino);
   try {
     if (mv) mv = [mv[0], decodeURIComponent(mv[1]), decodeURIComponent(mv[2])];
     if (m) m = [m[0], decodeURIComponent(m[1])];
@@ -295,20 +299,30 @@ async function ruta() {
     location.hash = '#/';
     return;
   }
-  $('vista-inicio').hidden = Boolean(mv || m || lib);
+  const modoVideo = ['editar', 'audio', 'guion'].includes(modoQ) ? modoQ : null;
+  let seccion = 'guiones';
+  if (camino === '#/videos') seccion = 'videos';
+  else if (camino === '#/desde-guion') seccion = 'desde';
+  else if (camino === '#/editar') seccion = 'editar';
+  else if (camino === '#/audio') seccion = 'audio';
+  else if (mv) seccion = modoVideo === 'audio' ? 'audio' : modoVideo === 'guion' ? 'desde' : 'editar';
+  $('vista-inicio').hidden = Boolean(mv || m || seccion !== 'guiones');
   $('vista-carpeta').hidden = !m;
   $('vista-video').hidden = !mv;
-  $('vista-videos').hidden = !lib;
-  const enVideos = lib;
-  const enPlanes = !lib;
-  $('nav-planes').removeAttribute('aria-current');
-  $('nav-videos').removeAttribute('aria-current');
-  if (enPlanes) $('nav-planes').setAttribute('aria-current', 'page');
-  if (enVideos) $('nav-videos').setAttribute('aria-current', 'page');
+  $('vista-videos').hidden = seccion !== 'videos';
+  $('vista-desde').hidden = camino !== '#/desde-guion';
+  $('vista-elegir').hidden = !(camino === '#/editar' || camino === '#/audio');
+  for (const s of ['guiones', 'desde', 'editar', 'audio', 'videos']) {
+    const n = $(`nav-${s}`);
+    if (s === seccion) n.setAttribute('aria-current', 'page');
+    else n.removeAttribute('aria-current');
+  }
   window.scrollTo(0, 0);
-  if (mv) await mostrarVideo(mv[1], mv[2]);
+  if (mv) await mostrarVideo(mv[1], mv[2], modoVideo);
   else if (m) await mostrarCarpeta(m[1]);
-  else if (lib) await mostrarVideos();
+  else if (seccion === 'videos') await mostrarVideos();
+  else if (seccion === 'desde') await mostrarDesdeGuion();
+  else if (seccion === 'editar' || seccion === 'audio') mostrarElegir(seccion);
   else await cargarPlanes();
 }
 window.addEventListener('hashchange', ruta);

@@ -107,10 +107,10 @@ function pasoDe(fase) {
   return a.video ? 5 : a.preview ? 3 : a.entrada ? 1 : 0;
 }
 
-async function mostrarVideo(plan, nombre) {
+async function mostrarVideo(plan, nombre, modo) {
   salirVideo();
   const token = ++tokenW;
-  W = {plan, nombre, token, estado: null, log: [], archivos: {}, fuente: null, trabajoId: null, trabajoTipo: null, estilo: null, tipoLocal: null, req: [], recom: null, recomendando: false, mensaje: '', porcentaje: null, ultimoPaso: null, xhr: null, nodos: {}, errCount: 0, caption: null};
+  W = {plan, nombre, modo: ['editar', 'audio', 'guion'].includes(modo) ? modo : null, token, estado: null, log: [], archivos: {}, fuente: null, trabajoId: null, trabajoTipo: null, estilo: null, tipoLocal: null, req: [], recom: null, recomendando: false, mensaje: '', porcentaje: null, ultimoPaso: null, xhr: null, nodos: {}, errCount: 0, caption: null};
   const cont = $('video-cont');
   cont.replaceChildren(el('p', {className: 'vacio', textContent: 'Cargando…'}));
   const [r, rq] = await Promise.all([pedir(`/api/video/${enc(plan)}/${enc(nombre)}`), pedir('/api/requisitos')]);
@@ -163,7 +163,7 @@ function dibujar() {
   W.nodos.panel = el('div', {className: 'video-panel'});
   cont.replaceChildren(
     el('a', {className: 'volver', href: `#/p/${enc(W.plan)}`, textContent: `← ${W.plan}`}),
-    el('header', {className: 'cab-video'}, el('span', {className: 'insignia', textContent: '🎬 Editar video'}), el('h1', {textContent: W.nombre})),
+    el('header', {className: 'cab-video'}, el('span', {className: 'insignia', textContent: W.modo === 'audio' ? '🔊 Audio a video' : W.modo === 'guion' ? '🎙️ Video desde guion' : '🎬 Editar video'}), el('h1', {textContent: W.nombre})),
     W.nodos.pasos,
     err,
     W.nodos.panel,
@@ -194,7 +194,8 @@ function pintar() {
   W.nodos.barra = null;
   W.nodos.recom = null;
   let panel;
-  if (fase === 'sin_grabar' || fase === 'subido') panel = panelSubir();
+  if (W.modo === 'guion' && (fase === 'sin_grabar' || fase === 'subido')) panel = panelGuionPendiente();
+  else if (fase === 'sin_grabar' || fase === 'subido') panel = panelSubir();
   else if (FASES_CURSO.includes(fase)) panel = panelCurso();
   else if (fase === 'revision') panel = panelRevision();
   else if (fase === 'listo') panel = panelListo();
@@ -316,7 +317,7 @@ function logDetalles() {
 
 // ---------- panel: subir + estilo ----------
 function esAudio() {
-  return (W.tipoLocal || (W.estado.entrada && W.estado.entrada.tipo)) === 'audio';
+  return W.modo === 'audio' || W.modo === 'guion' || (W.tipoLocal || (W.estado.entrada && W.estado.entrada.tipo)) === 'audio';
 }
 
 function panelSubir() {
@@ -334,14 +335,15 @@ function panelSubir() {
 
   // 1. subir
   const entrada = W.estado.entrada;
-  const input = el('input', {type: 'file', className: 'oculto', accept: EXT_OK.map((e) => `.${e}`).join(',')});
+  const extPermitidas = W.modo === 'audio' ? EXT_AUDIO : W.modo === 'editar' ? EXT_OK.filter((e) => !EXT_AUDIO.includes(e)) : EXT_OK;
+  const input = el('input', {type: 'file', className: 'oculto', accept: extPermitidas.map((e) => `.${e}`).join(',')});
   input.tabIndex = -1;
   const zona = conAttr(el('div', {className: 'zona', tabIndex: 0}), {role: 'button', 'aria-label': 'Elegir o arrastrar tu grabación'});
-  const zonaTxt = el('p', {className: 'zona-txt', textContent: fase === 'subido' ? 'Cambiar la grabación' : 'Arrastra tu grabación aquí'});
+  const zonaTxt = el('p', {className: 'zona-txt', textContent: fase === 'subido' ? (W.modo === 'audio' ? 'Cambiar el audio' : 'Cambiar la grabación') : W.modo === 'audio' ? 'Arrastra el audio de la profe aquí' : 'Arrastra el video de la profe aquí'});
   zona.append(
     el('span', {className: 'zona-icono', textContent: '⬆'}),
     zonaTxt,
-    el('p', {className: 'zona-sub', textContent: 'o haz clic para elegir un archivo · mov, mp4, m4v, m4a, mp3, wav, ogg, opus'}),
+    el('p', {className: 'zona-sub', textContent: `o haz clic para elegir un archivo · ${extPermitidas.join(', ')}`}),
     input,
   );
   const barra = conAttr(el('div', {className: 'barra-prog', hidden: true}, el('span')), {role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-valuenow': '0', 'aria-label': 'Progreso de la subida'});
@@ -374,7 +376,7 @@ function panelSubir() {
   cancelarSub.addEventListener('click', () => W.xhr && W.xhr.abort());
 
   const ya = fase === 'subido' && entrada ? el('p', {className: 'ya-subido'}, '✅ Ya subiste ', el('strong', {textContent: entrada.archivo || 'tu archivo'}), entrada.bytes ? ` (${mb(entrada.bytes)})` : '') : null;
-  frag.append(el('section', {className: 'panel video-sec'}, el('h2', {textContent: '1. Sube tu grabación'}), ya, zona, barra, subEstado, cancelarSub));
+  frag.append(el('section', {className: 'panel video-sec'}, el('h2', {textContent: W.modo === 'audio' ? '1. Sube el audio de la profe' : '1. Sube el video de la profe'}), ya, zona, barra, subEstado, cancelarSub));
 
   // 2. estilo
   W.nodos.estilos = el('div', {className: 'estilos'});
@@ -411,10 +413,12 @@ function panelSubir() {
 
 function pintarEstilos() {
   const audio = esAudio();
+  const sinVoz = !audio && W.modo === 'editar';
   if (audio) W.estilo = 'voice';
+  else if (sinVoz && W.estilo === 'voice') W.estilo = null;
   const grupo = conAttr(el('div', {className: 'estilo-grupo'}), {role: 'radiogroup', 'aria-label': 'Estilo del video'});
   for (const s of ESTILOS_UI) {
-    const bloqueado = audio && s.id !== 'voice';
+    const bloqueado = audio ? s.id !== 'voice' : sinVoz && s.id === 'voice';
     const radio = el('input', {type: 'radio', name: 'estilo', value: s.id, checked: W.estilo === s.id, disabled: bloqueado});
     radio.addEventListener('change', () => {
       W.estilo = s.id;
@@ -423,7 +427,7 @@ function pintarEstilos() {
     grupo.append(el('label', {className: `estilo-card${bloqueado ? ' desactivada' : ''}`}, radio, el('span', {className: 'estilo-in'}, el('strong', {textContent: s.titulo}), el('span', {textContent: s.texto}))));
   }
   const nodos = [grupo];
-  if (audio) nodos.push(el('p', {className: 'tenue nota-audio', textContent: 'Tu archivo es solo audio, así que el estilo es "Solo voz": las escenas se crean con motion graphics. Los demás estilos necesitan video con la profe en cámara.'}));
+  if (audio) nodos.push(el('p', {className: 'tenue nota-audio', textContent: 'Con audio el estilo es "Solo voz": las escenas se crean con motion graphics. Los demás estilos necesitan video con la profe en cámara.'}));
   W.nodos.estilos.replaceChildren(...nodos);
   if (W.nodos.btnRec) W.nodos.btnRec.hidden = audio;
   actualizarEmpezar();
@@ -450,7 +454,7 @@ function pintarRecom() {
   } else if (W.recom) {
     const e = ESTILOS_UI.find((x) => x.id === W.recom.estilo);
     const usar = el('button', {type: 'button', className: 'primario pequeno', textContent: 'Usar esta'});
-    usar.disabled = !e || (esAudio() && e.id !== 'voice');
+    usar.disabled = !e || (esAudio() && e.id !== 'voice') || (!esAudio() && W.modo === 'editar' && e.id === 'voice');
     usar.addEventListener('click', () => {
       W.estilo = W.recom.estilo;
       pintarEstilos();
@@ -464,8 +468,9 @@ function subir(file) {
   setErr('');
   const ext = (file.name.split('.').pop() || '').toLowerCase();
   const s = W.nodos.subida;
-  if (!file.name.includes('.') || !EXT_OK.includes(ext)) {
-    setErr(`Ese formato no sirve. Usa uno de estos: ${EXT_OK.join(', ')}.`);
+  const permitidas = W.modo === 'audio' ? EXT_AUDIO : W.modo === 'editar' ? EXT_OK.filter((e) => !EXT_AUDIO.includes(e)) : EXT_OK;
+  if (!file.name.includes('.') || !permitidas.includes(ext)) {
+    setErr(`Ese formato no sirve. Usa uno de estos: ${permitidas.join(', ')}.`);
     return;
   }
   W.tipoLocal = EXT_AUDIO.includes(ext) ? 'audio' : 'video';
@@ -528,6 +533,11 @@ function subir(file) {
   xhr.send(file);
 }
 
+// ---------- panel: video desde guion que aun no arranco ----------
+function panelGuionPendiente() {
+  return el('section', {className: 'panel video-sec'}, el('h2', {textContent: 'Este video todavía no se ha empezado'}), el('p', {className: 'tenue', textContent: 'Elige el guion y la voz en la sección "Video desde guion" para empezar.'}), el('div', {className: 'acciones'}, el('a', {className: 'primario enlace', href: '#/desde-guion', textContent: 'Ir a Video desde guion'})));
+}
+
 // ---------- panel: en curso ----------
 function panelCurso() {
   const fase = W.estado.fase;
@@ -554,35 +564,25 @@ function panelRevision() {
   const img = el('img', {className: 'preview', src: urlArchivo(W.plan, W.nombre, 'preview', `?v=${v}`), alt: 'Vista previa de cómo quedará el video'});
   img.addEventListener('error', () => img.replaceWith(el('p', {className: 'tenue', textContent: 'No se pudo cargar la vista previa.'})));
   const aprobar = el('button', {type: 'button', className: 'primario', textContent: 'Aprobar y renderizar'});
-  const ta = el('textarea', {id: 'cambios-texto', className: 'cambios-texto', maxLength: 1500, rows: 4, placeholder: 'Por ejemplo: cambia el gancho, quita la música, haz la letra más grande…'});
-  const cont = el('span', {className: 'contador-txt', textContent: '0 / 1500'});
-  const enviar = el('button', {type: 'button', className: 'secundario', textContent: 'Enviar cambios', disabled: true});
-  ta.addEventListener('input', () => {
-    cont.textContent = `${ta.value.length} / 1500`;
-    enviar.disabled = !ta.value.trim();
-  });
   aprobar.addEventListener('click', async () => {
-    if (await lanzar(rutaAccion('aprobar'), {}, 'renderizando', [aprobar, enviar, ta])) pintar();
-  });
-  enviar.addEventListener('click', async () => {
-    const texto = ta.value.trim();
-    if (!texto) return;
-    if (await lanzar(rutaAccion('cambios'), {texto}, 'planificando', [aprobar, enviar, ta])) pintar();
+    if (await lanzar(rutaAccion('aprobar'), {}, 'renderizando', [aprobar])) pintar();
   });
   const cambios = Array.isArray(e.cambios) ? e.cambios : [];
   return el(
     'div',
     {},
     el('section', {className: 'panel video-sec'}, el('h2', {textContent: 'Revisa cómo quedaría'}), el('div', {className: 'preview-caja'}, img), e.resumen ? el('p', {className: 'resumen', textContent: e.resumen}) : null, el('div', {className: 'acciones'}, aprobar)),
-    el(
-      'section',
-      {className: 'panel video-sec'},
-      el('h2', {textContent: 'Pídele cambios en tus palabras'}),
-      el('label', {className: 'etiqueta', htmlFor: 'cambios-texto', textContent: '¿Qué quieres cambiar?'}),
-      ta,
-      el('div', {className: 'cambios-pie'}, cont, enviar),
-      cambios.length ? el('div', {className: 'cambios-prev'}, el('h3', {textContent: 'Cambios que ya pediste'}), el('ul', {}, ...cambios.map((c) => el('li', {}, el('span', {textContent: c.texto}), c.en ? el('small', {textContent: ` · ${fecha(c.en)}`}) : null)))) : null,
-    ),
+    panelRetro({
+      titulo: 'Pídele cambios en tus palabras',
+      placeholder: 'Por ejemplo: cambia el gancho, quita la música, haz la letra más grande…',
+      boton: 'Pedir cambios',
+      historial: cambios,
+      enviar: async (texto) => {
+        if (!(await lanzar(rutaAccion('cambios'), {texto}, 'planificando', [aprobar]))) return {ok: false, error: (W && W.nodos.err && W.nodos.err.textContent) || 'No se pudo pedir los cambios.'};
+        pintar();
+        return {ok: true};
+      },
+    }),
   );
 }
 

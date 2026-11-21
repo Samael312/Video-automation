@@ -54,6 +54,12 @@ Archivo `media/input/<PLAN>/<NOMBRE>.estado.json` (escritura atómica). `<PLAN>`
 | `GET /api/trabajos/<ID>/progreso` | | SSE (ver eventos) |
 | `GET /api/archivo/<PLAN>/<NOMBRE>/<tipo>[?descargar=1]` | | archivo (`entrada\|preview\|video\|caption`) con `Range` |
 | `GET /api/videos` | | `[{plan, nombre, titulo, actualizado}]` de los videos `listo` |
+| `GET /api/voces` | | `[{id, nombre, disponible, motivo?}]` (`laura`, `profe`; `motivo` explica por qué no está disponible, p. ej. falta `ELEVENLABS_VOICE_ID_LAURA` en `.env`; nunca incluye claves) |
+| `POST /api/guiones/<PLAN>` | `{tema?, cantidad?}` (tema ≤ 300, cantidad 1–12, defecto 5) | `202 {trabajo}`: Claude (edit-script) **añade** guiones a un plan existente (404 si no existe). No confundir con `POST /api/guiones` (plan nuevo: `tema, cantidad, largo`, responde `202 {request}` y usa `/api/guiones/progreso`) |
+| `POST /api/guiones/<PLAN>/<NOMBRE>/cambios` | `{texto}` (≤ 1500 caracteres) | `202 {trabajo}`: Claude modifica `<NOMBRE>.txt` (y su entrada en plan.json/PLAN.md); `fin ok:false` si el guion no cambió |
+| `POST /api/video-desde-guion/<PLAN>/<NOMBRE>/empezar` | `{voz}` (`laura`; `profe` → 409 «todavía no está lista»; otra → 400) | `202 {trabajo}`: genera la voz con ElevenLabs desde el guion, la guarda como `media/input/<PLAN>/<NOMBRE>.mp3` (reemplaza otra entrada y lo intermedio), pone entrada `audio` + estilo `voice` y encadena preparación + planificación `edit-voice` como `empezar`. 400 si la voz no está configurada o el guion está vacío/supera 5000 caracteres |
+Los trabajos de guiones (`tipo` `guion-cambios` / `guion-plan`) emiten `progreso`, `accion` y `fin` por `GET /api/trabajos/<ID>/progreso`; comparten el candado global y se cancelan con `POST /api/cancelar`. Cancelar mientras se genera la voz espera a que termine la petición a ElevenLabs y descarta el audio.
+
 Errores: `{error: "texto en español"}` con 400/404/409 (ya hay un trabajo pesado en curso: incluye `trabajo`) / 413.
 
 ## Eventos SSE (`data: <json>`)

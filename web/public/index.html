@@ -14,17 +14,21 @@
   <div class="blob blob-a" aria-hidden="true"></div>
   <div class="blob blob-b" aria-hidden="true"></div>
 
-  <nav class="barra">
-    <div class="barra-in">
-      <a class="marca-link" href="#/">
-        <span class="logo"><img src="/logo.png" alt="" width="32" height="32" /></span>
-        <span class="marca">tuprofemaria</span>
-      </a>
-      <a class="nav-link" id="nav-planes" href="#/">Mis planes</a>
-      <a class="nav-link" id="nav-videos" href="#/videos">Mis videos</a>
-    </div>
-  </nav>
-
+  <div class="app">
+  <aside class="menu" aria-label="Menú principal">
+    <a class="marca-link" href="#/">
+      <span class="logo"><img src="/logo.png" alt="" width="32" height="32" /></span>
+      <span class="marca">tuprofemaria</span>
+    </a>
+    <nav class="menu-lista">
+      <a class="menu-item" id="nav-guiones" href="#/"><span class="menu-ico" aria-hidden="true">📝</span>Guiones</a>
+      <a class="menu-item" id="nav-desde" href="#/desde-guion"><span class="menu-ico" aria-hidden="true">🎙️</span>Video desde guion</a>
+      <a class="menu-item" id="nav-editar" href="#/editar"><span class="menu-ico" aria-hidden="true">🎬</span>Editar video</a>
+      <a class="menu-item" id="nav-audio" href="#/audio"><span class="menu-ico" aria-hidden="true">🔊</span>Audio a video</a>
+      <a class="menu-item menu-aparte" id="nav-videos" href="#/videos"><span class="menu-ico" aria-hidden="true">📚</span>Mis videos</a>
+    </nav>
+  </aside>
+  <main class="principal">
   <div id="aviso" class="aviso" hidden></div>
 
   <!-- ===== inicio: formulario + planes (carpetas) ===== -->
@@ -90,12 +94,19 @@
     <div id="carpeta-orden" class="orden" hidden></div>
     <div id="plan-md" class="panel plan" hidden></div>
     <div id="guiones" class="rejilla"></div>
+    <div id="carpeta-extra"></div>
   </div>
 
   <!-- ===== asistente: editar un video ===== -->
   <div class="contenedor" id="vista-video" hidden>
     <div id="video-cont"></div>
   </div>
+
+  <!-- ===== video desde guion (seccion 2) ===== -->
+  <div class="contenedor" id="vista-desde" hidden></div>
+
+  <!-- ===== elegir guion para editar video / audio a video (secciones 3 y 4) ===== -->
+  <div class="contenedor" id="vista-elegir" hidden></div>
 
   <!-- ===== biblioteca de videos terminados ===== -->
   <div class="contenedor" id="vista-videos" hidden>
@@ -139,7 +150,11 @@
     </div>
   </div>
 
+  </main>
+  </div>
+
   <script src="/video.js"></script>
+  <script src="/secciones.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>

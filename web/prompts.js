@@ -264,6 +264,7 @@ module.exports = {
   PERMITIDAS,
   DENEGADAS,
   parseSalidaClaude,
+  limpiarCambios,
   traducirError,
   parseLineaPipeline,
 };

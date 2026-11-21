@@ -11,7 +11,9 @@ const files = require('./files');
 const prompts = require('./prompts');
 const requisitos = require('./requisitos');
 const jobs = require('./jobs');
-const {crearFlujo, REQ_PIPELINE} = require('./flujo');
+const {crearFlujo, REQ_PIPELINE, SUFIJOS_PREPARACION} = require('./flujo');
+const {crearTrabajosGuion} = require('./guionesjob');
+const voces = require('./voces');
 
 const ROOT = path.join(__dirname, '..');
 const INPUT = path.join(ROOT, 'media', 'input');
@@ -24,9 +26,6 @@ const RE_NOMBRE = /^[A-Za-z0-9_-]{1,120}$/;
 const RE_ESTATICO = /^\/[A-Za-z0-9_.-]+\.(js|css|png|svg|ico|html)$/;
 const TIPOS_ESTATICO = {'.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon', '.html': 'text/html; charset=utf-8'};
 
-// Archivos intermedios de un video que dejan de valer si se sube otro archivo (solo estos nombres, nunca comodines).
-const SUFIJOS_PREPARACION = ['.mp4', '.raw.wav', '.transcript.json', '.transcript.whisper.json', '.cuts.json', '.edit.json', '.matte.json', '.matte.webm'];
-
 const gestor = new jobs.Gestor();
 let ultimoGuiones = null; // id del ultimo trabajo de guiones (para GET /api/guiones/progreso)
 
@@ -34,7 +33,14 @@ let ultimoGuiones = null; // id del ultimo trabajo de guiones (para GET /api/gui
 const revisarRequisitos = () => requisitos.comprobarRequisitos(ROOT, process.env);
 const faltantes = async (ids) => revisarRequisitos().filter((r) => !r.ok && ids.includes(r.id));
 
-const flujo = crearFlujo({root: ROOT, inputDir: INPUT, gestor, faltantes});
+const flujo = crearFlujo({root: ROOT, inputDir: INPUT, gestor, faltantes, voces});
+const trabajosGuion = crearTrabajosGuion({root: ROOT, inputDir: INPUT, gestor, faltantes});
+
+/** Responde con el resultado de una operacion de flujo: 202 {trabajo} | 200 {estado} | error. */
+const responder = (res, r) => {
+  if (!r.ok) return send(res, r.status || 400, {error: r.error, ...(r.trabajo ? {trabajo: r.trabajo} : {}), ...(r.faltantes ? {faltantes: r.faltantes} : {})});
+  return r.trabajo ? send(res, 202, {trabajo: r.trabajo}) : send(res, 200, {estado: r.estado});
+};
 
 // ---------- generar guiones ----------
 const ARGS_GUIONES = ['-p', '--output-format', 'stream-json', '--verbose', '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Write,Edit,Glob,Grep', '--disallowedTools', prompts.DENEGADAS.join(',')];
@@ -225,6 +231,22 @@ const server = http.createServer(async (req, res) => {
       await generarGuiones(built.request);
       return send(res, 202, {request: built.request});
     }
+    m = /^\/api\/guiones\/([^/]+)$/.exec(p);
+    if (req.method === 'POST' && m && m[1] !== 'progreso') {
+      const cuerpo = await readJson(req);
+      return responder(res, await trabajosGuion.masGuiones(decodeURIComponent(m[1]), cuerpo));
+    }
+    m = /^\/api\/guiones\/([^/]+)\/([^/]+)\/cambios$/.exec(p);
+    if (req.method === 'POST' && m) {
+      const cuerpo = await readJson(req);
+      return responder(res, await trabajosGuion.cambiosGuion(decodeURIComponent(m[1]), decodeURIComponent(m[2]), cuerpo.texto));
+    }
+    if (req.method === 'GET' && p === '/api/voces') return send(res, 200, voces.listarVoces(ROOT));
+    m = /^\/api\/video-desde-guion\/([^/]+)\/([^/]+)\/empezar$/.exec(p);
+    if (req.method === 'POST' && m) {
+      const cuerpo = await readJson(req);
+      return responder(res, await flujo.empezarDesdeGuion(decodeURIComponent(m[1]), decodeURIComponent(m[2]), cuerpo.voz));
+    }
     if (req.method === 'GET' && p === '/api/guiones/progreso') {
       const job = gestor.obtener(ultimoGuiones);
       if (!job) return send(res, 204, '');
@@ -263,8 +285,7 @@ const server = http.createServer(async (req, res) => {
         : accion === 'cambios' ? await flujo.cambios(plan, nombre, cuerpo.texto)
         : accion === 'aprobar' ? await flujo.aprobar(plan, nombre)
         : await flujo.reintentar(plan, nombre);
-      if (!r.ok) return send(res, r.status || 400, {error: r.error, ...(r.trabajo ? {trabajo: r.trabajo} : {}), ...(r.faltantes ? {faltantes: r.faltantes} : {})});
-      return r.trabajo ? send(res, 202, {trabajo: r.trabajo}) : send(res, 200, {estado: r.estado});
+      return responder(res, r);
     }
     m = /^\/api\/subidas\/([^/]+)\/([^/]+)$/.exec(p);
     if (req.method === 'POST' && m) {

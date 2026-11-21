@@ -15,6 +15,10 @@ const REQ_PIPELINE = ['claude', 'venv', 'ffmpeg', 'ffprobe', 'hf_token', 'deepfi
 const REQ_RENDER = ['claude', 'venv', 'ffmpeg', 'node_modules'];
 const REQ_CLAUDE = ['claude'];
 
+// Archivos intermedios de un video que dejan de valer si cambia el audio/video de entrada (solo estos nombres, nunca comodines).
+const SUFIJOS_PREPARACION = ['.mp4', '.raw.wav', '.transcript.json', '.transcript.whisper.json', '.cuts.json', '.edit.json', '.matte.json', '.matte.webm'];
+const EXT_ENTRADA = ['mov', 'mp4', 'm4v', 'm4a', 'mp3', 'wav', 'ogg', 'opus'];
+
 const err = (status, error, extra = {}) => ({ok: false, status, error, ...extra});
 
 /** Linea de registro para eventos de Claude que interesan al "Ver registro" (herramientas y errores de herramienta). */
@@ -53,6 +57,7 @@ function crearFlujo(opts) {
     faltantes = async () => [], // (ids) => [{id, titulo, arreglo}] de los requisitos que fallan
     uuid = () => crypto.randomUUID(),
     npm = 'npm',
+    voces = require('./voces'), // {listarVoces(root, env), generarVoz({...})}
   } = opts;
 
   const pub = (f) => path.join(root, 'public', f);
@@ -165,6 +170,7 @@ function crearFlujo(opts) {
   }
 
   function lanzar(tipo, plan, nombre, pesado, fn, faseSiCancela) {
+    const faseCancela = () => (typeof faseSiCancela === 'function' ? faseSiCancela() : faseSiCancela);
     const job = gestor.crear({tipo, plan, nombre, pesado});
     const c = ctx(job, plan, nombre);
     (async () => {
@@ -180,7 +186,7 @@ function crearFlujo(opts) {
       }
       if (job.cancelado) {
         try {
-          c.estado({fase: faseSiCancela, mensaje: 'Cancelado', trabajo: null});
+          c.estado({fase: faseCancela(), mensaje: 'Cancelado', trabajo: null});
         } catch {
           /* ignorado */
         }
@@ -225,18 +231,67 @@ function crearFlujo(opts) {
     const p = await previo(plan, nombre, {req: REQ_PIPELINE, fases: ['subido', 'error', 'necesita_accion', 'interrumpido', 'revision', 'listo'], validar});
     if (!p.ok) return p;
     const e = p.estado;
+    return lanzar('empezar', plan, nombre, true, (job, c) => cuerpoEmpezar(job, c, plan, nombre, e, estilo), 'subido');
+  }
+
+  /** Cuerpo comun de "empezar": prepara el audio/video y deja a Claude armar el plan hasta el preview. */
+  async function cuerpoEmpezar(job, c, plan, nombre, e, estilo) {
+    c.estado({estilo, error: null, accion: null, resumen: '', trabajo: job.id});
+    if (!(await preparar(job, c, plan, nombre, e))) return;
+    c.estado({fase: 'planificando', mensaje: 'Claude está armando el plan de edición…', trabajo: job.id});
+    c.progreso('Claude está armando el plan de edición…');
+    const sessionId = uuid();
+    const prompt = prompts.promptPlanificar({plan, nombre, archivo: e.entrada.archivo, estilo});
+    const r = await ejecutarClaude(job, c, prompts.argsClaude({sessionId}), prompt);
+    if (job.cancelado) return;
+    if (r.falta) return c.estado({fase: 'error', error: r.falta, trabajo: null});
+    await revisar(plan, nombre, c, r.run, r.salida, sessionId);
+  }
+
+  /** Video desde un guion: genera la voz (ElevenLabs), la guarda como entrada de audio y sigue como "empezar" con estilo voice. */
+  async function empezarDesdeGuion(plan, nombre, voz) {
+    if (voz === 'profe') return err(409, 'La voz de la profe todavía no está lista.');
+    if (voz !== 'laura') return err(400, 'Voz no válida.');
+    const p = await previo(plan, nombre, {req: REQ_PIPELINE, fases: ['sin_grabar', 'subido', 'error', 'necesita_accion', 'interrumpido', 'revision', 'listo']});
+    if (!p.ok) return p;
+    const disp = voces.listarVoces(root, env()).find((v) => v.id === voz);
+    if (!disp || !disp.disponible) return err(400, (disp && disp.motivo) || 'Esa voz no está disponible.');
+    let texto;
+    try {
+      texto = fs.readFileSync(path.join(inputDir, plan, `${nombre}.txt`), 'utf8').trim();
+    } catch {
+      return err(404, 'No encuentro ese guion.');
+    }
+    if (!texto) return err(400, 'El guion está vacío.');
+    if (texto.length > voces.MAX_CHARS) return err(400, `El guion es demasiado largo para la voz (máximo ${voces.MAX_CHARS} caracteres).`);
+    const e = p.estado;
+    const dir = path.join(inputDir, plan);
+    let tocado = false; // true cuando ya se reemplazo la entrada anterior
     return lanzar('empezar', plan, nombre, true, async (job, c) => {
-      c.estado({estilo, error: null, accion: null, resumen: '', trabajo: job.id});
-      if (!(await preparar(job, c, plan, nombre, e))) return;
-      c.estado({fase: 'planificando', mensaje: 'Claude está armando el plan de edición…', trabajo: job.id});
-      c.progreso('Claude está armando el plan de edición…');
-      const sessionId = uuid();
-      const prompt = prompts.promptPlanificar({plan, nombre, archivo: e.entrada.archivo, estilo});
-      const r = await ejecutarClaude(job, c, prompts.argsClaude({sessionId}), prompt);
-      if (job.cancelado) return;
-      if (r.falta) return c.estado({fase: 'error', error: r.falta, trabajo: null});
-      await revisar(plan, nombre, c, r.run, r.salida, sessionId);
-    }, 'subido');
+      c.estado({fase: 'preparando', mensaje: 'Generando la voz…', trabajo: job.id, error: null, accion: null, estilo: 'voice', resumen: ''});
+      c.progreso('Generando la voz con ElevenLabs…');
+      const tmp = path.join(dir, `${nombre}.voz-nueva.mp3`);
+      let g;
+      try {
+        g = await voces.generarVoz({root, voz, texto, destino: tmp, env: env()});
+      } catch (x) {
+        fs.rmSync(tmp, {force: true});
+        c.log(`Voz: ${String(x && x.message).slice(0, 300)}`);
+        return c.estado({fase: 'error', error: `No se pudo generar la voz. ${String(x && x.message).slice(0, 250)}`, trabajo: null});
+      }
+      if (job.cancelado) {
+        fs.rmSync(tmp, {force: true});
+        return;
+      }
+      // el audio nuevo reemplaza la entrada anterior y lo intermedio del video viejo
+      for (const ext of EXT_ENTRADA) fs.rmSync(path.join(dir, `${nombre}.${ext}`), {force: true});
+      fs.renameSync(tmp, path.join(dir, `${nombre}.mp3`));
+      for (const suf of SUFIJOS_PREPARACION) fs.rmSync(pub(`${nombre}${suf}`), {force: true});
+      tocado = true;
+      const nuevo = c.estado({entrada: {archivo: `${nombre}.mp3`, tipo: 'audio', bytes: g.bytes}, estilo: 'voice', sessionId: null, cambios: [], resumen: ''});
+      c.log('Voz generada y guardada como entrada de audio.');
+      await cuerpoEmpezar(job, c, plan, nombre, nuevo, 'voice');
+    }, () => (tocado ? 'subido' : e.fase));
   }
 
   async function cambios(plan, nombre, texto) {
@@ -337,7 +392,7 @@ function crearFlujo(opts) {
     return empezar(plan, nombre, e.estilo);
   }
 
-  return {empezar, cambios, aprobar, recomendar, reintentar, preparado};
+  return {empezar, empezarDesdeGuion, cambios, aprobar, recomendar, reintentar, preparado};
 }
 
-module.exports = {crearFlujo, lineaDeEvento, REQ_PIPELINE, REQ_RENDER, REQ_CLAUDE};
+module.exports = {crearFlujo, SUFIJOS_PREPARACION, EXT_ENTRADA, lineaDeEvento, REQ_PIPELINE, REQ_RENDER, REQ_CLAUDE};

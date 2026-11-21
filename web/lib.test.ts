@@ -163,17 +163,19 @@ describe('detectClaudeConfig / claudeEnv', () => {
     expect(lib.detectClaudeConfig(home, {CLAUDE_CONFIG_DIR: 'X:\mio'})).toEqual({dir: 'X:\mio', profile: 'entorno'});
     expect(lib.claudeEnv({CLAUDE_CONFIG_DIR: 'X:\mio'}, home).CLAUDE_CONFIG_DIR).toBe('X:\mio');
   });
-  it('prioriza personal sobre normal y work', () => {
-    login('.claude-work');
-    login('.claude');
+  it('prioriza work (claude-w) sobre personal y normal', () => {
     login('.claude-personal');
-    const r = lib.detectClaudeConfig(home, {});
-    expect(r.profile).toBe('personal');
-    expect(r.dir).toBe(path.join(home, '.claude-personal'));
-  });
-  it('sin personal usa la normal (sin tocar el entorno)', () => {
-    login('.claude-work');
     login('.claude');
+    login('.claude-work');
+    const r = lib.detectClaudeConfig(home, {});
+    expect(r.profile).toBe('work');
+    expect(r.dir).toBe(path.join(home, '.claude-work'));
+  });
+  it('sin work usa personal, luego la normal (sin tocar el entorno)', () => {
+    login('.claude-personal');
+    login('.claude');
+    expect(lib.detectClaudeConfig(home, {}).profile).toBe('personal');
+    fs.rmSync(path.join(home, '.claude-personal'), {recursive: true, force: true});
     expect(lib.detectClaudeConfig(home, {})).toEqual({dir: null, profile: 'normal'});
     expect(lib.claudeEnv({A: '1'}, home)).toEqual({A: '1'});
   });
@@ -182,7 +184,7 @@ describe('detectClaudeConfig / claudeEnv', () => {
     fs.writeFileSync(path.join(home, '.claude.json'), '{"oauthAccount": {"emailAddress": "x"}}');
     expect(lib.detectClaudeConfig(home, {}).profile).toBe('normal');
   });
-  it('work es la ultima opcion', () => {
+  it('work se usa aunque sea la unica', () => {
     login('.claude-work');
     const r = lib.detectClaudeConfig(home, {});
     expect(r.profile).toBe('work');

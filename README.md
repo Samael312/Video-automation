@@ -1,7 +1,7 @@
 # video-automation
 
 Automatiza la edición de TikToks (9:16) para una profe de inglés online: transcripción, cortes de silencio, subtítulos, transiciones y motion graphics.
-**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, `/edit-voice` (guion + nota de voz), problemas comunes).
+**Manual de uso: [`docs/MANUAL.md`](docs/MANUAL.md)** (instalación, flujo diario con las skills `/edit-router`, `/edit-captions`, `/edit-motion`, `/edit-mixed`, `/edit-voice` (guion + nota de voz, o solo guion con la voz clonada), problemas comunes).
 
 Diseño completo: [`docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md`](docs/superpowers/specs/2026-11-12-tiktok-auto-editor-design.md).
 
@@ -34,6 +34,8 @@ npm run preview -- video               # hoja de capturas del plan
 npm run setup-audio -- --yes          # DeepFilterNet para limpiar la voz (una vez)
 npm run draft-motion -- video          # borrador de bloques/beats (estrategia motion)
 npm run emoji -- --3d 😱               # emoji 3D Fluent a public/emoji3d/
+npm run tts -- media/input/X.txt       # guion → voz clonada X.ai.mp3 (ElevenLabs)
+npm run voice-samples                  # muestras de media/voice/raw/ para entrenar la voz
 npm test                           # vitest (lib TypeScript)
 .venv\Scripts\python -m pytest pipeline/tests   # pytest (pipeline)
 npm run verify                     # revisa ffmpeg, venv, Remotion
@@ -41,7 +43,7 @@ npm run studio                     # previsualizar
 .venv\Scripts\python pipeline\transcribe_diarize.py media\input\video.mp4
 ```
 
-Copia `.env.example` a `.env` y pon tu `HF_TOKEN`.
+Copia `.env.example` a `.env` y pon tu `HF_TOKEN` (y `ELEVENLABS_API_KEY` / `ELEVENLABS_VOICE_ID` para la voz clonada).
 
 ## Pipeline actual
 

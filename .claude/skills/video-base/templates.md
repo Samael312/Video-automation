@@ -76,6 +76,12 @@ Label = texto serif con flecha discontinua animada. Emoji = entra con rebote. `s
 ```
 **Burbujas de chat** (tipo iMessage): `left` = gris (recibido), `right` = azul (enviado). 1–4 mensajes; cada uno aparece en su `at` (segundo original, entre start y end) o escalonado cada 0.8 s. Abajo (y 720) para no tapar la cara. Úsalo para **diálogos en inglés** que la profe cuenta o ejemplifica. Puede llevar emojis dentro del texto ("See you! 👋"): se dibujan como PNG de `public/emoji/`; si falta alguno el validador dice el `npm run emoji -- <código>` que lo baja. Pon un `pop` en cada `at`.
 
+```json
+{"kind": "fx", "component": "rush-meter", "start": 4.4, "end": 13.95, "cues": [4.48, 5.54, 6.91],
+ "props": {"steps": [{"phrase": "I'm in a rush", "tag": "la más confiable", "level": 0.35}]}}
+```
+**Overlay GSAP sin fondo** (`fx`): cualquier componente de `src/scenes/generated/` dibujado **encima de la profe**, sin el fondo de escena; vale en `captions` y `mixed` (no es una escena). `cues` = segundos del video original (deben caer entre `start` y `end`; puede cruzar cortes): se reubican solos y llegan al componente como `props.cues` en segundos desde el inicio del overlay. Es la vía para un recurso **nuevo por video** (ver "Creatividad, no repetición" en `SKILL.md`): crea el componente pensado para esa idea (fondo transparente; panel propio si hace falta legibilidad, fuera de la franja de subtítulos y≈260–330), regístralo en `index.ts`, y revisa sus momentos clave con `npx remotion still` (el preview automático saca una sola captura por overlay). Ejemplo: `public/RUN.edit.json` (velocímetro de "prisa").
+
 ### Texto detrás de la persona (`behind`)
 `"behind": true` en `title` o en un `item`: la persona queda **delante** del texto (estilo Bog). Requiere `npm run matte -- NOMBRE` **después de escribir el plan**: solo recorta los tramos con `behind` (+0.5 s antes), así que tarda ~10 s por cada segundo marcado, no el video entero. Si cambias esos tiempos, el validador pide volver a correrlo (si ya cubre lo pedido, no repite trabajo). Sin `y`, la altura sale **sola** de la posición de la cabeza en esos frames (el texto cruza la parte alta de la cabeza); `y` explícito manda. **Mira el preview**: el texto debe leerse con ≤ 1/3 tapado; si la cabeza lo tapa de más, sube `y` (menor número); si no la toca, bájalo. Úsalo en 1–2 momentos por video, no en todo.
 

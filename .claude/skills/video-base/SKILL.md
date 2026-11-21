@@ -51,7 +51,13 @@ Reglas comunes (todas las estrategias):
 - **Escenas** (`scenes`): 1–8 s, sin solaparse, **dentro de un solo TRAMO**. Empieza ~0.1 s antes de la primera palabra de la idea que ilustra y termina antes de que empiece la siguiente idea. Nunca la estires sobre un `--- CORTE ---`.
 - **Gancho en los primeros 2 s**: `title` desde 0 (dura 2–3 s, termina cuando la profe ya arrancó la idea). `captions.from` = `title.end` para no tapar el título.
 - **Subtítulos**: estilo Ela, frase entera en blanco (sin palabra activa resaltada). Se esconden solos antes de `captions.from`, desde el cierre y mientras hay un `item` arriba.
-- **Algo nuevo cada ~3 s**: label, emoji, ítem, chat, zoom por palabra clave o escena. Recorre `inspect` en bloques de 3 s; si un bloque no tiene nada, agrega un label o un emoji.
+- **Algo nuevo cada ~3 s**: label, emoji, ítem, chat, zoom por palabra clave, texto `behind`, escena o un recurso nuevo. Recorre `inspect` en bloques de 3 s; si un bloque no tiene nada, agrega algo que **no** hayas usado ya en el video.
+- **Creatividad, no repetición (regla del usuario, gana a cualquier "usa un label por…" de las estrategias)**: el público ve todos los videos seguidos; si cada uno trae las mismas flechas, ítems y emojis en la esquina, se nota la plantilla.
+  - Antes de planear, mira los 2–3 últimos planes (`ls -t public/*.edit.json`) y anota qué recursos usaron. No los repitas como recurso principal.
+  - **Label con flecha**: máximo **1 por video**, y solo si ningún otro recurso lo dice mejor. Nunca uno por cada palabra.
+  - Ningún recurso más de 2 veces en el mismo video (la lista de ítems "1-2-3" cuenta como un solo recurso).
+  - Alternativas antes de un label: texto `behind` (detrás de la profe), `chat`, zoom en la palabra, un emoji que entra con su propio gesto, una escena generada corta, o un **overlay o escena GSAP nuevo** en `src/scenes/generated/` pensado para *esta* idea (un sello, una tachadura, una palabra que cae, un contador…).
+  - En el resumen del paso 5, di qué recurso es nuevo en este video.
 - **Zoom**: `keywords` = las palabras en inglés que se enseñan (tal como aparecen en el transcript). El zoom en cada corte es automático.
 - **Overlays sobre escenas**: se dibujan **encima** de las escenas. No pongas un label/emoji durante una escena salvo que sea parte de la idea.
 - **Posiciones** (frame 720x1280; los subtítulos ocupan la franja y≈260–330): labels en `y: 400`, con `x: 170, dir: "right"` (izquierda) o `x: 540, dir: "left"` (derecha); emojis en `y: 560`, `x: 130` o `570`, `size: 110`. Alterna lados.
@@ -83,6 +89,7 @@ Preview: media/output/NOMBRE_preview.png
 - [ ] Título en 0–3 s, `line1` ≤ 14 y `line2` ≤ 18 caracteres, y `captions.from` = `title.end`
 - [ ] Ningún bloque de 3 s sin algo nuevo
 - [ ] Ningún overlay que duplique una escena
+- [ ] Máximo 1 label con flecha; ningún recurso más de 2 veces; nada copiado como recurso principal de los últimos 2–3 planes
 - [ ] Palabras en inglés escritas correctamente
 - [ ] Cierre con CTA según `brand.md`
 - [ ] Reglas de la estrategia cumplidas (ver su SKILL.md)

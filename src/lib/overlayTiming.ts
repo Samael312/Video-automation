@@ -1,4 +1,4 @@
-import type {ChatOverlay} from './plan';
+import type {ChatOverlay, FxOverlay} from './plan';
 
 /** Segundos entre burbujas cuando no se da `at`. */
 export const CHAT_STAGGER = 0.8;
@@ -16,3 +16,6 @@ export const captionsVisible = (t: number, o: {from: number; until: number; item
 /** y por defecto con `behind`: el texto cruza solo la parte alta de la cabeza (~1/3 tapado). Depende de la persona: ajusta `y` mirando el preview. */
 export const BEHIND_TITLE_Y = 330;
 export const BEHIND_ITEM_Y = 340;
+
+/** Cues de un overlay fx en segundos desde su inicio (con start y cues ya reubicados tras los cortes). */
+export const fxCues = (o: FxOverlay): number[] => (o.cues ?? []).map((c) => +(c - o.start).toFixed(3));

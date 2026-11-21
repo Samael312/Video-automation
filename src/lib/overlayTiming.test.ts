@@ -1,5 +1,5 @@
 import {describe, expect, test} from 'vitest';
-import {captionsVisible, chatTimes, CHAT_STAGGER} from './overlayTiming';
+import {captionsVisible, chatTimes, CHAT_STAGGER, fxCues} from './overlayTiming';
 
 const chat = (messages: {text: string; side: 'left' | 'right'; at?: number}[], start = 2, end = 8) => ({kind: 'chat' as const, messages, start, end});
 
@@ -26,4 +26,10 @@ describe('captionsVisible', () => {
     expect(captionsVisible(5.5, {from: 0, until: 20, items})).toBe(false);
     expect(captionsVisible(8.5, {from: 0, until: 20, items})).toBe(true);
   });
+});
+
+describe('fxCues', () => {
+  test('cues del overlay en segundos desde su inicio', () =>
+    expect(fxCues({kind: 'fx', component: 'x', start: 2, end: 6, cues: [2.5, 5]})).toEqual([0.5, 3]));
+  test('sin cues -> lista vacia', () => expect(fxCues({kind: 'fx', component: 'x', start: 2, end: 6})).toEqual([]));
 });

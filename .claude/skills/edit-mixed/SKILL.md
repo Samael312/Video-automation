@@ -19,7 +19,7 @@ description: Edita un video de la profe de inglés para TikTok mezclando la prof
   - "X significa Y" → `translate`
   - idiom / phrasal verb con ejemplo → `example`
 - **Quiz de cierre (opcional)**: si la idea principal se puede preguntar ("¿qué significa X?"), un `quiz` de 3–4 s antes del CTA, con la respuesta revelándose cuando la profe la dice. Cuenta como una de las 3 escenas. Los distractores: la traducción falsa obvia (el falso amigo) y una plausible.
-- **Entre escenas, la profe con overlays**: labels con flecha para las palabras en inglés que no tienen escena y emojis para la emoción.
+- **Entre escenas, la profe con overlays**: marca las palabras en inglés que no tienen escena con recursos variados (`behind`, zoom, `chat`, un overlay GSAP nuevo); label con flecha máximo 1 por video (ver "Creatividad, no repetición" en `video-base`). Emojis solo donde suman.
 - **Varias palabras/ideas** ("3 palabras…"): gancho de lista numerada + un `item` por cada una cuando la profe la nombra (el `item` puede ir antes de su escena).
 - **Diálogo o ejemplo de conversación**: `chat` en vez de escena; deja a la profe a la vista.
 - `zoom.keywords`: las palabras en inglés enseñadas.

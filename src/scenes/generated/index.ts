@@ -12,6 +12,17 @@ import {DoChecklist} from './do-checklist';
 import {BuildVsRun} from './build-vs-run';
 import {VersusIntro} from './versus-intro';
 import {MakeFactory} from './make-factory';
+import {RiseUp} from './rise-up';
+import {DoorIn} from './door-in';
+import {BoomerangBack} from './boomerang-back';
+import {RushMeter} from './rush-meter';
+import {ScoreStamp} from './score-stamp';
+import {CompoundJoin} from './compound-join';
+import {BasgiathSlay} from './basgiath-slay';
+import {LiveComments} from './live-comments';
+import {TwoWorlds} from './two-worlds';
+import {RuneSplit} from './rune-split';
+import {Embers} from './embers';
 
 export type GeneratedProps = {props: Record<string, unknown>; theme: Theme; durationInFrames: number};
 
@@ -33,4 +44,15 @@ export const GENERATED: Record<string, React.FC<GeneratedProps>> = {
   'build-vs-run': BuildVsRun,
   'versus-intro': VersusIntro,
   'make-factory': MakeFactory,
+  'rise-up': RiseUp,
+  'door-in': DoorIn,
+  'boomerang-back': BoomerangBack,
+  'rush-meter': RushMeter,
+  'score-stamp': ScoreStamp,
+  'compound-join': CompoundJoin,
+  'basgiath-slay': BasgiathSlay,
+  'live-comments': LiveComments,
+  'two-worlds': TwoWorlds,
+  'rune-split': RuneSplit,
+  embers: Embers,
 };

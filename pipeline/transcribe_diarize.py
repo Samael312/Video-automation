@@ -12,7 +12,7 @@ import whisperx
 from whisperx.diarize import DiarizationPipeline
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from quality import low_confidence_ratio
+from quality import low_confidence_ratio, needs_retry, pick_plain
 
 ROOT = Path(__file__).resolve().parent.parent
 # Acepta .env y .env.txt (Windows suele anadir .txt sin avisar)
@@ -44,17 +44,35 @@ def step(msg): print(f"[{time.time()-t0:6.1f}s] {msg}", flush=True)
 
 step("cargando audio")
 audio = whisperx.load_audio(str(video))          # ffmpeg -> numpy 16 kHz
-step(f"transcribiendo con '{args.model}' (cpu/int8)")
 prompt_file = Path(args.prompt)
 initial_prompt = prompt_file.read_text(encoding="utf-8").strip() if args.prompt and prompt_file.is_file() else None  # --prompt "" = sin prompt
-model = whisperx.load_model(args.model, DEVICE, compute_type=COMPUTE, asr_options={"initial_prompt": initial_prompt})
-result = model.transcribe(audio, batch_size=4)
-lang = result["language"]
-step(f"idioma detectado: {lang}")
 
-step("alineando palabras")
-align_model, meta = whisperx.load_align_model(language_code=lang, device=DEVICE)
-result = whisperx.align(result["segments"], align_model, meta, audio, DEVICE)
+
+def transcribe_align(prompt):
+    """Transcribe y alinea; devuelve (idioma, resultado alineado, fraccion de palabras de baja confianza)."""
+    step(f"transcribiendo con '{args.model}' (cpu/int8){'' if prompt else ' sin prompt de vocabulario'}")
+    model = whisperx.load_model(args.model, DEVICE, compute_type=COMPUTE, asr_options={"initial_prompt": prompt})
+    raw = model.transcribe(audio, batch_size=4)
+    lang = raw["language"]
+    step(f"idioma detectado: {lang}")
+    step("alineando palabras")
+    align_model, meta = whisperx.load_align_model(language_code=lang, device=DEVICE)
+    aligned = whisperx.align(raw["segments"], align_model, meta, audio, DEVICE)
+    ratio = low_confidence_ratio([w for s in aligned["segments"] for w in s.get("words", []) if "start" in w])
+    return lang, aligned, ratio
+
+
+lang, result, ratio = transcribe_align(initial_prompt)
+used_prompt = initial_prompt is not None
+if used_prompt and needs_retry(ratio):
+    # el prompt de vocabulario (ingles) a veces traduce o se salta frases: se prueba sin el y se queda la mejor
+    step(f"{ratio:.0%} de palabras con baja confianza con el prompt de vocabulario: reintento sin prompt")
+    lang2, result2, ratio2 = transcribe_align(None)
+    if pick_plain(ratio, ratio2):
+        step(f"uso la version sin prompt ({ratio2:.0%} baja confianza vs {ratio:.0%})")
+        lang, result, ratio, used_prompt = lang2, result2, ratio2, False
+    else:
+        step(f"me quedo con la version con prompt ({ratio:.0%} vs {ratio2:.0%} sin prompt)")
 
 step("diarizando (pyannote)")
 diarizer = DiarizationPipeline(token=token, device=DEVICE)
@@ -78,6 +96,7 @@ payload = {
     "video": video.name,
     "language": lang,
     "model": args.model,
+    "vocab_prompt": used_prompt,
     "duration": round(len(audio) / 16000, 3),
     "speakers": sorted({w["speaker"] for w in words}),
     "segments": [

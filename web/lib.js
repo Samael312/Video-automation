@@ -203,7 +203,15 @@ function resolveClaude(env = process.env, platform = process.platform, exists = 
     if (exists(path.join(d, 'claude.cmd'))) {
       const cli = path.join(d, 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
       if (exists(cli)) return {cmd: process.execPath, prefijo: [cli]};
+      // versiones nuevas del paquete npm traen un binario en vez de cli.js
+      const bin = path.join(d, 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+      if (exists(bin)) return {cmd: bin, prefijo: []};
     }
+  }
+  // instalador nativo: ~/.local/bin, aunque no esté en el PATH
+  if (env.USERPROFILE) {
+    const nativo = path.join(env.USERPROFILE, '.local', 'bin', 'claude.exe');
+    if (exists(nativo)) return {cmd: nativo, prefijo: []};
   }
   return null;
 }

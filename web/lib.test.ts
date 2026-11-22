@@ -210,6 +210,15 @@ describe('resolveClaude', () => {
     const cli = path.join('C:/npm', 'node_modules', '@anthropic-ai', 'claude-code', 'cli.js');
     expect(win(['C:/npm'], [cmd, cli])).toEqual({cmd: process.execPath, prefijo: [cli]});
   });
+  it('Windows: claude.cmd de npm con bin/claude.exe (sin cli.js)', () => {
+    const cmd = path.join('C:/npm', 'claude.cmd');
+    const bin = path.join('C:/npm', 'node_modules', '@anthropic-ai', 'claude-code', 'bin', 'claude.exe');
+    expect(win(['C:/npm'], [cmd, bin])).toEqual({cmd: bin, prefijo: []});
+  });
+  it('Windows: instalador nativo en ~/.local/bin aunque no esté en PATH', () => {
+    const exe = path.join('C:/Users/u', '.local', 'bin', 'claude.exe');
+    expect(lib.resolveClaude({PATH: '', USERPROFILE: 'C:/Users/u'}, 'win32', (f: string) => f === exe)).toEqual({cmd: exe, prefijo: []});
+  });
   it('Windows: solo claude.cmd sin cli.js o nada instalado da null', () => {
     expect(win(['C:/npm'], [path.join('C:/npm', 'claude.cmd')])).toBeNull();
     expect(win(['C:/npm'], [])).toBeNull();

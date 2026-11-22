@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "video": "GET.mp4",
+  "style": "referencia",
+  "strategy": "mixed",
+  "title": {"line1": "3 verbos", "line2": "con get", "start": 0, "end": 3.0},
+  "end": {"start": 29.16, "line1": "Guárdalo", "line2": "para practicar después"},
+  "captions": {"maxWords": 5, "from": 3.0},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["get"]},
+  "overlays": [
+    {"kind": "label", "text": "get", "start": 5.04, "end": 6.9, "x": 540, "y": 400, "dir": "left"},
+    {"kind": "emoji", "file": "2705", "start": 6.2, "end": 8.0, "x": 130, "y": 560, "size": 110},
+    {"kind": "chat", "start": 12.77, "end": 14.6, "messages": [{"text": "I get up at 7 a.m. ⏰", "side": "right", "at": 12.87}]},
+    {"kind": "chat", "start": 26.11, "end": 28.28, "messages": [{"text": "I will get back home late 🏠", "side": "right", "at": 26.19}]}
+  ],
+  "scenes": [
+    {"type": "generated", "start": 8.69, "end": 12.0, "data": {"component": "rise-up", "props": {
+      "badge": "1 / 3", "verb": "get", "particle": "up", "meaning": "levantarte",
+      "notes": ["de la cama", "de la silla"], "alarm": "23f0", "bed": "1f6cf",
+      "at": {"rise": 0.1, "meaning": 1.32, "notes": [2.04, 2.96]}}}},
+    {"type": "generated", "start": 15.21, "end": 21.0, "data": {"component": "door-in", "props": {
+      "badge": "2 / 3", "verb": "get", "particle": "in", "meaning": "entrar a un lugar",
+      "emoji": "1f697", "example": "Get in, let's go!",
+      "at": {"enter": 0.1, "meaning": 1.22, "emoji": 2.66, "example": 4.24}}}},
+    {"type": "generated", "start": 21.65, "end": 25.2, "data": {"component": "boomerang-back", "props": {
+      "badge": "3 / 3", "verb": "get", "particle": "back", "meanings": ["volver", "regresar"], "home": "1f3e0",
+      "at": {"fly": 0.1, "meanings": [1.26, 2.02]}}}}
+  ],
+  "sfx": [
+    {"at": 0.74, "name": "swoosh"},
+    {"at": 5.04, "name": "pop"},
+    {"at": 6.2, "name": "pop"},
+    {"at": 12.87, "name": "pop"},
+    {"at": 26.19, "name": "pop"}
+  ]
+}

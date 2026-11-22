@@ -1,0 +1,99 @@
+{
+  "version": 1,
+  "video": "TOP5_PALABRAS.mp4",
+  "style": "referencia",
+  "strategy": "motion",
+  "title": {"line1": "Top 5 palabras", "line2": "nombres perfectos", "start": 0, "end": 3.9},
+  "end": {"start": 146.0, "line1": "¿Cuál falta?", "line2": "Cuéntame abajo"},
+  "captions": {"maxWords": 5, "from": 3.9},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["footprint", "toothbrush", "sunflower", "raincoat", "watermelon"]},
+  "overlays": [
+    {"kind": "item", "n": 5, "text": "footprint", "start": 10.4, "end": 11.55},
+    {"kind": "item", "n": 4, "text": "toothbrush", "start": 33.45, "end": 34.45},
+    {"kind": "fx", "component": "score-stamp", "start": 62.75, "end": 64.05, "cues": [62.83],
+     "props": {"text": "100/10", "sub": "a mí"}},
+    {"kind": "item", "n": 3, "text": "sunflower", "start": 65.45, "end": 67.8},
+    {"kind": "item", "n": 2, "text": "raincoat", "start": 92.4, "end": 94.05},
+    {"kind": "fx", "component": "compound-join", "start": 104.32, "end": 110.05, "cues": [105.32, 107.3, 109.42],
+     "props": {"parts": [{"word": "rain", "hint": "lluvia"}, {"word": "coat", "hint": "abrigo"}], "emoji": "2614"}},
+    {"kind": "fx", "component": "score-stamp", "start": 110.06, "end": 111.6, "cues": [110.12],
+     "props": {"text": "cero drama", "color": "#2f80ed"}},
+    {"kind": "item", "n": 1, "text": "watermelon", "start": 114.45, "end": 116.1},
+    {"kind": "fx", "component": "compound-join", "start": 137.44, "end": 145.9, "cues": [139.5, 137.6, 142.44],
+     "props": {"parts": [{"word": "water", "hint": "90% agua"}, {"word": "melon", "hint": "melón"}], "emoji": "1f349"}}
+  ],
+  "scenes": [],
+  "sfx": [
+    {"at": 1.62, "name": "swoosh"},
+    {"at": 10.43, "name": "ding"},
+    {"at": 33.52, "name": "ding"},
+    {"at": 62.75, "name": "pop"},
+    {"at": 65.49, "name": "ding"},
+    {"at": 92.45, "name": "ding"},
+    {"at": 109.42, "name": "tick"},
+    {"at": 110.06, "name": "pop"},
+    {"at": 114.5, "name": "ding"},
+    {"at": 142.44, "name": "tick"}
+  ],
+  "motion": {
+    "blocks": [
+      {"start": 12.23, "end": 19.89, "bg": "light", "beats": [
+        {"at": 12.23, "layout": "big", "key": "footprint"},
+        {"at": 13.85, "layout": "swap", "lead": "literalmente es", "from": "footprint", "to": "impresión de pie"},
+        {"at": 15.05, "layout": "ring", "emoji": "1f463", "lead": "impresión de", "key": "pie"},
+        {"at": 16.7, "layout": "word", "lead": "es como cuando mandas", "key": "imprimir"},
+        {"at": 18.1, "layout": "prop", "emoji": "1f5a8", "lead": "un", "key": "PDF"}
+      ]},
+      {"start": 22.46, "end": 29.35, "bg": "dark", "beats": [
+        {"at": 22.46, "layout": "word", "lead": "Entonces,", "key": "eres"},
+        {"at": 24.7, "layout": "big", "key": "tú"},
+        {"at": 25.4, "layout": "list", "title": "eres…", "items": ["tú", "tu cuerpo", "tu pie"], "active": 1},
+        {"at": 26.15, "layout": "list", "title": "eres…", "items": ["tú", "tu cuerpo", "tu pie"], "active": 2},
+        {"at": 26.9, "layout": "word", "lead": "dejándole literalmente su", "key": "digital footprint"}
+      ]},
+      {"start": 35.66, "end": 42.6, "bg": "light", "beats": [
+        {"at": 35.66, "layout": "big", "key": "toothbrush"},
+        {"at": 37.36, "layout": "swap", "from": "toothbrush", "to": "cepillo dental"},
+        {"at": 38.65, "layout": "prop", "emoji": "1faa5", "lead": "o cepillo de", "key": "diente", "pos": "top"},
+        {"at": 40.15, "layout": "word", "lead": "en el español está muy bien", "key": "nombrado"}
+      ]},
+      {"start": 48.96, "end": 53.3, "bg": "dark", "beats": [
+        {"at": 48.96, "layout": "word", "lead": "Imagínate que fuéramos así de", "key": "sencillos"},
+        {"at": 51.3, "layout": "ring", "emoji": "1f92f", "lead": "que no hubieran", "key": "complicaciones"}
+      ]},
+      {"start": 55.11, "end": 62.19, "bg": "light", "beats": [
+        {"at": 55.11, "layout": "word", "lead": "en vez de", "key": "shampoo"},
+        {"at": 57.0, "layout": "swap", "lead": "sería", "from": "shampoo", "to": "hair soap"},
+        {"at": 58.9, "layout": "word", "lead": "o en vez de", "key": "zapatos"},
+        {"at": 59.9, "layout": "swap", "lead": "sería", "from": "zapatos", "to": "feet box"},
+        {"at": 61.5, "layout": "big", "key": "whatever"}
+      ]},
+      {"start": 69.19, "end": 77.1, "bg": "dark", "beats": [
+        {"at": 69.19, "layout": "big", "key": "sunflower"},
+        {"at": 70.65, "layout": "word", "lead": "es literalmente la", "key": "flor"},
+        {"at": 72.4, "layout": "ring", "emoji": "1f33b", "lead": "más", "key": "main character"},
+        {"at": 73.8, "layout": "word", "lead": "que existe en el", "key": "mundo"},
+        {"at": 75.3, "layout": "prop", "emoji": "2600", "lead": "sigue al", "key": "sol"}
+      ]},
+      {"start": 79.22, "end": 83.15, "bg": "light", "beats": [
+        {"at": 79.22, "layout": "card", "frame": "phone", "lead": "su idol del", "key": "kpop"},
+        {"at": 80.65, "layout": "word", "lead": "y no solo, también", "key": "luce como él"}
+      ]},
+      {"start": 86.11, "end": 91.43, "bg": "dark", "beats": [
+        {"at": 86.11, "layout": "word", "key": "matching energy"},
+        {"at": 87.9, "layout": "big", "key": "aura"},
+        {"at": 89.1, "layout": "word", "lead": "nivel de aura", "key": "1000/10"}
+      ]},
+      {"start": 96.92, "end": 101.45, "bg": "light", "beats": [
+        {"at": 96.92, "layout": "word", "lead": "ellos no", "key": "pensaron"},
+        {"at": 99.0, "layout": "strike", "items": ["un nombre aesthetic", "raincoat"]}
+      ]},
+      {"start": 125.42, "end": 131.89, "bg": "dark", "beats": [
+        {"at": 125.42, "layout": "big", "key": "cero drama"},
+        {"at": 126.85, "layout": "word", "lead": "cero", "key": "misterio"},
+        {"at": 128.7, "layout": "prop", "emoji": "1f348", "lead": "es un", "key": "melón"},
+        {"at": 129.85, "layout": "word", "lead": "literalmente que no", "key": "soporta"}
+      ]}
+    ]
+  }
+}

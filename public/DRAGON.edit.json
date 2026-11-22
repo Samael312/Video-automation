@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "video": "DRAGON.mp4",
+  "style": "referencia",
+  "strategy": "mixed",
+  "title": {"line1": "slay", "line2": "¿matar o brillar?", "start": 0, "end": 2.5},
+  "end": {"start": 26.65, "line1": "¿Cuál usas más?", "line2": "dragón o outfit"},
+  "captions": {"maxWords": 4, "from": 2.5},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["slay", "slays"]},
+  "overlays": [
+    {"kind": "fx", "component": "embers", "start": 0, "end": 2.5, "props": {"count": 30}},
+    {"kind": "fx", "component": "live-comments", "start": 9.3, "end": 18.95,
+     "cues": [10.72, 12.18, 13.32, 15.6, 16.48, 17.5],
+     "props": {
+       "comments": [
+         {"user": "@lectora_23", "text": "you slay", "emoji": "2728"},
+         {"user": "@itsvale", "text": "SLAAAY", "emoji": "1f485"},
+         {"user": "@dragon", "text": "uff, me salvé", "avatar": "1f409"}
+       ],
+       "stickers": [
+         {"text": "la rompiste", "emoji": "1f485"},
+         {"text": "te ves increíble", "emoji": "2728"},
+         {"text": "espectacular", "emoji": "1f525"}
+       ]}},
+    {"kind": "fx", "component": "rune-split", "start": 24.78, "end": 26.6, "cues": [25.05, 25.99],
+     "props": {"word": "SLAY", "left": {"label": "derrotar", "emoji": "2694"}, "right": {"label": "la rompiste", "emoji": "1f485"}}}
+  ],
+  "scenes": [
+    {"type": "generated", "start": 2.55, "end": 8.45, "data": {"component": "basgiath-slay", "props": {
+      "header": "BASGIATH WAR COLLEGE", "words": ["slay", "the", "dragon"], "meaning": "derrotar", "meaning2": "desvivir",
+      "at": {"words": [0.12, 0.48, 0.7], "literal": 1.82, "slash": 3.07, "ash": 4.21}}}},
+    {"type": "generated", "start": 19.4, "end": 24.75, "data": {"component": "two-worlds", "props": {
+      "hl": "slay",
+      "top": {"tag": "FOURTH WING", "words": ["slay", "a", "dragon"], "emojis": ["dragon", "2694"]},
+      "bottom": {"tag": "VIDA REAL", "words": ["that", "outfit", "slays"], "emojis": ["1f457", "1f485"]},
+      "at": {"top": 0.22, "topWords": [1.21, 1.51, 1.62], "bottom": 2.53, "bottomWords": [3.35, 3.89, 4.47]}}}}
+  ],
+  "sfx": [
+    {"at": 0.2, "name": "swoosh"},
+    {"at": 5.62, "name": "swoosh"},
+    {"at": 10.72, "name": "pop"},
+    {"at": 12.18, "name": "pop"},
+    {"at": 13.32, "name": "pop"},
+    {"at": 15.6, "name": "ding"},
+    {"at": 16.48, "name": "pop"},
+    {"at": 17.5, "name": "pop"},
+    {"at": 25.05, "name": "tick"},
+    {"at": 25.99, "name": "ding"}
+  ]
+}

@@ -55,7 +55,13 @@ Reglas comunes (todas las estrategias):
 - **Hook (opcional, recomendado para videos con cámara)**: `"hook": {"text": "No digas esto", "end": 1.6}`. Frase grande (≤ 40 caracteres, ≤ 2.5 s) sobre el video oscurecido desde el segundo 0; la última palabra va en crema. Si lo usas, `title.start` debe ser ≥ `hook.end` y `captions.from` ≥ `title.end`. Úsalo cuando la primera frase de la profe no engancha sola: pregunta, error o promesa corta. Si la profe ya arranca con un gancho fuerte, basta el `title`.
 - **Open loop y cierre**: si el guion promete algo ("al final te digo…"), el `end` cierra con la respuesta o con una pregunta que conecte con el gancho (el cierre "vuelve" al inicio), para que la gente vea el video completo y lo repita.
 - **Subtítulos**: estilo Ela, frase entera en blanco (sin palabra activa resaltada). Se esconden solos antes de `captions.from`, desde el cierre y mientras hay un `item` arriba.
-- **Algo nuevo cada ~3 s**: label, emoji, ítem, chat, zoom por palabra clave o escena. Recorre `inspect` en bloques de 3 s; si un bloque no tiene nada, agrega un label o un emoji.
+- **Algo nuevo cada ~3 s**: label, emoji, ítem, chat, zoom por palabra clave, texto `behind`, escena o un recurso nuevo. Recorre `inspect` en bloques de 3 s; si un bloque no tiene nada, agrega algo que **no** hayas usado ya en el video.
+- **Creatividad, no repetición (regla del usuario, gana a cualquier "usa un label por…" de las estrategias)**: el público ve todos los videos seguidos; si cada uno trae las mismas flechas, ítems y emojis en la esquina, se nota la plantilla.
+  - Antes de planear, mira los 2–3 últimos planes (`ls -t public/*.edit.json`) y anota qué recursos usaron. No los repitas como recurso principal.
+  - **Label con flecha**: máximo **1 por video**, y solo si ningún otro recurso lo dice mejor. Nunca uno por cada palabra.
+  - Ningún recurso más de 2 veces en el mismo video (la lista de ítems "1-2-3" cuenta como un solo recurso).
+  - Alternativas antes de un label: texto `behind` (detrás de la profe), `chat`, zoom en la palabra, un emoji que entra con su propio gesto, una escena generada corta, o un **overlay o escena GSAP nuevo** en `src/scenes/generated/` pensado para *esta* idea (un sello, una tachadura, una palabra que cae, un contador…).
+  - En el resumen del paso 5, di qué recurso es nuevo en este video.
 - **Zoom**: `keywords` = las palabras en inglés que se enseñan (tal como aparecen en el transcript). El zoom en cada corte es automático. `zoom.mode`: `"pulse"` (por defecto, pulso en cada corte) o `"punch"` (estilo jump-cut: el video alterna entre 1× y `zoom.punch` —1.12 por defecto, máx. 1.3— en cada corte y se queda; da ritmo cuando hay varios cortes. Las palabras clave siguen pulsando). Usa `punch` en videos con ≥ 3 cortes y la profe en cámara; `pulse` si hay pocos cortes o muchas escenas.
 - **Efecto en cortes** (`cutFx`, opcional, a nivel de plan): `"flash"` (destello blanco), `"shake"` (temblor, suena un golpe suave) o `"glitch"` (temblor + color, suena el sfx glitch). Defecto: ninguno. Úsalo solo en videos con ≥ 3 cortes, y no combines `glitch` con tono calmado; sirve para errores, giros y humor.
 - **Subtítulos**: tamaño 32 px (antes 25, muy chico en móvil).
@@ -89,6 +95,7 @@ Preview: media/output/NOMBRE_preview.png
 - [ ] Título en 0–3 s, `line1` ≤ 14 y `line2` ≤ 18 caracteres, y `captions.from` = `title.end`
 - [ ] Ningún bloque de 3 s sin algo nuevo
 - [ ] Ningún overlay que duplique una escena
+- [ ] Máximo 1 label con flecha; ningún recurso más de 2 veces; nada copiado como recurso principal de los últimos 2–3 planes
 - [ ] Palabras en inglés escritas correctamente
 - [ ] Cierre con CTA según `brand.md`
 - [ ] Reglas de la estrategia cumplidas (ver su SKILL.md)

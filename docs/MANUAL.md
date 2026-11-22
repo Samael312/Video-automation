@@ -80,6 +80,20 @@ No necesita video. Pídelo en lenguaje normal:
 
 Claude reparte la temática en subtemas y formatos distintos (vocabulario, error común, falso amigo, idiom, quiz...) y crea **una carpeta por plan** en `media/input/<PLAN>/` (por ejemplo `media/input/NAVIDAD/`) con un `NOMBRE.txt` por guion, un `PLAN.md` legible y un `plan.json` con el formato, largo, gancho (3 variantes), estrategia, duración y caption de cada uno. Los guiones se escriben conociendo lo que la edición puede hacer (escenas, hook en pantalla, listas, quiz, etc.). Por defecto los guiones son cortos (15-25 s). Pide **más largos** para 30-45 s o 45-65 s: `/edit-script 5 guiones de gramática, más largos` o `... de un minuto`. Luego graba la nota de voz con el mismo nombre del guion y déjala **dentro de la misma carpeta del plan**; usa `/edit-voice media/input/<PLAN>/NOMBRE.m4a`.
 
+### Video solo con guion (voz clonada)
+Sin grabar nada: `/edit-voice media/input/NOMBRE.txt`. Si junto al guion hay una nota de voz real (`NOMBRE.m4a`…), **gana la real**. Si no, genera `NOMBRE.ai.mp3` con la voz clonada de la profe (ElevenLabs) y sigue igual que con nota de voz (sin limpiar el audio: ya sale limpio). El audio IA se genera una vez; volver a correr no gasta créditos (`npm run tts -- media/input/NOMBRE.txt --force` lo rehace).
+
+**Crear la voz (una vez).** Usa Professional Voice Clone de ElevenLabs (plan Creator o superior, ~22 $/mes). La profe debe estar de acuerdo: ella misma hace la verificación.
+1. Copia sus videos viejos (TikToks, clases; solo ella hablando, sin música) a `media/voice/raw/`.
+2. `npm run voice-samples`: limpia la voz, acorta pausas y deja mp3 en `media/voice/samples/`. Dice cuánto llevas (`18:42 de voz - faltan 11:18`). Mínimo 30 min, ideal 1 h+. Los videos con música o mucho ruido se descartan solos. Puedes ir añadiendo videos y volver a correrlo: solo procesa los nuevos.
+3. Con 30 min o más: en elevenlabs.io → Voices → Add voice → **Professional Voice Clone** → sube los mp3 de `media/voice/samples/` → **verificación** (la profe lee en voz alta la frase que le pide) → entrenar (unas horas).
+4. Copia el `voice_id` de la voz a `.env`: `ELEVENLABS_VOICE_ID=...` (y `ELEVENLABS_API_KEY=...`, en Profile → API keys).
+5. `/edit-voice media/input/NOMBRE.txt`.
+
+**Para que suene más como ella:** más videos limpios en `media/voice/raw/` → `npm run voice-samples` → sube los nuevos mp3 a la misma voz en ElevenLabs y reentrena.
+
+**Al publicar:** activa en TikTok la etiqueta "contenido generado por IA" (TikTok la exige para voces realistas de una persona real).
+
 ### `/edit-mixed` — la profe cuenta, las escenas remarcan
 1 a 3 escenas en los momentos clave (traducción, falso amigo, ejemplo) y un **quiz** opcional al final. Entre escenas, labels y emojis. Ejemplo real: `public/ACTUALLY.edit.json`.
 
@@ -206,6 +220,9 @@ Usa solo música con licencia para redes (Pixabay Music, YouTube Audio Library o
 | `npm run emoji -- --3d 😀` | descarga el emoji 3D (Microsoft Fluent) a `public/emoji3d/` para los beats de motion |
 | `npm run draft-motion -- X` | borrador de bloques y beats de motion en `public/X.edit.json` (con `strategy: "voice"` cubre todo el video) |
 | `npm run edit -- media/input/X.m4a --plan-only` | nota de voz: la pasa a video de fondo plano y sigue igual (alinea con `X.txt` si existe) |
+| `npm run edit -- media/input/X.txt --plan-only` | solo guion: voz IA clonada (`X.ai.mp3`) si no hay nota de voz real, y sigue igual |
+| `npm run tts -- media/input/X.txt` | solo la voz IA: guion → `media/input/X.ai.mp3` (`--force` la rehace) |
+| `npm run voice-samples` | prepara las muestras de `media/voice/raw/` para entrenar la voz clonada (`--force` rehace) |
 | `npm run script-align -- X [guion.txt]` | pone el texto del guion sobre los tiempos de la transcripción (original en `public/X.transcript.whisper.json`) |
 | `npm run audio-to-video -- audio.m4a public/X.mp4` | solo la conversión de audio a video 720×1280 |
 | `npm run studio` | abre Remotion Studio para ver el video en vivo |

@@ -1,6 +1,6 @@
 ---
 name: edit-voice
-description: Hace un TikTok 100 % motion graphics (estilo media/reference/motion/m_1.mp4) a partir de un guion de texto y una nota de voz de la profe leyéndolo, sin cámara. Úsala cuando la entrada es solo audio (.m4a, .mp3, .ogg, .opus, .wav) con su guion NOMBRE.txt al lado. Uso: /edit-voice media/input/NOMBRE.m4a
+description: Hace un TikTok 100 % motion graphics (estilo media/reference/motion/m_1.mp4) a partir de un guion de texto y una nota de voz de la profe leyéndolo, o solo del guion con su voz clonada (ElevenLabs), sin cámara. Úsala cuando la entrada es solo audio (.m4a, .mp3, .ogg, .opus, .wav) con su guion NOMBRE.txt al lado, o solo un guion .txt. Uso: /edit-voice media/input/NOMBRE.m4a o /edit-voice media/input/NOMBRE.txt
 ---
 
 # edit-voice: guion + nota de voz → todo motion
@@ -14,7 +14,8 @@ Todo el video es motion: bloques de 3–8 s **seguidos, sin huecos**, con beats 
 
 ## Paso 1 (reemplaza al de video-base)
 1. Comprueba que existe el guion `media/input/.../NOMBRE.txt` (mismo nombre que el audio, misma carpeta; los guiones de `/edit-script` viven en `media/input/<PLAN>/`). Si falta, **para** y dile al usuario: "falta el guion NOMBRE.txt junto al audio".
-2. `npm run edit -- media/input/NOMBRE.m4a --plan-only`. Convierte el audio en `public/NOMBRE.mp4` (fondo plano), limpia la voz, transcribe, **alinea con el guion** y corta silencios.
+2. `npm run edit -- media/input/NOMBRE.m4a --plan-only` (o `media/input/NOMBRE.txt` si solo hay guion). Convierte el audio en `public/NOMBRE.mp4` (fondo plano), limpia la voz, transcribe, **alinea con el guion** y corta silencios.
+   - **Solo guion:** si hay nota de voz real al lado imprime `uso la nota de voz real …` y sigue con ella. Si no, el paso `voz IA` genera `media/input/NOMBRE.ai.mp3` con la voz clonada (no se limpia: ya sale limpia). Si falla (`falta ELEVENLABS_API_KEY`, `falta ELEVENLABS_VOICE_ID`, `API key inválida`, `sin créditos en ElevenLabs`, `la voz … no existe`), **para** y muéstrale el mensaje al usuario; la guía está en `docs/MANUAL.md` → "Video solo con guion (voz clonada)".
 3. Lee la línea `coincidencia X %` del paso "alinear con guion". Si el paso falla con "el audio no parece leer este guion", para y muéstrale al usuario las diferencias: o el guion no es de este audio, o ella improvisó.
 4. `npm run inspect -- NOMBRE` como siempre. El texto ya viene del guion (inglés bien escrito).
 
@@ -34,6 +35,7 @@ Todo el video es motion: bloques de 3–8 s **seguidos, sin huecos**, con beats 
 
 ## Resumen para el usuario (además del de video-base)
 ```
+Voz: IA clonada (ElevenLabs)   ← o "Voz: nota de voz real"
 Guion: coincidencia X % (n reemplazos)
 Motion: 100 % — <n> bloques, <n> beats
 Gancho: <layout> "<key>"   CTA: <layout> "<key>"
@@ -42,6 +44,7 @@ Bloques:
 Layouts usados: word ×n, prop ×n, …
 ```
 En el resumen de video-base, las líneas de gancho/cierre/subtítulos se reemplazan por estas.
+Con voz IA, añade al final: **"Al publicar, activa en TikTok la etiqueta 'contenido generado por IA'"** (TikTok la exige para voces realistas de una persona real).
 
 ## Qué evitar
 - Huecos entre bloques.

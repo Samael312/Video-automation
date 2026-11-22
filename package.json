@@ -24,6 +24,8 @@
     "script-align": "tsx scripts/script-align.ts",
     "audio-to-video": "tsx scripts/audio-to-video.ts",
     "web": "node web/server.js",
+    "voice-samples": ".venv\\Scripts\\python.exe pipeline/voice_samples.py",
+    "tts": "tsx scripts/tts.ts",
     "setup-audio": ".venv\\Scripts\\python.exe scripts/setup_audio.py"
   },
   "keywords": [],

@@ -2,14 +2,22 @@ import React, {useMemo} from 'react';
 import {AbsoluteFill, Audio, Sequence, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {getTheme} from './styles/themes';
 import {Chat, Emoji, EndCard, FRAMES_PER_CHAR, Hook, Item, ITEM_DEFAULT_Y, Label, Title} from './overlays';
-import {BEHIND_ITEM_Y, BEHIND_TITLE_Y, captionsVisible, chatTimes} from './lib/overlayTiming';
+import {BEHIND_ITEM_Y, BEHIND_TITLE_Y, captionsVisible, chatTimes, fxCues} from './lib/overlayTiming';
+import {GENERATED} from './scenes/generated';
+import type {Theme} from './styles/themes';
 import {CutVideo} from './lib/CutVideo';
 import {cutPoints, mapTimeNext, remapWords, type Keep} from './lib/cuts';
 import {buildPages} from './lib/captions';
 import {cutFxState, keywordEvents, punchScale, zoomScale} from './lib/dynamics';
 import {TikTokCaptions} from './lib/TikTokCaptions';
 import {SceneLayer} from './lib/SceneLayer';
-import {matteFile, type EditPlan, type ItemOverlay, type Overlay} from './lib/plan';
+import {matteFile, type EditPlan, type FxOverlay, type ItemOverlay, type Overlay} from './lib/plan';
+
+/** Overlay fx: componente GSAP de src/scenes/generated sin fondo, encima de la profe. */
+const FxLayer: React.FC<{o: FxOverlay; theme: Theme; durationInFrames: number}> = ({o, theme, durationInFrames}) => {
+  const C = GENERATED[o.component];
+  return C ? <AbsoluteFill style={{transform: o.y ? `translateY(${o.y}px)` : undefined}}><C props={{...o.props, cues: fxCues(o)}} theme={theme} durationInFrames={durationInFrames} /></AbsoluteFill> : null;
+};
 import {autoBehindY, type MatteInfo} from './lib/matte';
 import {MotionLayer} from './motion/MotionLayer';
 import {insideBlocks} from './motion/timing';
@@ -62,6 +70,7 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
   const title = plan.title ? mapSpan(plan.title) : null;
   const mapOverlay = (o: Overlay): Overlay | null => {
     const m = mapSpan(o);
+    if (m && m.kind === 'fx') return {...m, cues: m.cues?.map(mapAt)};
     return m && m.kind === 'chat' ? {...m, messages: m.messages.map((x) => (x.at === undefined ? x : {...x, at: mapAt(x.at)}))} : m;
   };
   // behind sin y: altura automatica segun la cabeza (matte.json), con los tiempos originales
@@ -92,7 +101,8 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
       {o.kind === 'label' ? <Label text={o.text} x={o.x} y={o.y} dir={o.dir} theme={theme} />
         : o.kind === 'emoji' ? <Emoji file={o.file} x={o.x} y={o.y} size={o.size} />
         : o.kind === 'item' ? <Item n={o.n} text={o.text} y={itemY(o)} theme={theme} />
-        : <Chat messages={o.messages} y={o.y} theme={theme} appearAt={chatTimes(o).map((s) => fr(s) - fr(o.start))} />}
+        : o.kind === 'chat' ? <Chat messages={o.messages} y={o.y} theme={theme} appearAt={chatTimes(o).map((s) => fr(s) - fr(o.start))} />
+        : <FxLayer o={o} theme={theme} durationInFrames={fr(o.end - o.start)} />}
     </Sequence>
   );
   const titleEl = title && plan.title ? (

@@ -40,7 +40,8 @@ def main(argv=None) -> int:
     with tempfile.TemporaryDirectory() as tmp:
         out = Path(tmp) / video.name
         run([ffmpeg(), "-v", "error", "-y", "-i", video, "-map", "0:v?", "-map", "0:a:0", "-c:v", "copy",
-             "-af", f"{ln},aresample=48000", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", out])
+             "-af", f"{ln},aresample=48000", "-c:a", "aac", "-b:a", "192k",
+             "-shortest", "-movflags", "+faststart", out])  # loudnorm dinamico rellena ~60 ms al final
         os.replace(out, video)
     i2, tp2 = loudness(video)
     print(f"volumen final: {i2} LUFS, pico {tp2} dBTP (corregido desde {i} LUFS, pico {tp})")

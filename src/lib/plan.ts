@@ -13,8 +13,11 @@ export type ItemOverlay = {kind: 'item'; n: number; text: string; start: number;
 export type ChatMessage = {text: string; side: 'left' | 'right'; at?: number};
 /** Burbujas de chat que aparecen una a una (`at`: segundo del video original; por defecto escalonadas). */
 export type ChatOverlay = {kind: 'chat'; messages: ChatMessage[]; start: number; end: number; y?: number};
-export type Overlay = LabelOverlay | EmojiOverlay | ItemOverlay | ChatOverlay;
-export const OVERLAY_KINDS = ['label', 'emoji', 'item', 'chat'] as const;
+/** Componente GSAP de src/scenes/generated dibujado SIN fondo sobre la profe. `cues`: segundos del video original
+ *  (se reubican tras los cortes y llegan al componente como props.cues, en segundos desde el inicio del overlay). */
+export type FxOverlay = {kind: 'fx'; component: string; props?: Record<string, unknown>; cues?: number[]; start: number; end: number; y?: number};
+export type Overlay = LabelOverlay | EmojiOverlay | ItemOverlay | ChatOverlay | FxOverlay;
+export const OVERLAY_KINDS = ['label', 'emoji', 'item', 'chat', 'fx'] as const;
 export const MAX_CHAT_MESSAGES = 4;
 
 export const SCENE_TRANSITIONS = ['fade-slide', 'slide-left', 'slide-right', 'wipe', 'zoom', 'flip'] as const;
@@ -248,6 +251,14 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       if (o.kind === 'item') {
         if (!Number.isInteger(o.n) || (o.n as number) < 1 || (o.n as number) > 10) e.push(`${tag}: n debe ser un entero entre 1 y 10`);
         if (!isStr(o.text)) e.push(`${tag}: falta text`);
+      }
+      if (o.kind === 'fx') {
+        if (!isStr(o.component)) e.push(`${tag}: falta component (una escena de src/scenes/generated)`);
+        else if (!ctx.knownGenerated.includes(o.component)) e.push(`${tag}: component "${o.component}" no esta registrado (conocidos: ${ctx.knownGenerated.join(', ') || 'ninguno'})`);
+        if (o.props !== undefined && !isObj(o.props)) e.push(`${tag}: props debe ser un objeto`);
+        if (o.cues !== undefined && (!Array.isArray(o.cues) || o.cues.some((c: unknown) => !isNum(c) || c < (o.start as number) || c >= (o.end as number)))) {
+          e.push(`${tag}: cues deben ser numeros entre start y end del overlay (segundos del video original)`);
+        }
       }
       if (o.kind === 'chat') {
         const ms = o.messages;

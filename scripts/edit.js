@@ -1,4 +1,5 @@
-// Uso: node scripts/edit.js <video|audio> [--model medium] [--gap 0.7] [--plan-only] [--no-clean]
+// Uso: node scripts/edit.js <video|audio|guion.txt> [--model medium] [--gap 0.7] [--plan-only] [--no-clean]
+// Guion solo (.txt sin nota de voz al lado) -> voz IA clonada (scripts/tts.ts, NOMBRE.ai.mp3), sin limpiar audio.
 // Normaliza (mp4/mov) o convierte la nota de voz -> limpia la voz (pipeline/audio_clean.py; --no-clean lo salta) -> transcribe el audio limpio
 // -> alinea con el guion si hay <nombre>.txt junto a la entrada -> corta silencios -> valida edit.json y renderiza (scripts/render.js)
 // en media/output/edited/<nombre>/<nombre>_edited.mp4
@@ -8,6 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const {outputPaths} = require('./outputs');
 const {publicMp4} = require('./normalize');
+const {resolveInput} = require('./voiceInput');
 
 const root = path.join(__dirname, '..');
 const py = path.join(root, '.venv', 'Scripts', 'python.exe');
@@ -16,24 +18,28 @@ const VALUED = ['--model', '--gap'];
 const video = args.find((a, i) => !a.startsWith('--') && !VALUED.includes(args[i - 1]));
 const opt = (name, def) => (args.includes(name) ? args[args.indexOf(name) + 1] : def);
 const planOnly = args.includes('--plan-only');
-const noClean = args.includes('--no-clean');
+let noClean = args.includes('--no-clean');
 if (!video) {
-  console.error('Uso: node scripts/edit.js <video> [--model medium] [--gap 0.7] [--plan-only] [--no-clean]');
+  console.error('Uso: node scripts/edit.js <video|audio|guion.txt> [--model medium] [--gap 0.7] [--plan-only] [--no-clean]');
   process.exit(1);
 }
-const name = path.basename(video).replace(/\.[^.]+$/, '');
+const input = resolveInput(video, (dir) => fs.readdirSync(path.resolve(root, dir)));
+const {name} = input;
+if (input.realVoice) console.log(`uso la nota de voz real ${input.realVoice}`);
+if (input.kind === 'script') noClean = true; // la voz IA ya sale limpia: el denoiser solo la empeoraria
 const publicVideo = `${name}.mp4`;
 const out = outputPaths(root, name).final;
-const audioOnly = /\.(m4a|mp3|ogg|opus|wav)$/i.test(video); // nota de voz: fondo plano + audio (estrategia voice)
+const audioOnly = input.kind !== 'video'; // nota de voz: fondo plano + audio (estrategia voice)
 const scriptTxt = path.join(path.dirname(path.resolve(root, video)), `${name}.txt`); // guion junto al archivo de entrada
 
 const steps = [
+  ...(input.kind === 'script' ? [['voz IA', `npx tsx scripts/tts.ts "${video}"`]] : []),
   audioOnly
-    ? ['audio a video', `npx tsx scripts/audio-to-video.ts "${video}" "public/${publicVideo}"`]
+    ? ['audio a video', `npx tsx scripts/audio-to-video.ts "${input.source}" "public/${publicVideo}"`]
     : ['normalizar video (mp4/mov -> mp4 720x1280 30 fps)', `node scripts/normalize_video.js "${video}" "${publicMp4(video, root)}"`],
   ...(noClean ? [] : [['limpiar audio', `"${py}" pipeline/audio_clean.py "public/${publicVideo}"`]]),
   // se transcribe el mp4 normalizado: mismos tiempos que el render (un mov puede tener fps variable)
-  ['transcribir', `"${py}" pipeline/transcribe_diarize.py "public/${publicVideo}" --model ${opt('--model', 'medium')}`],
+  ['transcribir', `"${py}" pipeline/transcribe_diarize.py "public/${publicVideo}" --model ${opt('--model', 'medium')}${input.noPrompt ? ' --prompt ""' : ''}`],
   ...(fs.existsSync(scriptTxt)
     ? [
         ['alinear con guion', () => fs.rmSync(path.join(root, 'public', `${name}.transcript.whisper.json`), {force: true})],

@@ -163,3 +163,12 @@ describe('validatePlan: transiciones y cutFx', () => {
   test('cutFx válido', () => expect(errs({...base(), cutFx: 'glitch'})).toEqual([]));
   test('cutFx inválido', () => has({...base(), cutFx: 'boom'}, 'cutFx'));
 });
+
+describe('validatePlan: overlay fx (componente GSAP transparente sobre la profe)', () => {
+  const fx = (over: Record<string, unknown> = {}) => ({...base(), overlays: [{kind: 'fx', component: 'demo', start: 2, end: 6, cues: [2.5, 5], ...over}]});
+  test('fx registrado con cues dentro del overlay', () => expect(errs(fx())).toEqual([]));
+  test('fx con componente no registrado', () => has(fx({component: 'nope'}), 'nope'));
+  test('fx sin componente', () => has(fx({component: undefined}), 'component'));
+  test('cue fuera del overlay', () => has(fx({cues: [7]}), 'cues'));
+  test('fx puede cruzar un corte (los cues se reubican)', () => expect(errs(fx({start: 2, end: 12, cues: [3, 10]}))).toEqual([]));
+});

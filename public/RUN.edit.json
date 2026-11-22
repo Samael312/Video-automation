@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "video": "RUN.mp4",
+  "style": "referencia",
+  "strategy": "captions",
+  "title": {"line1": "3 frases", "line2": "para sonar nativo", "start": 0, "end": 3.0, "behind": true},
+  "end": {"start": 14.27, "line1": "Guárdala", "line2": "¿Cuál vas a usar?"},
+  "captions": {"maxWords": 4, "from": 3.0},
+  "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["rush", "run", "blast"]},
+  "overlays": [
+    {"kind": "fx", "component": "rush-meter", "start": 4.4, "end": 13.95,
+     "cues": [4.48, 5.54, 6.91, 8.39, 10.39, 11.39, 12.33],
+     "props": {"vanish": true, "steps": [
+       {"phrase": "I'm in a rush", "tag": "la más confiable", "level": 0.35},
+       {"phrase": "I gotta run", "tag": "cuando te vas volando", "level": 0.68},
+       {"phrase": "I gotta blast", "tag": "muy chill · desapareces", "level": 0.97}]}}
+  ],
+  "scenes": [],
+  "sfx": [
+    {"at": 0.78, "name": "swoosh"},
+    {"at": 4.48, "name": "tick"},
+    {"at": 6.91, "name": "tick"},
+    {"at": 10.39, "name": "tick"},
+    {"at": 12.33, "name": "swoosh"}
+  ]
+}

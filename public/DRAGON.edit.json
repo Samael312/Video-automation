@@ -3,7 +3,7 @@
   "video": "DRAGON.mp4",
   "style": "referencia",
   "strategy": "mixed",
-  "title": {"line1": "slay", "line2": "¿matar o brillar?", "start": 0, "end": 2.5},
+  "title": {"line1": "slay", "line2": "¿desvivir o brillar?", "start": 0, "end": 2.5},
   "end": {"start": 26.65, "line1": "¿Cuál usas más?", "line2": "dragón o outfit"},
   "captions": {"maxWords": 4, "from": 2.5},
   "zoom": {"peak": 1.08, "duration": 0.35, "keywords": ["slay", "slays"]},

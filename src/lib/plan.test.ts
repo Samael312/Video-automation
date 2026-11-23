@@ -172,3 +172,27 @@ describe('validatePlan: overlay fx (componente GSAP transparente sobre la profe)
   test('cue fuera del overlay', () => has(fx({cues: [7]}), 'cues'));
   test('fx puede cruzar un corte (los cues se reubican)', () => expect(errs(fx({start: 2, end: 12, cues: [3, 10]}))).toEqual([]));
 });
+
+describe('validatePlan: assets en props y sonidos', () => {
+  const full = {...ctx, knownEmojis: ['1f409'], knownEmojis3d: ['2694'], knownGenerated: ['demo', 'embers']};
+  const fxPlan = (props: Record<string, unknown>) => ({...base(), overlays: [{kind: 'fx', component: 'embers', start: 2, end: 3, props}]});
+  test('fx con emoji que falta en props', () => expect(validatePlan(fxPlan({emoji: '1f999'}), full).join(' | ')).toContain('overlays[0].props.emoji'));
+  test('fx con emoji existente', () => expect(validatePlan(fxPlan({emoji: '1f409'}), full)).toEqual([]));
+  test('escena generated con emoji que falta en data.props', () =>
+    expect(validatePlan(withScenes(scene({type: 'generated', data: {component: 'demo', props: {emojis: ['1f998']}}})), full).join(' | ')).toContain('scenes[0].data.props.emojis[0]'));
+  test('sonido que falta en public/sfx', () => {
+    const p = {...base(), overlays: [{kind: 'label', text: 'a', start: 2, end: 3, x: 1, y: 1, dir: 'left'}]};
+    const e = validatePlan(p, {...ctx, knownSfx: ['pop']}).join(' | ');
+    expect(e).toContain('falta public/sfx/swoosh.wav');
+    expect(e).not.toContain('sfx/pop.wav');
+  });
+  test('sin knownSfx no revisa sonidos', () => expect(errs(base())).toEqual([]));
+});
+
+describe('validatePlan: carpeta de emojis del componente', () => {
+  test('fx que usa emoji3d con un código que solo está en emoji', () => {
+    const c = {...ctx, knownEmojis: ['1f409'], knownEmojis3d: ['2694'], knownGenerated: ['demo', 'tw'], generatedEmojiDirs: {tw: ['emoji3d' as const]}};
+    const p = {...base(), overlays: [{kind: 'fx', component: 'tw', start: 2, end: 3, props: {emojis: ['1f409']}}]};
+    expect(validatePlan(p, c).join(' | ')).toContain('public/emoji3d');
+  });
+});

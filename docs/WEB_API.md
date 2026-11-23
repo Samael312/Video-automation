@@ -28,6 +28,45 @@ Archivo `media/input/<PLAN>/<NOMBRE>.estado.json` (escritura atómica). `<PLAN>`
 - Sin archivo de estado: `sin_grabar`; si existe un archivo de entrada en la carpeta: `subido`.
 - Log técnico: `<NOMBRE>.log` (texto, últimas ~400 líneas).
 
+## Videos sin guion
+Las secciones "Editar video" y "Audio a video" suben el archivo sin elegir guion. Se guarda en las carpetas `media/input/VIDEOS_PROFE/` (solo video) y `media/input/AUDIOS_PROFE/` (solo audio). En ellas no hace falta `<NOMBRE>.txt` (`estado.existeVideo`). La primera subida da 409 si el nombre ya lo usa otro video (`estado.nombreOcupado`: ya editado, o con guion/estado en otro plan). Sin guion, `edit.js` no alinea y `edit-voice` usa la transcripción. `GET /api/videos` lista además todo lo que haya en `media/output/edited/`. Su plan es el que tenga su estado o su guion (`estado.planDeVideo`); si no tiene ninguno, `VIDEOS_PROFE`.
+
+## Cambios a videos ya editados
+`POST /api/video/<PLAN>/<NOMBRE>/cambios` acepta también la fase `listo`. El video vuelve a `revision` con un preview nuevo; al aprobar se renderiza otra vez y se reemplazan el mp4 y el caption de `edited/`. Un video editado fuera de la web no tiene estado: al pedirlo con `GET /api/video/<PLAN>/<NOMBRE>` se le crea un estado `listo` (`estado.adoptarEditado`). Solo pasa si existen su mp4 editado y `public/<NOMBRE>.edit.json`, y si no pertenece a otro plan.
+
+## Render (`npm run render:plan -- <N>`, lo usa "aprobar")
+`scripts/render.js` lanza `scripts/render.ts`, que usa el orquestador de `scripts/renderFlow.ts`. Los pasos (`== paso ==`) son: `validar edit.json` (incluye emojis en props de fx/escenas y sonidos de `public/sfx`), `preparar` (música y un solo bundle), `prueba` (1 frame cada ~0.5 s, con audio), `renderizar` (a `<N>_edited.tmp.mp4`, con progreso `Rendered x/y`; un reintento con la mitad de concurrencia si falla el compositor), `volumen final` y `terminar` (renombra el `.tmp` sobre el final). Si algo falla: una línea de causa en español, después `FALLO en el paso: <paso>`, se borra el `.tmp` y el video anterior queda intacto. `traducirError` convierte esas causas en textos para la profe.
+
+## Paquete de Remotion compartido (`scripts/bundleCache.ts`)
+`preview.ts` y `render.ts` usan `getServeUrl()`: un solo paquete por hash de `src/**` + `package-lock.json` + `remotion.config.ts` en `media/output/.remotion-bundle/<hash>/`, con `public` como junction a la `public/` real (no se copian ~280 MB). Si el paquete ya existe se reutiliza (log `(paquete de Remotion reutilizado: …)`). Si no se puede enlazar, se empaqueta copiando como antes (`aviso: …`). Borrar un paquete quita primero el junction: nunca toca `public/`. Un cambio en `node_modules` sin tocar el lock no invalida la caché: en ese caso borra `media/output/.remotion-bundle`.
+
+## Transcriptor en memoria (`web/transcriptor.js` + `pipeline/transcribe_worker.py`)
+Al arrancar, la web lanza el trabajador en segundo plano (`--port 0 --parent-pid <pid web> --warm`, ~2–3 GB de RAM). Carga Whisper y los alineadores es/en una vez (~2 min) y escucha en `127.0.0.1` (`GET /salud`, `POST /transcribir`; solo rutas dentro del proyecto; una petición a la vez). `crearFlujo({transcriptorUrl})` pasa `TRANSCRIBIR_URL` a `npm run edit`; `scripts/edit.js` lo usa (`scripts/transcribeClient.js`, log `transcriptor en memoria (n palabras)`) y, si no responde o falla, usa `pipeline/transcribe_diarize.py --no-diarize` con `aviso: transcriptor en memoria no disponible (…), uso el normal`. Si el trabajador muere, la web lo relanza una vez. Se cierra al salir la web, o solo si el proceso de la web desaparece (lo comprueba cada 5 s). La lógica común está en `pipeline/transcribe_core.py`. La edición ya no diariza: todo es `SPEAKER_00`.
+
+## Organización del código
+**Servidor:**
+- `web/server.js`: exporta `crearServidor(deps)`, un `http.Server` sin `listen`.
+  - `deps = {root, inputDir, publicDir, host, port, gestor, flujo, trabajosGuion, revisarRequisitos, checkClaude?, voces}`.
+  - Con `port: 0`, Host y Origin se comparan con el puerto real tras `listen`.
+  - Solo al ejecutarse directamente (`npm run web`) arma las dependencias reales, el transcriptor y `listen`.
+- `web/http.js`: `send` (siempre `Cache-Control: no-store`), `readJson(req, max)`, `allowed(req, esSubida, {host, port})`, `servirEstatico` y `RE_ESTATICO`.
+- `web/rutas.js`: `crearRutas(deps) → {manejar(req, res)}`, una tabla `[método, patrón, manejador]` donde gana la primera que coincide.
+- `web/servidor.smoke.test.ts`: peticiones HTTP reales sobre un root temporal, sin Claude ni Python.
+
+**Navegador** (`web/public`, módulos ES; `index.html` solo carga `/main.js`):
+- `comun.js`: `el`, `tag`, `pedir`, `conBloqueo`, `copiar`, fases, `rutaVideo`, `urlArchivo`…
+- `markdown.js`
+- `pendiente.js`: el archivo elegido antes de abrir el asistente.
+- `guiones.js`: planes, carpeta, visor y generar.
+- `secciones.js`: Video desde guion, Editar video, Audio a video, `panelRetro` y `selectorGuion`.
+- `asistente.js`: el estado `W`, SSE y acciones; `pintar` y `pintarRecom` se registran en `ganchos` para evitar ciclos.
+- `paneles.js`: paneles por fase.
+- `video.js`: abrir, dibujar y pintar.
+- `mis-videos.js`
+- `main.js`: rutas `#/…` y arranque.
+
+Las funciones puras tienen tests en `web/front.test.ts`.
+
 ## Módulos (exports CommonJS)
 **`web/estado.js`**: `FASES`, `EN_CURSO`, `NOMBRE_SEGURO` (regex), `estadoPath(inputDir, plan, nombre)` (null si inseguro), `leerEstado(inputDir, plan, nombre)` (saneado; con valores por defecto), `escribirEstado(inputDir, plan, nombre, patch)` (mezcla, valida fase, escritura atómica, devuelve el estado nuevo), `marcarInterrumpidos(inputDir)` (devuelve cuántos), `estadosDePlan(inputDir, plan)` (`{nombre: {fase, actualizado}}`), `listarListos(inputDir)` (`[{plan, nombre, actualizado}]` con fase `listo`), `agregarLog(inputDir, plan, nombre, linea)`, `leerLog(inputDir, plan, nombre, max=200)`.
 

@@ -21,7 +21,7 @@ const FxLayer: React.FC<{o: FxOverlay; theme: Theme; durationInFrames: number}> 
 import {autoBehindY, type MatteInfo} from './lib/matte';
 import {MotionLayer} from './motion/MotionLayer';
 import {insideBlocks} from './motion/timing';
-import {KEYWORD_SFX, overlaySfx, thinEvents, TITLE_SFX, type AutoSfxEvent} from './lib/autoSfx';
+import {autoSfxEvents} from './lib/sfxPlan';
 import {MUSIC_DEFAULTS, musicVolume, speechSpans} from './lib/music';
 import type {Transcript} from './lib/types';
 
@@ -118,24 +118,8 @@ export const Edit: React.FC<EditProps> = ({videoSrc, transcript, keeps, plan, ma
   ) : null;
   const isBehind = (o: Overlay) => o.kind === 'item' && Boolean(o.behind);
 
-  // Sonidos automaticos (tiempos del video final). Se omiten dentro de bloques de motion (ya traen los suyos)
-  // y cerca de un sfx manual del plan; `autoSfx: false` los apaga.
-  const autoEvents: AutoSfxEvent[] =
-    plan.autoSfx === false
-      ? []
-      : thinEvents(
-          [
-            ...overlays.flatMap((o): AutoSfxEvent[] =>
-              o.kind === 'chat' ? chatTimes(o).map((at) => ({at, ...overlaySfx('chat')})) : [{at: o.start, ...overlaySfx(o.kind)}],
-            ),
-            ...(plan.cutFx === 'glitch' ? cuts.map((at) => ({at, name: 'glitch' as const, volume: 0.5})) : []),
-            ...(plan.cutFx === 'shake' ? cuts.map((at) => ({at, name: 'hit' as const, volume: 0.3})) : []),
-            ...(hookEnd > 0 ? [{at: 0, ...TITLE_SFX}] : []),
-            ...(title ? [{at: title.start, ...TITLE_SFX}] : []),
-            ...keywordEvents(newWords, plan.zoom.keywords).map((at) => ({at, ...KEYWORD_SFX})),
-          ].filter((e) => !insideBlocks(e.at, plan.motion, keeps)),
-          plan.sfx.map((s) => mapAt(s.at)),
-        );
+  // Sonidos automaticos (tiempos del video final): ver src/lib/sfxPlan.ts
+  const autoEvents = autoSfxEvents({plan, overlays, cuts, hookEnd, title, words: newWords, keeps, manualAt: plan.sfx.map((s) => mapAt(s.at))});
 
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>

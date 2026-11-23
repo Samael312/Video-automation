@@ -29,9 +29,9 @@ const cleanResidue = (root, name) => {
   if (fs.existsSync(workRoot) && fs.readdirSync(workRoot).length === 0) fs.rmdirSync(workRoot);
 };
 
-const KEEP = new Set(['edited', '.gitkeep']);
+const KEEP = new Set(['edited', '.gitkeep', '.remotion-bundle']); // .remotion-bundle: cache del paquete (scripts/bundleCache.ts)
 
-/** Deja media/output solo con edited/ (y .gitkeep). Devuelve los nombres borrados. */
+/** Deja media/output solo con edited/, .gitkeep y la cache del paquete de Remotion. Devuelve los nombres borrados. */
 const cleanAll = (root) => {
   const out = outputDir(root);
   if (!fs.existsSync(out)) return [];

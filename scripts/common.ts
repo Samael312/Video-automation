@@ -56,3 +56,9 @@ export const knownEmojis3d = (): string[] => {
   const dir = path.join(PUBLIC, 'emoji3d');
   return fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')) : [];
 };
+
+/** Nombres de public/sfx/*.wav (sin extension). */
+export const knownSfx = (): string[] => {
+  const dir = path.join(PUBLIC, 'sfx');
+  return fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('.wav')).map((f) => f.replace(/\.wav$/, '')) : [];
+};

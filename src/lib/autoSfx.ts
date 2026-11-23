@@ -2,8 +2,8 @@ import type {Overlay, SfxName} from './plan';
 
 export type AutoSfx = {name: SfxName; volume: number};
 
-/** Sonido que acompana a cada overlay al aparecer (multiplicador del sfxVolume del tema). */
-export const overlaySfx = (kind: Overlay['kind']): AutoSfx => {
+/** Sonido que acompana a cada overlay al aparecer (multiplicador del sfxVolume del tema); null = sin sonido automatico. */
+export const overlaySfx = (kind: Overlay['kind']): AutoSfx | null => {
   switch (kind) {
     case 'emoji':
       return {name: 'pop2', volume: 0.7};
@@ -13,6 +13,11 @@ export const overlaySfx = (kind: Overlay['kind']): AutoSfx => {
       return {name: 'tick', volume: 0.8};
     case 'chat':
       return {name: 'message', volume: 0.6};
+    case 'fx':
+      // los componentes fx marcan sus golpes con `cues` y sfx manuales del plan
+      return null;
+    default:
+      return null; // tipo nuevo sin sonido definido: mejor silencio que sfx/undefined.wav
   }
 };
 

@@ -5,10 +5,13 @@ const ev = (at: number): AutoSfxEvent => ({at, name: 'pop', volume: 0.5});
 
 describe('overlaySfx', () => {
   it('da un sonido a cada tipo de overlay', () => {
-    expect(overlaySfx('emoji').name).toBe('pop2');
-    expect(overlaySfx('label').name).toBe('pop');
-    expect(overlaySfx('item').name).toBe('tick');
-    expect(overlaySfx('chat').name).toBe('message');
+    expect(overlaySfx('emoji')?.name).toBe('pop2');
+    expect(overlaySfx('label')?.name).toBe('pop');
+    expect(overlaySfx('item')?.name).toBe('tick');
+    expect(overlaySfx('chat')?.name).toBe('message');
+  });
+  it('fx no lleva sonido automático (trae sus cues y sfx propios)', () => {
+    expect(overlaySfx('fx')).toBeNull();
   });
 });
 

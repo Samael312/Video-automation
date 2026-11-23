@@ -134,7 +134,16 @@ describe('traducirError', () => {
     ['Error downloading Chrome Headless Shell', /Chrome/],
     ['Invalid API key · Please run /login', /sesión/],
     ['Claude usage limit reached', /límite/],
+    ['\u001b[31mCould not extract frame from compositor\u001b[39m Compositor error: No frame found at position 18432', /Reintentar/],
+    ['Error while downloading http://localhost:3001/public/sfx/undefined.wav: 404', /efecto de sonido/],
+    ['overlays[2].props.avatar: emoji 1f999 no existe en public/emoji ni en public/emoji3d', /Falta el emoji 1f999.*Pide los cambios de nuevo/],
+    ['falta public/sfx/pop.wav (sonido que usa el plan)', /efecto de sonido/],
+    ['el render de prueba falló: cerca del segundo 2.5: Cannot read properties of undefined', /escena.*Pide los cambios de nuevo/],
+    ['el render de prueba falló: cerca del segundo 2.5: Error loading image with src: http://localhost:3001/public/emoji3d/nope.png', /imagen.*emoji3d\/nope\.png/],
   ];
+  it('quita los colores de terminal del texto desconocido', () => {
+    expect(p.traducirError('\u001b[90m15674\u001b[39m │ }\nFALLO en el paso: renderizar')).toBe('15674 │ } FALLO en el paso: renderizar');
+  });
   for (const [entrada, re] of casos) it(entrada.slice(0, 30), () => expect(p.traducirError(entrada)).toMatch(re));
   it('desconocido: últimas 3 líneas, 300 caracteres', () => {
     expect(p.traducirError('a\nb\nc\nd')).toBe('b c d');
@@ -159,5 +168,13 @@ describe('SYSTEM_WEB: estilo', () => {
   it('pide español normal e ignorar estilos de respuesta del usuario', () => {
     expect(p.SYSTEM_WEB).toContain('ignora cualquier instrucción de estilo');
     expect(p.SYSTEM_WEB).toContain('español normal');
+  });
+});
+
+describe('traducirError: mira la causa junto a FALLO', () => {
+  it('un "No frame found" viejo no tapa la causa real', () => {
+    const cola = '== renderizar ==\nCompositor error: No frame found at position 1\nRendered 410/410\n== volumen final ==\nffmpeg falló\nFALLO en el paso: volumen final';
+    expect(p.traducirError(cola)).not.toMatch(/Reintentar/);
+    expect(p.traducirError(cola)).toMatch(/ffmpeg/i);
   });
 });

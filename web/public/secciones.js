@@ -1,14 +1,14 @@
-/* Secciones del menú lateral (Video desde guion, Editar video, Audio a video), selector de guion
-   y panel reutilizable de retroalimentación. Se carga después de video.js y antes de app.js.
-   Usa $, el, tag, pedir, enc, textoError, conAttr, conBloqueo, rutaVideo solo al ejecutarse.
-   Todo con textContent: nada de innerHTML. */
+// Secciones del menú lateral (Video desde guion, Editar video, Audio a video), selector de guion
+// y panel reutilizable de retroalimentación. Todo con textContent: nada de innerHTML.
+import {$, el, fecha, mb, pedir, enc, textoError, conAttr, conBloqueo, rutaVideo, NOMBRE_OK} from './comun.js';
+import {ponerPendiente} from './pendiente.js';
 
 const MAX_RETRO = 1500;
 const NO_DISPONIBLE = 'Esta función todavía no está disponible en el servidor.';
 
 // ---------- panel reutilizable de retroalimentación ----------
 // opciones: {titulo, etiqueta, placeholder, boton, enviar: async (texto) => ({ok, error?, mensaje?}), historial: [{texto, en}]}
-function panelRetro(op) {
+export function panelRetro(op) {
   const id = `retro-${Math.random().toString(36).slice(2, 8)}`;
   const ta = el('textarea', {id, className: 'cambios-texto', maxLength: MAX_RETRO, rows: 4, placeholder: op.placeholder || 'Por ejemplo: hazlo más corto, cambia el gancho…'});
   const cont = el('span', {className: 'contador-txt', textContent: `0 / ${MAX_RETRO}`});
@@ -56,7 +56,7 @@ function respuestaGuion(r, mensajeOk) {
 
 // retroalimentación sobre un guion
 // TODO(backend): POST /api/guiones/<PLAN>/<NOMBRE>/cambios {texto} (≤ 1500 caracteres)
-function panelRetroGuion(plan, nombre) {
+export function panelRetroGuion(plan, nombre) {
   return panelRetro({
     titulo: 'Pídele cambios al guion',
     placeholder: 'Por ejemplo: más corto, otro gancho, tono más divertido…',
@@ -66,7 +66,7 @@ function panelRetroGuion(plan, nombre) {
 
 // generar más guiones dentro de un plan
 // TODO(backend): POST /api/guiones/<PLAN> {tema, cantidad}
-function panelGenerarEnPlan(plan, alTerminar) {
+export function panelGenerarEnPlan(plan, alTerminar) {
   const tema = el('input', {type: 'text', maxLength: 300, placeholder: 'Tema de los guiones nuevos (vacío = variados)', autocomplete: 'off'});
   const num = el('input', {type: 'number', min: 1, max: 10, value: 3, className: 'num-chico'});
   const boton = el('button', {type: 'button', className: 'secundario', textContent: 'Generar guiones en este plan'});
@@ -87,7 +87,7 @@ function panelGenerarEnPlan(plan, alTerminar) {
 
 // ---------- selector de guion (plan + guion) ----------
 // devuelve {nodo, actual(): {plan, nombre} | null}; alCambiar() se llama al cambiar la elección
-function selectorGuion(alCambiar) {
+export function selectorGuion(alCambiar) {
   const selPlan = el('select', {className: 'seleccion', id: `sel-plan-${Math.random().toString(36).slice(2, 6)}`});
   const selGuion = el('select', {className: 'seleccion', id: `sel-guion-${Math.random().toString(36).slice(2, 6)}`});
   const msg = el('p', {className: 'tenue', textContent: 'Cargando planes…'});
@@ -149,7 +149,7 @@ async function cargarVoces() {
   return voces;
 }
 
-async function mostrarDesdeGuion() {
+export async function mostrarDesdeGuion() {
   const cont = $('vista-desde');
   cont.replaceChildren(cabeceraSec('🎙️ Video desde guion', 'Video desde', 'guion', 'Elige un guion ya creado y una voz: te armo el video solo con motion graphics.'));
   const err = conAttr(el('p', {className: 'error-linea', hidden: true}), {role: 'alert'});
@@ -188,27 +188,111 @@ async function mostrarDesdeGuion() {
   refrescar();
 }
 
-// ---------- secciones 3 y 4: elegir guion y abrir el asistente ----------
+// ---------- secciones 3 y 4: subir el video o el audio de la profe (sin guion) ----------
+// El archivo elegido aquí se guarda con ponerPendiente y el asistente (video.js) lo sube al abrirse.
+const CARPETA_SIN_GUION = {editar: 'VIDEOS_PROFE', audio: 'AUDIOS_PROFE'};
+
 const MODOS = {
-  editar: {insignia: '🎬 Editar video', titulo: 'Editar', grad: 'video', texto: 'Sube el video de la profe y elige el estilo (captions, motion o mixto), o pide una recomendación.', boton: 'Continuar con el video'},
-  audio: {insignia: '🔊 Audio a video', titulo: 'Audio a', grad: 'video', texto: 'Sube el audio de la profe (.mp3 o .m4a) con su guion: el video se hace solo con motion graphics.', boton: 'Continuar con el audio'},
+  editar: {insignia: '🎬 Editar video', titulo: 'Editar', grad: 'video', texto: 'Sube el video de la profe. Después eliges el estilo (captions, motion o mixto) o pides que te recomiende uno.', zona: 'Arrastra el video de la profe aquí', ext: ['mov', 'mp4', 'm4v']},
+  audio: {insignia: '🔊 Audio a video', titulo: 'Audio a', grad: 'video', texto: 'Sube el audio de la profe: se transcribe solo y el video se hace con motion graphics. No hace falta guion.', zona: 'Arrastra el audio de la profe aquí', ext: ['m4a', 'mp3', 'wav', 'ogg', 'opus']},
 };
 
-function mostrarElegir(modo) {
+// nombre de archivo -> nombre seguro (A-Z, 0-9, _ y -), sin la extensión
+export function nombreDesdeArchivo(nombreArchivo) {
+  const base = String(nombreArchivo || '').replace(/\.[^.]+$/, '');
+  const limpio = base.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9_-]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 80);
+  return limpio || `VIDEO_${new Date().toISOString().slice(0, 10).replace(/-/g, '')}`;
+}
+
+export function mostrarElegir(modo) {
   const m = MODOS[modo];
+  const plan = CARPETA_SIN_GUION[modo];
   const cont = $('vista-elegir');
   cont.replaceChildren(cabeceraSec(m.insignia, m.titulo, m.grad, m.texto));
-  const boton = el('button', {type: 'button', className: 'primario', textContent: m.boton, disabled: true});
-  const guionTxt = el('div');
+  let archivo = null;
+  const err = conAttr(el('p', {className: 'error-linea', hidden: true}), {role: 'alert'});
+  const input = el('input', {type: 'file', className: 'oculto', accept: m.ext.map((e) => `.${e}`).join(',')});
+  input.tabIndex = -1;
+  const zonaTxt = el('p', {className: 'zona-txt', textContent: m.zona});
+  const zona = conAttr(el('div', {className: 'zona', tabIndex: 0}, el('span', {className: 'zona-icono', textContent: '⬆'}), zonaTxt, el('p', {className: 'zona-sub', textContent: `o haz clic para elegir un archivo · ${m.ext.join(', ')}`}), input), {role: 'button', 'aria-label': 'Elegir o arrastrar el archivo'});
+  const idNombre = `nombre-${modo}`;
+  const nombre = el('input', {type: 'text', id: idNombre, maxLength: 80, placeholder: 'Por ejemplo: PHRASAL_VERBS', autocomplete: 'off'});
+  const boton = el('button', {type: 'button', className: 'primario', textContent: 'Subir y continuar', disabled: true});
+  const listo = () => {
+    boton.disabled = !archivo || !NOMBRE_OK.test(nombre.value.trim());
+  };
+  const elegir = (f) => {
+    err.hidden = true;
+    const ext = (f.name.split('.').pop() || '').toLowerCase();
+    if (!f.name.includes('.') || !m.ext.includes(ext)) {
+      err.hidden = false;
+      err.textContent = `Ese formato no sirve aquí. Usa uno de estos: ${m.ext.join(', ')}.`;
+      return;
+    }
+    archivo = f;
+    zonaTxt.textContent = `✅ ${f.name} (${mb(f.size)}) · clic para cambiarlo`;
+    if (!nombre.value.trim()) nombre.value = nombreDesdeArchivo(f.name);
+    listo();
+  };
+  zona.addEventListener('click', () => input.click());
+  zona.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      input.click();
+    }
+  });
+  zona.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    zona.classList.add('encima');
+  });
+  zona.addEventListener('dragleave', () => zona.classList.remove('encima'));
+  zona.addEventListener('drop', (e) => {
+    e.preventDefault();
+    zona.classList.remove('encima');
+    const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) elegir(f);
+  });
+  input.addEventListener('change', () => {
+    if (input.files[0]) elegir(input.files[0]);
+    input.value = '';
+  });
+  nombre.addEventListener('input', () => {
+    nombre.value = nombre.value.replace(/[^A-Za-z0-9_-]/g, '_');
+    listo();
+  });
+  boton.addEventListener('click', async () => {
+    const n = nombre.value.trim();
+    if (!archivo || !NOMBRE_OK.test(n)) return;
+    err.hidden = true;
+    await conBloqueo([boton, nombre], async () => {
+      // los videos terminados se guardan por nombre: no se puede repetir
+      const r = await pedir(`/api/video/${enc(plan)}/${enc(n)}`);
+      if (r.ok && r.datos && r.datos.estado && r.datos.estado.fase !== 'sin_grabar') {
+        err.hidden = false;
+        err.textContent = 'Ya hay un video con ese nombre. Escribe otro nombre.';
+        return;
+      }
+      ponerPendiente({plan, nombre: n, file: archivo});
+      location.hash = `${rutaVideo(plan, n)}?m=${modo}`;
+    });
+  });
+  const campoNombre = el('div', {className: 'campo'}, el('label', {className: 'etiqueta', htmlFor: idNombre, textContent: 'Nombre del video (letras, números, _ o -)'}), nombre);
+  cont.append(
+    el('section', {className: 'panel video-sec'}, el('h2', {textContent: modo === 'audio' ? '1. Sube el audio' : '1. Sube el video'}), zona, campoNombre, err),
+    el('section', {className: 'video-sec centro-acciones'}, boton),
+    panelDesdeGuion(modo),
+  );
+}
+
+// opción secundaria: la grabación es de un guion creado en la web (se usa ese guion)
+function panelDesdeGuion(modo) {
+  const boton = el('button', {type: 'button', className: 'secundario', textContent: 'Continuar con este guion', disabled: true});
   const sel = selectorGuion(() => {
-    const a = sel.actual();
-    boton.disabled = !a;
-    const g = sel.guionActual();
-    guionTxt.replaceChildren(g && g.texto ? el('details', {className: 'ver-registro'}, el('summary', {textContent: 'Ver el guion'}), el('p', {className: 'guion-previo', textContent: g.texto})) : '');
+    boton.disabled = !sel.actual();
   });
   boton.addEventListener('click', () => {
     const a = sel.actual();
     if (a) location.hash = `${rutaVideo(a.plan, a.nombre)}?m=${modo}`;
   });
-  cont.append(el('section', {className: 'panel video-sec'}, el('h2', {textContent: 'Elige el guion de este video'}), sel.nodo, guionTxt), el('section', {className: 'video-sec centro-acciones'}, boton));
+  return el('details', {className: 'panel video-sec'}, el('summary', {textContent: '¿Grabaste un guion de la web? Elígelo aquí (opcional)'}), sel.nodo, el('div', {className: 'acciones'}, boton));
 }

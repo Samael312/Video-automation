@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import {afterEach, beforeEach, describe, expect, it} from 'vitest';
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const {crearFlujo, lineaDeEvento} = require('./flujo.js');
+const {crearFlujo, lineaDeEvento, REQ_PIPELINE} = require('./flujo.js');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const {Gestor} = require('./jobs.js');
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -34,8 +34,10 @@ const PLAN = 'NAVIDAD';
 const N = 'NAVIDAD_EVE';
 const resultado = (texto: string, extra: object = {}) => ({type: 'result', subtype: 'success', is_error: false, result: texto, session_id: 'sesion-fake-123', ...extra});
 
-const correrComando = async (job: unknown, cmd: string, args: string[], opts: {onLine: (l: string) => void}) => {
+let envs: Record<string, string | undefined>[] = [];
+const correrComando = async (job: unknown, cmd: string, args: string[], opts: {onLine: (l: string) => void; env?: Record<string, string | undefined>}) => {
   comandos.push(args);
+  envs.push(opts.env ?? {});
   if (cfg.esperar) await cfg.esperar;
   if (args.includes('edit')) {
     opts.onLine('== normalizar ==');
@@ -81,7 +83,7 @@ const correrClaude = async (job: unknown, args: string[], prompt: string, opts: 
   return {code: 0, result: resultado(texto, {permission_denials: cfg.denegaciones}), stderr: ''};
 };
 
-const crear = () =>
+const crear = (extra: object = {}) =>
   crearFlujo({
     root,
     inputDir,
@@ -94,6 +96,7 @@ const crear = () =>
     faltantes: async () => faltan,
     uuid: () => '11111111-2222-3333-4444-555555555555',
     npm: 'npm',
+    ...extra,
   });
 
 const esperarFin = async (r: {ok: boolean; trabajo?: string}) => {
@@ -108,6 +111,7 @@ const subir = (tipo = 'video', archivo = `${N}.mp4`) =>
   estadoMod.escribirEstado(inputDir, PLAN, N, {fase: 'subido', entrada: {archivo, tipo, bytes: 10}});
 
 beforeEach(() => {
+  envs = [];
   root = fs.mkdtempSync(path.join(os.tmpdir(), 'flujo-'));
   inputDir = path.join(root, 'media', 'input');
   fs.mkdirSync(path.join(inputDir, PLAN), {recursive: true});
@@ -258,6 +262,14 @@ describe('cambios', () => {
     expect(llamadasClaude[1].prompt).toContain('Retomas una edición');
     expect(estado().fase).toBe('revision');
   });
+  it('acepta cambios de un video ya listo y vuelve a revisión', async () => {
+    const f = crear();
+    await enRevision(f);
+    estadoMod.escribirEstado(path.join(root, 'media', 'input'), PLAN, N, {fase: 'listo'});
+    await esperarFin(await f.cambios(PLAN, N, 'quita la música'));
+    expect(estado().fase).toBe('revision');
+    expect(estado().cambios.slice(-1)[0].texto).toBe('quita la música');
+  });
   it('rechaza texto vacío, enorme o un video que aún no tiene plan', async () => {
     const f = crear();
     expect(await f.cambios(PLAN, N, '   ')).toMatchObject({ok: false, status: 400});
@@ -342,5 +354,26 @@ describe('lineaDeEvento', () => {
     expect(lineaDeEvento({type: 'user', message: {content: [{type: 'tool_result', is_error: true, content: 'permission denied'}]}})).toBe('! permission denied');
     expect(lineaDeEvento({type: 'system'})).toBeNull();
     expect(lineaDeEvento(null)).toBeNull();
+  });
+});
+
+describe('transcriptor en memoria', () => {
+  it('la preparación recibe TRANSCRIBIR_URL si hay trabajador', async () => {
+    subir();
+    await esperarFin(await crear({transcriptorUrl: () => 'http://127.0.0.1:5000'}).empezar(PLAN, N, 'mixed'));
+    const i = comandos.findIndex((a) => a.includes('edit'));
+    expect(envs[i].TRANSCRIBIR_URL).toBe('http://127.0.0.1:5000');
+  });
+  it('sin trabajador no la recibe', async () => {
+    subir();
+    await esperarFin(await crear({transcriptorUrl: () => null}).empezar(PLAN, N, 'mixed'));
+    const i = comandos.findIndex((a) => a.includes('edit'));
+    expect(envs[i]).not.toHaveProperty('TRANSCRIBIR_URL');
+  });
+});
+
+describe('requisitos de preparar', () => {
+  it('ya no pide el token de Hugging Face (la edición no separa voces)', () => {
+    expect(REQ_PIPELINE).not.toContain('hf_token');
   });
 });

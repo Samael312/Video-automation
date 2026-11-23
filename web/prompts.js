@@ -213,6 +213,11 @@ function parseSalidaClaude(result) {
 
 // ---------- errores ----------
 const ERRORES = [
+  [/No frame found at position|Could not extract frame from compositor/i, 'El render se cortó por un fallo puntual al leer el video (pasa a veces). Pulsa "Reintentar" y luego "Aprobar" otra vez.'],
+  [/emoji ([0-9a-f-]+) no existe en public\/emoji/i, (m) => `Falta el emoji ${m[1]} que usa una escena del plan. Pide los cambios de nuevo (o bájalo con npm run emoji -- ${m[1]}).`],
+  [/render de prueba falló.*Error loading image with src: \S*?\/public\/(\S+)/i, (m) => `Una escena usa una imagen que no existe (public/${m[1]}). Pide los cambios de nuevo para cambiar esa imagen.`],
+  [/render de prueba falló/i, 'Una escena del plan se rompe al dibujarse. Pide los cambios de nuevo describiendo qué escena quitar o cambiar.'],
+  [/public\/sfx\/[^\s]*\.wav/i, 'Falta un efecto de sonido del plan (public/sfx). Pide los cambios de nuevo o reintenta la planificación.'],
   [/falta HF_TOKEN/i, 'Falta el HF_TOKEN. Pónlo en el archivo .env (HF_TOKEN=...) y vuelve a intentar.'],
   [/falta DeepFilterNet|setup-audio/i, 'Falta DeepFilterNet (limpieza de voz). Corre "npm run setup-audio -- --yes" una vez y vuelve a intentar.'],
   [/no parece leer este guion|coincidencia\s*\d+\s*%/i, 'El audio no coincide con el guion. Revisa que sea la nota de voz correcta y que lea el guion tal cual.'],
@@ -225,8 +230,19 @@ const ERRORES = [
 ];
 
 function traducirError(texto) {
-  const t = String(texto == null ? '' : texto);
-  for (const [re, msg] of ERRORES) if (re.test(t)) return msg;
+  let t = String(texto == null ? '' : texto).replace(ANSI, '');
+  // con un FALLO de render:plan, solo cuenta el tramo de ese paso (desde su "== paso ==") para que
+  // un aviso de un paso anterior (p. ej. un reintento del compositor) no tape la causa real
+  const lineas = t.split(/\r?\n/);
+  const fallo = lineas.map((l) => /^FALLO en el paso/.test(l.trim())).lastIndexOf(true);
+  if (fallo >= 0) {
+    const ini = lineas.slice(0, fallo).map((l) => /^==.*==$/.test(l.trim())).lastIndexOf(true);
+    if (ini >= 0) t = lineas.slice(ini + 1, fallo + 1).join('\n');
+  }
+  for (const [re, msg] of ERRORES) {
+    const m = re.exec(t);
+    if (m) return typeof msg === 'function' ? msg(m) : msg;
+  }
   return t.trim().split(/\r?\n/).filter((l) => l.trim()).slice(-3).join(' ').trim().slice(0, 300) || 'Algo falló. Vuelve a intentar.';
 }
 

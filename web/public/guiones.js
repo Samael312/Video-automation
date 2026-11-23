@@ -1,4 +1,8 @@
-const $ = (id) => document.getElementById(id);
+// Seccion Guiones: generar planes, lista de planes, una carpeta y el visor grande de un guion.
+import {$, el, api, tag, fecha, copiar, botonCopiar, badgeFase, rutaVideo, NOMBRE_OK} from './comun.js';
+import {renderMarkdown} from './markdown.js';
+import {panelGenerarEnPlan, panelRetroGuion} from './secciones.js';
+
 const form = $('form');
 const generar = $('generar');
 const cancelar = $('cancelar');
@@ -7,18 +11,6 @@ let nuevos = new Set();
 let fuente = null;
 let carpetaActual = null; // {name, guiones, ...}
 let visorIdx = -1;
-
-// ---------- utilidades (todo se construye con nodos de texto: nada de innerHTML) ----------
-const el = (tag, props = {}, ...children) => {
-  const n = Object.assign(document.createElement(tag), props);
-  for (const c of children) if (c !== null && c !== undefined && c !== false) n.append(c);
-  return n;
-};
-const api = async (ruta) => {
-  const r = await fetch(ruta);
-  if (!r.ok) throw new Error(String(r.status));
-  return r.json();
-};
 
 function setProgreso(texto, clase = '') {
   progreso.hidden = !texto;
@@ -31,96 +23,14 @@ function setOcupado(ocupado) {
   if (ocupado) progreso.classList.add('trabajando');
 }
 
-// Copia al portapapeles. writeText a veces se queda colgado (sin resolver ni rechazar): se le da 1.5 s y se prueba el plan B.
-async function copiar(texto, boton) {
-  let ok = false;
-  try {
-    await Promise.race([navigator.clipboard.writeText(texto), new Promise((_, rechaza) => setTimeout(() => rechaza(new Error('tiempo agotado')), 1500))]);
-    ok = true;
-  } catch {
-    const ta = el('textarea', {value: texto});
-    ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
-    document.body.append(ta);
-    ta.select();
-    try {
-      ok = document.execCommand('copy');
-    } catch {
-      ok = false;
-    }
-    ta.remove();
-  }
-  const original = boton.dataset.original || boton.textContent;
-  boton.dataset.original = original;
-  boton.textContent = ok ? '¡Copiado!' : 'No se pudo copiar: selecciónalo y copia a mano';
-  setTimeout(() => (boton.textContent = original), ok ? 1500 : 3500);
-}
-const botonCopiar = (texto, etiqueta = 'Copiar') => {
-  const b = el('button', {type: 'button', className: 'secundario pequeno', textContent: etiqueta});
-  b.addEventListener('click', () => copiar(texto, b));
-  return b;
-};
-const tag = (texto, extra = '') => el('span', {className: `tag ${extra}`.trim(), textContent: texto});
-const fecha = (iso) => {
-  const d = new Date(iso);
-  return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString('es', {day: 'numeric', month: 'short', year: 'numeric'});
-};
-
 // contador de cantidad (1 a 10)
 const cantidad = $('cantidad');
 const ajustar = (delta) => (cantidad.value = String(Math.min(10, Math.max(1, Number(cantidad.value) + delta))));
 $('menos').addEventListener('click', () => ajustar(-1));
 $('mas').addEventListener('click', () => ajustar(1));
 
-// ---------- markdown minimo para PLAN.md ----------
-function inline(texto) {
-  const frag = document.createDocumentFragment();
-  for (const parte of texto.split(/(\*\*[^*]+\*\*|`[^`]+`)/g)) {
-    if (!parte) continue;
-    if (parte.startsWith('**')) frag.append(el('strong', {textContent: parte.slice(2, -2)}));
-    else if (parte.startsWith('`')) frag.append(el('code', {textContent: parte.slice(1, -1)}));
-    else frag.append(parte);
-  }
-  return frag;
-}
-function renderMarkdown(md) {
-  const root = el('div');
-  const lineas = md.split('\n');
-  let i = 0;
-  while (i < lineas.length) {
-    const l = lineas[i];
-    if (/^\s*\|/.test(l) && /^\s*\|[\s:|-]+\|\s*$/.test(lineas[i + 1] || '')) {
-      const celdas = (s) => s.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim());
-      const tabla = el('table');
-      const cab = el('tr');
-      for (const c of celdas(l)) cab.append(el('th', {}, inline(c)));
-      tabla.append(el('thead', {}, cab));
-      const cuerpo = el('tbody');
-      i += 2;
-      while (i < lineas.length && /^\s*\|/.test(lineas[i])) {
-        const fila = el('tr');
-        for (const c of celdas(lineas[i])) fila.append(el('td', {}, inline(c)));
-        cuerpo.append(fila);
-        i++;
-      }
-      tabla.append(cuerpo);
-      root.append(tabla);
-      continue;
-    }
-    const h = /^(#{1,3})\s+(.*)$/.exec(l);
-    if (h) root.append(el('h' + h[1].length, {}, inline(h[2])));
-    else if (/^\s*[-*]\s+/.test(l)) {
-      const ul = el('ul');
-      while (i < lineas.length && /^\s*[-*]\s+/.test(lineas[i])) ul.append(el('li', {}, inline(lineas[i++].replace(/^\s*[-*]\s+/, ''))));
-      root.append(ul);
-      continue;
-    } else if (l.trim()) root.append(el('p', {}, inline(l)));
-    i++;
-  }
-  return root;
-}
-
 // ---------- vista: planes (carpetas) ----------
-async function cargarPlanes() {
+export async function cargarPlanes() {
   const lista = $('planes');
   const carpetas = await api('/api/carpetas');
   lista.replaceChildren();
@@ -145,7 +55,7 @@ async function cargarPlanes() {
 }
 
 // ---------- vista: una carpeta ----------
-async function mostrarCarpeta(nombre) {
+export async function mostrarCarpeta(nombre) {
   let datos;
   try {
     datos = await api(`/api/carpetas/${encodeURIComponent(nombre)}`);
@@ -265,7 +175,7 @@ function abrirVisor(i) {
   document.body.classList.add('sin-scroll');
   $('visor-cerrar').focus();
 }
-function cerrarVisor() {
+export function cerrarVisor() {
   $('visor').hidden = true;
   document.body.classList.remove('sin-scroll');
   visorIdx = -1;
@@ -282,50 +192,6 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowLeft') abrirVisor(visorIdx - 1);
   else if (e.key === 'ArrowRight') abrirVisor(visorIdx + 1);
 });
-
-// ---------- rutas ----------
-// #/ y #/p/PLAN = Guiones · #/desde-guion · #/editar · #/audio · #/p/PLAN/v/NOMBRE[?m=editar|audio|guion] · #/videos
-async function ruta() {
-  cerrarVisor();
-  salirVideo();
-  const [camino, query = ''] = location.hash.split('?');
-  const modoQ = new URLSearchParams(query).get('m');
-  let mv = /^#\/p\/([^/]+)\/v\/([^/]+)$/.exec(camino);
-  let m = mv ? null : /^#\/p\/([^/]+)$/.exec(camino);
-  try {
-    if (mv) mv = [mv[0], decodeURIComponent(mv[1]), decodeURIComponent(mv[2])];
-    if (m) m = [m[0], decodeURIComponent(m[1])];
-  } catch {
-    location.hash = '#/';
-    return;
-  }
-  const modoVideo = ['editar', 'audio', 'guion'].includes(modoQ) ? modoQ : null;
-  let seccion = 'guiones';
-  if (camino === '#/videos') seccion = 'videos';
-  else if (camino === '#/desde-guion') seccion = 'desde';
-  else if (camino === '#/editar') seccion = 'editar';
-  else if (camino === '#/audio') seccion = 'audio';
-  else if (mv) seccion = modoVideo === 'audio' ? 'audio' : modoVideo === 'guion' ? 'desde' : 'editar';
-  $('vista-inicio').hidden = Boolean(mv || m || seccion !== 'guiones');
-  $('vista-carpeta').hidden = !m;
-  $('vista-video').hidden = !mv;
-  $('vista-videos').hidden = seccion !== 'videos';
-  $('vista-desde').hidden = camino !== '#/desde-guion';
-  $('vista-elegir').hidden = !(camino === '#/editar' || camino === '#/audio');
-  for (const s of ['guiones', 'desde', 'editar', 'audio', 'videos']) {
-    const n = $(`nav-${s}`);
-    if (s === seccion) n.setAttribute('aria-current', 'page');
-    else n.removeAttribute('aria-current');
-  }
-  window.scrollTo(0, 0);
-  if (mv) await mostrarVideo(mv[1], mv[2], modoVideo);
-  else if (m) await mostrarCarpeta(m[1]);
-  else if (seccion === 'videos') await mostrarVideos();
-  else if (seccion === 'desde') await mostrarDesdeGuion();
-  else if (seccion === 'editar' || seccion === 'audio') mostrarElegir(seccion);
-  else await cargarPlanes();
-}
-window.addEventListener('hashchange', ruta);
 $('recargar').addEventListener('click', cargarPlanes);
 
 // ---------- generar y progreso en vivo ----------
@@ -378,8 +244,8 @@ form.addEventListener('submit', async (e) => {
 });
 cancelar.addEventListener('click', () => fetch('/api/cancelar', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}));
 
-// ---------- arranque ----------
-(async () => {
+/** Al abrir la web: avisos de Claude y, si ya hay guiones generandose, engancha su progreso. */
+export async function revisarEstado() {
   try {
     const estado = await api('/api/estado');
     const aviso = $('aviso');
@@ -397,5 +263,4 @@ cancelar.addEventListener('click', () => fetch('/api/cancelar', {method: 'POST',
   } catch {
     /* sin estado: se verá al generar */
   }
-  await ruta();
-})();
+}

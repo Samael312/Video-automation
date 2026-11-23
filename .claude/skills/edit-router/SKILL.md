@@ -8,7 +8,7 @@ description: Mira un video de la profe de inglés, detecta de qué formato es (�
 No edita nada por sí sola: clasifica, recomienda, espera tu "sí" y luego sigue con la skill elegida.
 
 ## 0. ¿Solo audio o solo guion?
-Si la entrada es una nota de voz (`.m4a`, `.mp3`, `.ogg`, `.opus`, `.wav`) o un guion (`.txt`, voz clonada), no hay cámara: la única estrategia es **`edit-voice`** (la nota de voz necesita el guion `NOMBRE.txt` al lado). Carga `edit-voice` y síguela desde su paso 1; no clasifiques.
+Si la entrada es una nota de voz (`.m4a`, `.mp3`, `.ogg`, `.opus`, `.wav`) o un guion (`.txt`, voz clonada), no hay cámara: la única estrategia es **`edit-voice`** (la nota de voz puede llevar el guion `NOMBRE.txt` al lado; sin él se usa la transcripción). Carga `edit-voice` y síguela desde su paso 1; no clasifiques.
 
 ## 1. Transcribir y ver
 Haz los pasos 1 y 2 de la skill `video-base` (carga `video-base`):

@@ -11,7 +11,7 @@ const lib = require('./lib');
 const jobs = require('./jobs');
 
 const MIN = 60 * 1000;
-const REQ_PIPELINE = ['claude', 'venv', 'ffmpeg', 'ffprobe', 'hf_token', 'deepfilter', 'node_modules'];
+const REQ_PIPELINE = ['claude', 'venv', 'ffmpeg', 'ffprobe', 'deepfilter', 'node_modules']; // sin hf_token: la edicion ya no separa voces
 const REQ_RENDER = ['claude', 'venv', 'ffmpeg', 'node_modules'];
 const REQ_CLAUDE = ['claude'];
 
@@ -50,6 +50,7 @@ function crearFlujo(opts) {
     inputDir,
     gestor,
     env = () => process.env,
+    transcriptorUrl = () => null, // url del transcriptor en memoria (web/transcriptor.js) o null
     claudeEnv = () => lib.claudeEnv(),
     resolveClaude = () => lib.resolveClaude(),
     correrComando = jobs.correrComando,
@@ -154,7 +155,7 @@ function crearFlujo(opts) {
   // ----- validaciones comunes -----
   async function previo(plan, nombre, {pesado = true, req = REQ_CLAUDE, fases = null, validar = null} = {}) {
     if (!estadoMod.PLAN_SEGURO.test(plan) || !estadoMod.NOMBRE_SEGURO.test(nombre)) return err(400, 'Nombre no válido.');
-    if (!fs.existsSync(path.join(inputDir, plan, `${nombre}.txt`))) return err(404, 'No encuentro ese guion.');
+    if (!estadoMod.existeVideo(inputDir, plan, nombre)) return err(404, 'No encuentro ese guion.');
     const e = leer(plan, nombre);
     if (estadoMod.EN_CURSO.includes(e.fase) && gestor.activoDe(plan, nombre)) return err(409, 'Este video ya se está editando.', {trabajo: gestor.activoDe(plan, nombre).id});
     if (pesado) {
@@ -200,8 +201,8 @@ function crearFlujo(opts) {
     return {ok: true, trabajo: job.id};
   }
 
-  const comandoNpm = (job, args, c, ms) =>
-    correrComando(job, npm, args, {cwd: root, env: env(), timeoutMs: ms, onLine: (l) => c.linea(l)});
+  const comandoNpm = (job, args, c, ms, extraEnv = {}) =>
+    correrComando(job, npm, args, {cwd: root, env: {...env(), ...extraEnv}, timeoutMs: ms, onLine: (l) => c.linea(l)});
 
   /** Paso 1 determinista: normaliza, limpia voz, transcribe y corta. Devuelve true si salio bien. */
   async function preparar(job, c, plan, nombre, estado) {
@@ -212,7 +213,8 @@ function crearFlujo(opts) {
     c.estado({fase: 'preparando', mensaje: 'Preparando el audio…', trabajo: job.id, error: null, accion: null});
     c.progreso('Preparando el audio y transcribiendo (puede tardar varios minutos)…');
     const rel = `media/input/${plan}/${estado.entrada.archivo}`;
-    const r = await comandoNpm(job, ['run', 'edit', '--', rel, '--plan-only'], c, 90 * MIN);
+    const tUrl = transcriptorUrl();
+    const r = await comandoNpm(job, ['run', 'edit', '--', rel, '--plan-only'], c, 90 * MIN, tUrl ? {TRANSCRIBIR_URL: tUrl} : {});
     if (job.cancelado) return false;
     if (r.code !== 0 || !preparado(nombre)) {
       c.estado({fase: 'error', error: prompts.traducirError(r.cola.join('\n')), trabajo: null});
@@ -303,7 +305,7 @@ function crearFlujo(opts) {
     } catch {
       return err(400, 'Texto no válido.');
     }
-    const p = await previo(plan, nombre, {req: REQ_CLAUDE, fases: ['revision', 'error', 'necesita_accion']});
+    const p = await previo(plan, nombre, {req: REQ_CLAUDE, fases: ['revision', 'listo', 'error', 'necesita_accion']});
     if (!p.ok) return p;
     if (!fs.existsSync(pub(`${nombre}.edit.json`))) return err(400, 'Todavía no hay un plan de edición: usa "Empezar edición".');
     const e = p.estado;

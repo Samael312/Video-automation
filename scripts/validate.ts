@@ -7,7 +7,8 @@ import {matteInfoFile, type MatteInfo} from '../src/lib/matte';
 import {motionShare, motionWarnings} from '../src/lib/motion';
 import {themes} from '../src/styles/themes';
 import {GENERATED} from '../src/scenes/generated';
-import {knownEmojis, knownEmojis3d, knownMusic, loadTranscriptAndKeeps, PUBLIC, readPublicJson, resolveVideo} from './common';
+import {emojiDirsOf} from '../src/lib/propAssets';
+import {knownEmojis, knownEmojis3d, knownMusic, knownSfx, loadTranscriptAndKeeps, PUBLIC, readPublicJson, resolveVideo} from './common';
 
 const {name, video} = resolveVideo(process.argv[2], 'npm run validate -- <video>');
 const {transcript, keeps} = loadTranscriptAndKeeps(name);
@@ -23,6 +24,14 @@ const ctx = {
   knownEmojis: knownEmojis(),
   knownEmojis3d: knownEmojis3d(),
   knownMusic: knownMusic(),
+  knownSfx: knownSfx(),
+  // carpeta de emojis de cada componente generado, leida de su codigo (src/scenes/generated/<nombre>.tsx)
+  generatedEmojiDirs: Object.fromEntries(
+    Object.keys(GENERATED).map((c) => {
+      const f = path.join(__dirname, '..', 'src', 'scenes', 'generated', `${c}.tsx`);
+      return [c, fs.existsSync(f) ? emojiDirsOf(fs.readFileSync(f, 'utf8')) : []];
+    }),
+  ),
   matte: fs.existsSync(path.join(PUBLIC, matteFile(video))) ? readPublicJson<MatteInfo>(matteInfoFile(video)) : null,
 };
 const errors = validatePlan(plan ?? defaultPlan(video), ctx);

@@ -19,7 +19,7 @@ npm run setup-audio -- --yes   # descarga DeepFilterNet (~30 MB) para limpiar la
 npm run verify              # revisa ffmpeg, venv, Remotion y DeepFilterNet
 ```
 
-**`HF_TOKEN`**: token gratis de Hugging Face (huggingface.co → Settings → Access Tokens, tipo *read*). Hace falta para separar voces. Acepta también las condiciones del modelo `pyannote/speaker-diarization-community-1` en su página de Hugging Face. El `.env` no se sube a git; no lo compartas.
+**`HF_TOKEN`**: token gratis de Hugging Face (huggingface.co → Settings → Access Tokens, tipo *read*). Hace falta para separar voces (solo en `transcribe_diarize.py` sin `--no-diarize`; la edición normal ya no separa voces). Acepta también las condiciones del modelo `pyannote/speaker-diarization-community-1` en su página de Hugging Face. El `.env` no se sube a git; no lo compartas.
 
 La primera transcripción descarga el modelo WhisperX `medium` (~1.5 GB) y tarda varios minutos. Después es más rápido.
 

@@ -4,7 +4,7 @@
 import {execFileSync, execSync} from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
-import {bundle} from '@remotion/bundler';
+import {getServeUrl} from './bundleCache';
 import {renderStill, selectComposition} from '@remotion/renderer';
 import {defaultPlan, type EditPlan} from '../src/lib/plan';
 import {previewFrames} from '../src/lib/preview';
@@ -28,7 +28,7 @@ const main = async () => {
   const plan = readPublicJson<EditPlan>(`${name}.edit.json`) ?? defaultPlan(video);
 
   console.log('\n== preparando Remotion ==');
-  const serveUrl = await bundle({entryPoint: path.join(ROOT, 'src', 'index.ts')});
+  const serveUrl = await getServeUrl();
   const inputProps = {videoSrc: video, transcript: null, keeps: [], plan: null};
   const composition = await selectComposition({serveUrl, id: 'Edit', inputProps});
   const keeps = quantizeKeeps(rawKeeps, composition.fps);

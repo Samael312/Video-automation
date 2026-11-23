@@ -55,3 +55,13 @@ describe('cleanAll', () => {
     expect(fs.existsSync(fin)).toBe(true);
   });
 });
+
+describe('cleanAll y la caché de Remotion', () => {
+  it('no borra media/output/.remotion-bundle', () => {
+    const out = path.join(root, 'media', 'output');
+    touch(path.join(out, '.remotion-bundle', 'abc', 'index.html'));
+    touch(path.join(out, 'x.png'));
+    expect(cleanAll(root)).toEqual(['x.png']);
+    expect(fs.existsSync(path.join(out, '.remotion-bundle', 'abc', 'index.html'))).toBe(true);
+  });
+});

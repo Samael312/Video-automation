@@ -10,6 +10,7 @@ const path = require('path');
 const {outputPaths} = require('./outputs');
 const {publicMp4} = require('./normalize');
 const {resolveInput} = require('./voiceInput');
+const {transcribirConTrabajador, avisoBajaConfianza} = require('./transcribeClient');
 
 const root = path.join(__dirname, '..');
 const py = path.join(root, '.venv', 'Scripts', 'python.exe');
@@ -39,7 +40,7 @@ const steps = [
     : ['normalizar video (mp4/mov -> mp4 720x1280 30 fps)', `node scripts/normalize_video.js "${video}" "${publicMp4(video, root)}"`],
   ...(noClean ? [] : [['limpiar audio', `"${py}" pipeline/audio_clean.py "public/${publicVideo}"`]]),
   // se transcribe el mp4 normalizado: mismos tiempos que el render (un mov puede tener fps variable)
-  ['transcribir', `"${py}" pipeline/transcribe_diarize.py "public/${publicVideo}" --model ${opt('--model', 'medium')}${input.noPrompt ? ' --prompt ""' : ''}`],
+  ['transcribir', () => transcribir()],
   ...(fs.existsSync(scriptTxt)
     ? [
         ['alinear con guion', () => fs.rmSync(path.join(root, 'public', `${name}.transcript.whisper.json`), {force: true})],
@@ -50,16 +51,39 @@ const steps = [
 ];
 if (!planOnly) steps.push(['validar y renderizar', `node scripts/render.js "${publicVideo}"${args.includes('--no-music') ? ' --no-music' : ''}`]);
 
-let last = '';
-for (const [label, cmd] of steps) {
-  if (label !== last) console.log(`\n== ${label} ==`);
-  last = label;
-  try {
-    if (typeof cmd === 'function') cmd();
-    else execSync(cmd, {cwd: root, stdio: 'inherit'});
-  } catch {
-    console.error(`\nFALLO en el paso: ${label}`);
-    process.exit(1);
+// Transcribir: el trabajador en memoria de la web (TRANSCRIBIR_URL) si responde; si no, la linea de comandos de siempre.
+async function transcribir() {
+  const model = opt('--model', 'medium');
+  const vocab = path.join(root, 'pipeline', 'vocab.txt');
+  const r = await transcribirConTrabajador({
+    url: process.env.TRANSCRIBIR_URL,
+    video: path.join(root, 'public', publicVideo),
+    out: path.join(root, 'public', `${name}.transcript.json`),
+    model,
+    prompt: input.noPrompt || !fs.existsSync(vocab) ? '' : fs.readFileSync(vocab, 'utf8').trim(),
+  });
+  if (r.ok) {
+    console.log(`transcriptor en memoria (${r.palabras} palabras)`);
+    const aviso = avisoBajaConfianza(r.bajaConfianza, `public/${name}.transcript.json`);
+    if (aviso) console.log(aviso);
+    return;
   }
+  if (process.env.TRANSCRIBIR_URL) console.log(`aviso: transcriptor en memoria no disponible (${r.motivo}), uso el normal`);
+  execSync(`"${py}" pipeline/transcribe_diarize.py "public/${publicVideo}" --no-diarize --model ${model}${input.noPrompt ? ' --prompt ""' : ''}`, {cwd: root, stdio: 'inherit'});
 }
-console.log(planOnly ? `\nListo para planificar. Siguiente: npm run inspect -- ${name}` : `\nListo: ${out}`);
+
+(async () => {
+  let last = '';
+  for (const [label, cmd] of steps) {
+    if (label !== last) console.log(`\n== ${label} ==`);
+    last = label;
+    try {
+      if (typeof cmd === 'function') await cmd();
+      else execSync(cmd, {cwd: root, stdio: 'inherit'});
+    } catch {
+      console.error(`\nFALLO en el paso: ${label}`);
+      process.exit(1);
+    }
+  }
+  console.log(planOnly ? `\nListo para planificar. Siguiente: npm run inspect -- ${name}` : `\nListo: ${out}`);
+})();

@@ -14,6 +14,26 @@ const MAX_LOG = 400;
 const MAX_CAMBIOS = 50;
 const SUFIJO = '.estado.json';
 
+// Carpetas de media/input para videos/audios subidos sin guion (secciones Editar video y Audio a video).
+const CARPETAS_SIN_GUION = {VIDEOS_PROFE: 'video', AUDIOS_PROFE: 'audio'};
+const esSinGuion = (plan) => Object.prototype.hasOwnProperty.call(CARPETAS_SIN_GUION, plan);
+
+/** Un video existe si tiene guion, o si vive en una carpeta sin guion. */
+function existeVideo(inputDir, plan, nombre) {
+  if (!planSeguro(plan) || !nombreSeguro(nombre)) return false;
+  return esSinGuion(plan) || fs.existsSync(path.join(inputDir, plan, `${nombre}.txt`));
+}
+
+/** Para subidas nuevas sin guion: ¿ya hay otro video con ese nombre (en otro plan o ya editado)? */
+function nombreOcupado(inputDir, editedDir, nombre) {
+  if (fs.existsSync(path.join(editedDir, nombre))) return true;
+  for (const p of planes(inputDir)) {
+    const dir = path.join(inputDir, p);
+    if (fs.existsSync(path.join(dir, `${nombre}.txt`)) || fs.existsSync(path.join(dir, `${nombre}${SUFIJO}`))) return true;
+  }
+  return false;
+}
+
 const planSeguro = (x) => typeof x === 'string' && PLAN_SEGURO.test(x);
 const nombreSeguro = (x) => typeof x === 'string' && NOMBRE_SEGURO.test(x);
 const esObjeto = (x) => Boolean(x) && typeof x === 'object' && !Array.isArray(x);
@@ -126,6 +146,35 @@ function escribirEstado(inputDir, plan, nombre, patch) {
   return nuevo;
 }
 
+/** Plan de un video por su nombre: primero el que tiene su estado, luego el que tiene su guion; si no, null. */
+function planDeVideo(inputDir, nombre) {
+  if (!nombreSeguro(nombre)) return null;
+  const todos = planes(inputDir);
+  return todos.find((p) => fs.existsSync(path.join(inputDir, p, `${nombre}${SUFIJO}`))) || todos.find((p) => fs.existsSync(path.join(inputDir, p, `${nombre}.txt`))) || null;
+}
+
+/**
+ * Video editado fuera de la web (sin archivo de estado): si existen su mp4 editado y public/<N>.edit.json,
+ * se le crea un estado `listo` para poder pedirle cambios. Devuelve el estado nuevo o null si no aplica.
+ */
+function adoptarEditado(inputDir, root, plan, nombre) {
+  const file = estadoPath(inputDir, plan, nombre);
+  if (!file || fs.existsSync(file)) return null;
+  const suyo = planDeVideo(inputDir, nombre); // si ya pertenece a otro plan, no se duplica
+  if (suyo && suyo !== plan) return null;
+  const mp4 = path.join(root, 'media', 'output', 'edited', nombre, `${nombre}_edited.mp4`);
+  const plano = path.join(root, 'public', `${nombre}.edit.json`);
+  if (!fs.existsSync(mp4) || !fs.existsSync(plano)) return null;
+  let estilo = null;
+  try {
+    const s = JSON.parse(fs.readFileSync(plano, 'utf8')).strategy;
+    if (['captions', 'motion', 'mixed', 'voice'].includes(s)) estilo = s;
+  } catch {
+    /* plan ilegible: sin estilo */
+  }
+  return escribirEstado(inputDir, plan, nombre, {fase: 'listo', estilo, mensaje: 'Video listo'});
+}
+
 /** Nombres de carpetas de plan seguras dentro de inputDir. */
 function planes(inputDir) {
   try {
@@ -226,4 +275,4 @@ function leerLog(inputDir, plan, nombre, max = 200) {
   return lineasDeLog(file).slice(-n);
 }
 
-module.exports = {FASES, EN_CURSO, NOMBRE_SEGURO, PLAN_SEGURO, EXT_AUDIO, estadoPath, leerEstado, escribirEstado, marcarInterrumpidos, estadosDePlan, listarListos, agregarLog, leerLog};
+module.exports = {CARPETAS_SIN_GUION, esSinGuion, existeVideo, nombreOcupado, planDeVideo, adoptarEditado, FASES, EN_CURSO, NOMBRE_SEGURO, PLAN_SEGURO, EXT_AUDIO, estadoPath, leerEstado, escribirEstado, marcarInterrumpidos, estadosDePlan, listarListos, agregarLog, leerLog};

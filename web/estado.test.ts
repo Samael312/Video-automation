@@ -154,3 +154,69 @@ describe('log', () => {
     expect(() => estado.agregarLog(dir, '../x', 'EVE', 'x')).toThrow(/no válido/);
   });
 });
+
+describe('carpetas sin guion', () => {
+  it('existeVideo: con guion, o en VIDEOS_PROFE/AUDIOS_PROFE aunque no haya .txt', () => {
+    fs.writeFileSync(path.join(dir, 'NAVIDAD', 'EVE.txt'), 'hola');
+    expect(estado.existeVideo(dir, 'NAVIDAD', 'EVE')).toBe(true);
+    expect(estado.existeVideo(dir, 'NAVIDAD', 'OTRO')).toBe(false);
+    expect(estado.existeVideo(dir, 'VIDEOS_PROFE', 'CLASE_1')).toBe(true);
+    expect(estado.existeVideo(dir, 'AUDIOS_PROFE', 'NOTA_1')).toBe(true);
+    expect(estado.existeVideo(dir, 'VIDEOS_PROFE', '../x')).toBe(false);
+  });
+  it('esSinGuion y tipo de cada carpeta', () => {
+    expect(estado.esSinGuion('VIDEOS_PROFE')).toBe(true);
+    expect(estado.esSinGuion('NAVIDAD')).toBe(false);
+    expect(estado.esSinGuion('toString')).toBe(false);
+    expect(estado.CARPETAS_SIN_GUION).toEqual({VIDEOS_PROFE: 'video', AUDIOS_PROFE: 'audio'});
+  });
+  it('nombreOcupado: ya editado, guion o estado en otro plan', () => {
+    const edited = path.join(dir, '_edited');
+    fs.mkdirSync(path.join(edited, 'HECHO'), {recursive: true});
+    fs.writeFileSync(path.join(dir, 'NAVIDAD', 'EVE.txt'), 'hola');
+    fs.writeFileSync(path.join(dir, 'NAVIDAD', 'SOLO.estado.json'), '{}');
+    expect(estado.nombreOcupado(dir, edited, 'HECHO')).toBe(true);
+    expect(estado.nombreOcupado(dir, edited, 'EVE')).toBe(true);
+    expect(estado.nombreOcupado(dir, edited, 'SOLO')).toBe(true);
+    expect(estado.nombreOcupado(dir, edited, 'NUEVO')).toBe(false);
+  });
+});
+
+describe('videos editados fuera de la web', () => {
+  let root: string;
+  let input: string;
+  beforeEach(() => {
+    root = fs.mkdtempSync(path.join(os.tmpdir(), 'adopta-'));
+    input = path.join(root, 'media', 'input');
+    fs.mkdirSync(path.join(input, 'NAVIDAD'), {recursive: true});
+    fs.mkdirSync(path.join(root, 'media', 'output', 'edited', 'VIEJO'), {recursive: true});
+    fs.writeFileSync(path.join(root, 'media', 'output', 'edited', 'VIEJO', 'VIEJO_edited.mp4'), 'x');
+    fs.mkdirSync(path.join(root, 'public'));
+    fs.writeFileSync(path.join(root, 'public', 'VIEJO.edit.json'), '{"strategy": "mixed"}');
+  });
+  afterEach(() => fs.rmSync(root, {recursive: true, force: true}));
+
+  it('planDeVideo: primero el estado, luego el guion, si no null', () => {
+    expect(estado.planDeVideo(input, 'VIEJO')).toBeNull();
+    fs.writeFileSync(path.join(input, 'NAVIDAD', 'VIEJO.txt'), 'g');
+    expect(estado.planDeVideo(input, 'VIEJO')).toBe('NAVIDAD');
+    fs.mkdirSync(path.join(input, 'VIDEOS_PROFE'));
+    fs.writeFileSync(path.join(input, 'VIDEOS_PROFE', 'VIEJO.estado.json'), '{}');
+    expect(estado.planDeVideo(input, 'VIEJO')).toBe('VIDEOS_PROFE');
+  });
+  it('adoptarEditado crea estado listo con el estilo del plan', () => {
+    const e = estado.adoptarEditado(input, root, 'VIDEOS_PROFE', 'VIEJO');
+    expect(e).toMatchObject({fase: 'listo', estilo: 'mixed', plan: 'VIDEOS_PROFE'});
+    expect(estado.leerEstado(input, 'VIDEOS_PROFE', 'VIEJO').fase).toBe('listo');
+    expect(estado.adoptarEditado(input, root, 'VIDEOS_PROFE', 'VIEJO')).toBeNull(); // ya tiene estado
+  });
+  it('no adopta sin mp4 o sin edit.json, ni en un plan que no es el suyo', () => {
+    expect(estado.adoptarEditado(input, root, 'VIDEOS_PROFE', 'OTRO')).toBeNull();
+    fs.rmSync(path.join(root, 'public', 'VIEJO.edit.json'));
+    expect(estado.adoptarEditado(input, root, 'VIDEOS_PROFE', 'VIEJO')).toBeNull();
+    fs.writeFileSync(path.join(root, 'public', 'VIEJO.edit.json'), '{}');
+    fs.writeFileSync(path.join(input, 'NAVIDAD', 'VIEJO.txt'), 'g');
+    expect(estado.adoptarEditado(input, root, 'VIDEOS_PROFE', 'VIEJO')).toBeNull();
+    expect(estado.adoptarEditado(input, root, 'NAVIDAD', 'VIEJO')).toMatchObject({fase: 'listo', estilo: null});
+  });
+});

@@ -77,6 +77,16 @@ describe('tipoMime', () => {
   });
 });
 
+describe('listarEditados', () => {
+  it('lista los mp4 editados y salta carpetas sin video o con nombre raro', () => {
+    escribir('media/output/edited/A/A_edited.mp4');
+    escribir('media/output/edited/B/B_caption.txt');
+    escribir('media/output/edited/mal.nombre/mal.nombre_edited.mp4');
+    expect(files.listarEditados(root).map((v: {nombre: string}) => v.nombre)).toEqual(['A']);
+  });
+  it('sin carpeta edited: lista vacía', () => expect(files.listarEditados(root)).toEqual([]));
+});
+
 describe('resolverArchivo', () => {
   it('resuelve los cuatro tipos', () => {
     const entrada = escribir('media/input/PLAN/V1.m4a');

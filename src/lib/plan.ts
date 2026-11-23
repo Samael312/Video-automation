@@ -1,6 +1,8 @@
 import {keepIndexOf, type Keep} from './cuts';
 import {behindSpans, matteCovers, type MatteInfo} from './matte';
 import {emojisIn} from './emoji';
+import {propAssetErrors, type EmojiDir} from './propAssets';
+import {sfxNamesUsed} from './sfxPlan';
 import {validateMotion, voiceGaps, type Block, type MotionPlan} from './motion';
 
 export const SCENE_TYPES = ['translate', 'false-friend', 'pronounce', 'mistake', 'example', 'quiz', 'before-after', 'versus', 'listen', 'countdown', 'generated'] as const;
@@ -66,6 +68,10 @@ export type ValidateCtx = {
   knownEmojis?: string[];
   knownEmojis3d?: string[];
   knownMusic?: string[];
+  /** nombres de public/sfx/*.wav: si se da, se comprueba que existan los sonidos que usa el plan */
+  knownSfx?: string[];
+  /** carpetas de emojis que carga cada componente generado (de su codigo); sin dato = cualquiera */
+  generatedEmojiDirs?: Record<string, EmojiDir[]>;
   matte?: MatteInfo | null;
 };
 
@@ -78,7 +84,7 @@ export const HOOK_MAX_SECONDS = 2.5;
 export const HOOK_MAX_CHARS = 40;
 export const MIN_SCENE_SECONDS = 1;
 export const MAX_SCENE_SECONDS = 8;
-const SFX_NAMES: SfxName[] = ['pop', 'swoosh', 'tick', 'ding', 'pop2', 'whoosh2', 'hit', 'riser', 'glitch', 'message', 'success'];
+export const SFX_NAMES: SfxName[] = ['pop', 'swoosh', 'tick', 'ding', 'pop2', 'whoosh2', 'hit', 'riser', 'glitch', 'message', 'success'];
 const STRATEGIES = ['captions', 'motion', 'mixed', 'voice'];
 
 export const defaultPlan = (video: string): EditPlan => ({
@@ -215,6 +221,7 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       if (!isObj(s)) return void e.push(`${tag}: debe ser un objeto`);
       if (!(SCENE_TYPES as readonly string[]).includes(s.type as string)) e.push(`${tag}: tipo desconocido "${String(s.type)}"`);
       else validateSceneData(s.type as SceneType, s.data, ctx).forEach((m) => e.push(`${tag} (${String(s.type)}): ${m}`));
+      if (s.type === 'generated' && isObj(s.data)) e.push(...propAssetErrors(s.data.props, ctx, `scenes[${i}].data.props`, ctx.generatedEmojiDirs?.[String(s.data.component)]));
       if (s.transition !== undefined && !(SCENE_TRANSITIONS as readonly string[]).includes(s.transition as string)) e.push(`${tag}: transition debe ser una de: ${SCENE_TRANSITIONS.join(', ')}`);
       if (!isNum(s.start) || !isNum(s.end)) return void e.push(`${tag}: start y end deben ser numeros`);
       if (s.start >= s.end) return void e.push(`${tag}: start (${s.start}) debe ser menor que end (${s.end})`);
@@ -256,6 +263,7 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
         if (!isStr(o.component)) e.push(`${tag}: falta component (una escena de src/scenes/generated)`);
         else if (!ctx.knownGenerated.includes(o.component)) e.push(`${tag}: component "${o.component}" no esta registrado (conocidos: ${ctx.knownGenerated.join(', ') || 'ninguno'})`);
         if (o.props !== undefined && !isObj(o.props)) e.push(`${tag}: props debe ser un objeto`);
+        else e.push(...propAssetErrors(o.props, ctx, `overlays[${i}].props`, ctx.generatedEmojiDirs?.[String(o.component)]));
         if (o.cues !== undefined && (!Array.isArray(o.cues) || o.cues.some((c: unknown) => !isNum(c) || c < (o.start as number) || c >= (o.end as number)))) {
           e.push(`${tag}: cues deben ser numeros entre start y end del overlay (segundos del video original)`);
         }
@@ -295,6 +303,11 @@ export const validatePlan = (plan: unknown, ctx: ValidateCtx): string[] => {
       }
       if (keepIndex(s.at, ctx.keeps) < 0) e.push(`sfx[${i}]: cae en zona cortada (${s.at}); muevelo a un tramo conservado`);
     });
+  }
+
+  // ----- sonidos (public/sfx) -----
+  if (ctx.knownSfx && e.length === 0) {
+    for (const n of sfxNamesUsed(plan as EditPlan)) if (!ctx.knownSfx.includes(n)) e.push(`falta public/sfx/${n}.wav (sonido que usa el plan)`);
   }
 
   // ----- musica (opcional) -----

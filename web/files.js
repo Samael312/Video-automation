@@ -111,6 +111,29 @@ function resolverArchivo(root, plan, nombre, tipo) {
   }
 }
 
+/** Videos terminados en media/output/edited/<N>/<N>_edited.mp4: [{nombre, actualizado}] (más nuevos primero). */
+function listarEditados(root) {
+  const edited = path.join(root, 'media', 'output', 'edited');
+  let dirs;
+  try {
+    dirs = fs.readdirSync(edited, {withFileTypes: true});
+  } catch {
+    return [];
+  }
+  const out = [];
+  for (const d of dirs) {
+    if (!d.isDirectory() || !NOMBRE_SEGURO.test(d.name)) continue;
+    const mp4 = archivoSeguro(edited, path.join(edited, d.name, `${d.name}_edited.mp4`));
+    if (!mp4) continue;
+    try {
+      out.push({nombre: d.name, actualizado: fs.statSync(mp4).mtime.toISOString()});
+    } catch {
+      /* se ignora */
+    }
+  }
+  return out.sort((a, b) => b.actualizado.localeCompare(a.actualizado));
+}
+
 /** Sirve un archivo en streaming con soporte de Range. */
 function servirArchivo(req, res, archivo, {descargar = false} = {}) {
   let st;
@@ -217,4 +240,4 @@ function guardarSubida(req, destino, {max = MAX_SUBIDA} = {}) {
   });
 }
 
-module.exports = {EXT_PERMITIDAS, MAX_SUBIDA, parseRange, validarSubida, tipoDeEntrada, resolverArchivo, tipoMime, servirArchivo, guardarSubida};
+module.exports = {EXT_PERMITIDAS, MAX_SUBIDA, parseRange, validarSubida, tipoDeEntrada, resolverArchivo, listarEditados, tipoMime, servirArchivo, guardarSubida};

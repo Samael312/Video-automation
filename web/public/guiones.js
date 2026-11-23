@@ -35,7 +35,12 @@ export async function cargarPlanes() {
   const carpetas = await api('/api/carpetas');
   lista.replaceChildren();
   if (!carpetas.length) {
-    lista.append(el('p', {className: 'vacio', textContent: 'Todavía no hay planes. Genera los primeros arriba.'}));
+    const crear = el('button', {type: 'button', className: 'primario', textContent: 'Crear el primero'});
+    crear.addEventListener('click', () => {
+      form.scrollIntoView({behavior: 'smooth', block: 'start'});
+      $('tema').focus({preventScroll: true});
+    });
+    lista.append(el('div', {className: 'vacio'}, el('p', {textContent: 'Todavía no hay guiones.'}), crear));
     return;
   }
   carpetas.sort((a, b) => Number(nuevos.has(b.name)) - Number(nuevos.has(a.name)));
@@ -60,7 +65,7 @@ export async function mostrarCarpeta(nombre) {
   try {
     datos = await api(`/api/carpetas/${encodeURIComponent(nombre)}`);
   } catch {
-    location.hash = '#/';
+    location.hash = '#/guiones';
     return;
   }
   carpetaActual = datos;

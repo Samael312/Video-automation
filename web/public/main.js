@@ -5,9 +5,10 @@ import {mostrarDesdeGuion, mostrarElegir} from './secciones.js';
 import {salirVideo} from './asistente.js';
 import {mostrarVideo} from './video.js';
 import {mostrarVideos} from './mis-videos.js';
+import {mostrarInicio} from './inicio.js';
 
 // ---------- rutas ----------
-// #/ y #/p/PLAN = Guiones · #/desde-guion · #/editar · #/audio · #/p/PLAN/v/NOMBRE[?m=editar|audio|guion] · #/videos
+// #/ = Inicio · #/guiones y #/p/PLAN = Guiones · #/desde-guion · #/editar · #/audio · #/p/PLAN/v/NOMBRE[?m=editar|audio|guion] · #/videos
 async function ruta() {
   cerrarVisor();
   salirVideo();
@@ -24,18 +25,20 @@ async function ruta() {
   }
   const modoVideo = ['editar', 'audio', 'guion'].includes(modoQ) ? modoQ : null;
   let seccion = 'guiones';
-  if (camino === '#/videos') seccion = 'videos';
+  if (camino === '#/' || camino === '' || camino === '#') seccion = 'inicio';
+  else if (camino === '#/videos') seccion = 'videos';
   else if (camino === '#/desde-guion') seccion = 'desde';
   else if (camino === '#/editar') seccion = 'editar';
   else if (camino === '#/audio') seccion = 'audio';
   else if (mv) seccion = modoVideo === 'audio' ? 'audio' : modoVideo === 'guion' ? 'desde' : 'editar';
+  $('vista-home').hidden = seccion !== 'inicio';
   $('vista-inicio').hidden = Boolean(mv || m || seccion !== 'guiones');
   $('vista-carpeta').hidden = !m;
   $('vista-video').hidden = !mv;
   $('vista-videos').hidden = seccion !== 'videos';
   $('vista-desde').hidden = camino !== '#/desde-guion';
   $('vista-elegir').hidden = !(camino === '#/editar' || camino === '#/audio');
-  for (const s of ['guiones', 'desde', 'editar', 'audio', 'videos']) {
+  for (const s of ['inicio', 'guiones', 'desde', 'editar', 'audio', 'videos']) {
     const n = $(`nav-${s}`);
     if (s === seccion) n.setAttribute('aria-current', 'page');
     else n.removeAttribute('aria-current');
@@ -46,6 +49,7 @@ async function ruta() {
   else if (seccion === 'videos') await mostrarVideos();
   else if (seccion === 'desde') await mostrarDesdeGuion();
   else if (seccion === 'editar' || seccion === 'audio') mostrarElegir(seccion);
+  else if (seccion === 'inicio') await mostrarInicio();
   else await cargarPlanes();
 }
 window.addEventListener('hashchange', ruta);

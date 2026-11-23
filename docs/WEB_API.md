@@ -63,6 +63,9 @@ Al arrancar, la web lanza el trabajador en segundo plano (`--port 0 --parent-pid
 - `paneles.js`: paneles por fase.
 - `video.js`: abrir, dibujar y pintar.
 - `mis-videos.js`
+- `inicio.js`: pantalla de Inicio (`#/`), con 4 opciones y los 3 últimos videos. Guiones vive en `#/guiones`.
+- `etapas.js`: puro. `etapa(nombre)` da icono y texto, `reloj(ms)` da 'm:ss' y `avanzar(hist, paso, ahora)` lleva el historial de etapas del panel en curso.
+- `aviso.js`: `mostrarAviso(texto, tipo)`, avisos breves abajo a la derecha (máximo 3, 4 s).
 - `main.js`: rutas `#/…` y arranque.
 
 Las funciones puras tienen tests en `web/front.test.ts`.

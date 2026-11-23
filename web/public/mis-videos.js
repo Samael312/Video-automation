@@ -10,7 +10,7 @@ export async function mostrarVideos() {
     return;
   }
   if (!r.datos.length) {
-    lista.replaceChildren(el('p', {className: 'vacio', textContent: 'Todavía no hay videos terminados. Cuando termines uno, aparecerá aquí.'}));
+    lista.replaceChildren(el('div', {className: 'vacio'}, el('p', {textContent: 'Todavía no hay videos terminados. Cuando termines uno, aparecerá aquí.'}), el('a', {className: 'primario enlace', href: '#/editar', textContent: 'Editar un video'})));
     return;
   }
   lista.replaceChildren();

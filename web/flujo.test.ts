@@ -286,6 +286,10 @@ describe('aprobar', () => {
     expect(estado()).toMatchObject({fase: 'listo', error: null});
     expect(comandos.some((a) => a.includes('render:plan') && a.includes(N))).toBe(true);
     expect(job.log.some((ev: {porcentaje?: number}) => ev.porcentaje === 50)).toBe(true);
+    const modelo = (args: string[]) => args[args.indexOf('--model') + 1];
+    const cap = llamadasClaude.find((l) => l.prompt.includes('caption.md'));
+    expect(modelo(cap!.args)).toBe('sonnet');
+    expect(llamadasClaude.filter((l) => l !== cap).every((l) => modelo(l.args) === 'opus')).toBe(true);
   });
   it('si falla el render queda en error con el motivo', async () => {
     const f = crear();
@@ -316,6 +320,7 @@ describe('recomendar', () => {
     expect(estado().fase).toBe('subido');
     expect(llamadasClaude[0].args).toContain('--allowedTools');
     expect(llamadasClaude[0].args[llamadasClaude[0].args.indexOf('--allowedTools') + 1]).not.toContain('Write');
+    expect(llamadasClaude[0].args[llamadasClaude[0].args.indexOf('--model') + 1]).toBe('sonnet');
   });
   it('una recomendación inválida avisa y deja elegir', async () => {
     cfg.recomendacion = 'voice | no aplica';

@@ -67,13 +67,17 @@ const SYSTEM_WEB = [
 ].join('\n');
 
 /** Argumentos de `claude`. Nada del usuario entra aqui (el prompt va por stdin). */
-function argsClaude({sessionId, resume, solo_lectura} = {}) {
+// Modelos: Opus para planificar, cambios y guiones; Sonnet (mas rapido y barato) para recomendar y el caption.
+const MODELOS = ['opus', 'sonnet'];
+function argsClaude({sessionId, resume, solo_lectura, modelo = 'opus'} = {}) {
   const permitidas = solo_lectura ? SOLO_LECTURA : PERMITIDAS;
+  if (!MODELOS.includes(modelo)) throw new Error(`modelo no permitido: ${modelo}`);
   const args = [
     '-p',
     '--output-format', 'stream-json',
     '--verbose',
     '--permission-mode', 'acceptEdits',
+    '--model', modelo,
     '--append-system-prompt', SYSTEM_WEB,
     '--allowedTools', permitidas.join(','),
     '--disallowedTools', DENEGADAS.join(','),

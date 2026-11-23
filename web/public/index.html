@@ -21,7 +21,8 @@
       <span class="marca">tuprofemaria</span>
     </a>
     <nav class="menu-lista">
-      <a class="menu-item" id="nav-guiones" href="#/"><span class="menu-ico" aria-hidden="true">📝</span>Guiones</a>
+      <a class="menu-item" id="nav-inicio" href="#/"><span class="menu-ico" aria-hidden="true">🏠</span>Inicio</a>
+      <a class="menu-item" id="nav-guiones" href="#/guiones"><span class="menu-ico" aria-hidden="true">📝</span>Guiones</a>
       <a class="menu-item" id="nav-desde" href="#/desde-guion"><span class="menu-ico" aria-hidden="true">🎙️</span>Video desde guion</a>
       <a class="menu-item" id="nav-editar" href="#/editar"><span class="menu-ico" aria-hidden="true">🎬</span>Editar video</a>
       <a class="menu-item" id="nav-audio" href="#/audio"><span class="menu-ico" aria-hidden="true">🔊</span>Audio a video</a>
@@ -30,6 +31,28 @@
   </aside>
   <main class="principal">
   <div id="aviso" class="aviso" hidden></div>
+
+  <!-- ===== inicio: que quieres hacer hoy ===== -->
+  <div class="contenedor" id="vista-home" hidden>
+    <header class="hero">
+      <span class="insignia">👋 Hola, profe</span>
+      <h1>¿Qué quieres hacer <span class="grad">hoy</span>?</h1>
+      <p>Elige una opción y te guío paso a paso.</p>
+    </header>
+    <nav class="opciones" aria-label="Qué hacer">
+      <a class="opcion" href="#/guiones"><span class="opcion-ico" aria-hidden="true">📝</span><strong>Crear guiones</strong><span>Dime un tema y te escribo guiones listos para grabar.</span></a>
+      <a class="opcion" href="#/editar"><span class="opcion-ico" aria-hidden="true">🎬</span><strong>Editar video</strong><span>Sube tu grabación y la convierto en un TikTok.</span></a>
+      <a class="opcion" href="#/audio"><span class="opcion-ico" aria-hidden="true">🔊</span><strong>Audio a video</strong><span>Solo tu voz: las escenas se hacen con motion graphics.</span></a>
+      <a class="opcion" href="#/desde-guion"><span class="opcion-ico" aria-hidden="true">🎙️</span><strong>Video desde guion</strong><span>Elige un guion y una voz; no hace falta grabar.</span></a>
+    </nav>
+    <section class="ultimos">
+      <div class="titulo-seccion">
+        <h2>Últimos videos</h2>
+        <a class="secundario enlace" href="#/videos">Ver todos</a>
+      </div>
+      <div id="ultimos-lista" class="rejilla rejilla-videos"></div>
+    </section>
+  </div>
 
   <!-- ===== inicio: formulario + planes (carpetas) ===== -->
   <div class="contenedor" id="vista-inicio">
@@ -82,7 +105,7 @@
 
   <!-- ===== carpeta de un plan: todos sus guiones ===== -->
   <div class="contenedor" id="vista-carpeta" hidden>
-    <a class="volver" href="#/">← Mis planes</a>
+    <a class="volver" href="#/guiones">← Mis planes</a>
     <header class="cab-carpeta">
       <div>
         <span class="insignia" id="carpeta-meta"></span>
@@ -152,6 +175,9 @@
 
   </main>
   </div>
+
+  <!-- avisos breves: el contenedor aria-live existe desde el principio para que el lector anuncie el primero -->
+  <div id="avisos" class="avisos" aria-live="polite"></div>
 
   <script type="module" src="/main.js"></script>
 </body>

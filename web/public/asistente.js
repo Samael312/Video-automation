@@ -1,6 +1,7 @@
 // Estado del asistente de un video (W) + progreso en vivo (SSE) + acciones.
 // pintar/pintarRecom viven en video.js/paneles.js y se registran en `ganchos` (asi no hay ciclos de import).
 import {el, enc, pedir, textoError, conBloqueo} from './comun.js';
+import {etapasDeEvento} from './etapas.js';
 
 export const EXT_OK = ['mov', 'mp4', 'm4v', 'm4a', 'mp3', 'wav', 'ogg', 'opus'];
 export const EXT_AUDIO = ['m4a', 'mp3', 'wav', 'ogg', 'opus'];
@@ -16,7 +17,7 @@ export const PASOS = ['Subir', 'Preparar', 'Plan', 'Revisar', 'Render', 'Listo']
 // W: el video abierto (null si no hay); los demas modulos lo leen (vinculo vivo) y mutan sus campos.
 export let W = null;
 let tokenW = 0;
-export const ganchos = {pintar: () => {}, pintarRecom: () => {}};
+export const ganchos = {pintar: () => {}, pintarRecom: () => {}, pintarEtapa: () => {}};
 
 /** Abre un video nuevo en el asistente; devuelve su token (para descartar respuestas viejas). */
 export function iniciarW(datos) {
@@ -54,6 +55,33 @@ export function pasoDe(fase) {
   return p;
 }
 
+const FRASES = [
+  'Sube la grabación y elige un estilo.',
+  'Limpio el audio y transcribo. No tienes que hacer nada.',
+  'Claude está planificando las escenas.',
+  'Mira la vista previa: apruébala o pide cambios.',
+  'Generando el video final.',
+  'Descárgalo y copia el caption.',
+];
+/** Frase corta que dice que pasa en el paso actual y si la profe tiene que hacer algo. */
+export function fraseDePaso(paso, fase, modo) {
+  if (['error', 'necesita_accion', 'interrumpido'].includes(fase)) return 'Algo necesita tu atención: mira el aviso de abajo.';
+  if (paso === 0 && modo === 'guion') return 'Elige el guion y la voz para empezar.';
+  if (paso === 0 && modo === 'audio') return 'Sube el audio de la profe.';
+  if (paso === 1 && modo === 'guion') return 'Creo la voz y preparo el video. No tienes que hacer nada.';
+  return FRASES[paso] || '';
+}
+
+/**
+ * Estado tras lanzar una accion: si el servidor ya devolvio el estado nuevo sin trabajo (reintentar con vista previa
+ * vuelve directo a revision) gana ese; si no, la fase optimista mientras llega el trabajo.
+ */
+export function estadoTrasLanzar(estado, datos, faseOptimista) {
+  if (datos && datos.estado && !datos.trabajo) return datos.estado;
+  if (faseOptimista) return {...estado, fase: faseOptimista, error: null, accion: null};
+  return estado;
+}
+
 export function aplicarVideo(datos) {
   W.estado = datos.estado;
   W.log = Array.isArray(datos.log) ? datos.log.slice(-400) : [];
@@ -83,6 +111,7 @@ export function conectar(id) {
   cerrarFuente();
   W.trabajoId = id;
   W.errCount = 0;
+  W.etapas = null; // el servidor reenvia todo el registro: el historial se rehace con las horas reales
   const token = W.token;
   const f = new EventSource(`/api/trabajos/${enc(id)}/progreso`);
   W.fuente = f;
@@ -95,6 +124,11 @@ export function conectar(id) {
       return;
     }
     W.errCount = 0;
+    const etapas = etapasDeEvento(W.etapas, ev, Date.now());
+    if (etapas !== W.etapas) {
+      W.etapas = etapas;
+      ganchos.pintarEtapa();
+    }
     if (ev.type === 'progreso') {
       W.mensaje = ev.mensaje || '';
       W.porcentaje = typeof ev.porcentaje === 'number' ? ev.porcentaje : null;
@@ -170,8 +204,10 @@ export async function lanzar(ruta, cuerpo, faseOptimista, botones) {
       if (r.status === 409 && r.datos && r.datos.trabajo) conectar(r.datos.trabajo);
       return false;
     }
-    if (faseOptimista) {
-      W.estado = {...W.estado, fase: faseOptimista, error: null, accion: null};
+    const nuevo = estadoTrasLanzar(W.estado, r.datos, faseOptimista);
+    if (nuevo !== W.estado) {
+      W.estado = nuevo;
+      W.etapas = null;
       W.mensaje = '';
       W.porcentaje = null;
     }

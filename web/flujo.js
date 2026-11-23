@@ -344,7 +344,7 @@ function crearFlujo(opts) {
       c.estado({mensaje: 'Escribiendo el caption…', trabajo: job.id});
       c.progreso('Escribiendo el caption…');
       const sessionId = uuid();
-      const k = await ejecutarClaude(job, c, prompts.argsClaude({sessionId}), prompts.promptCaption({plan, nombre}));
+      const k = await ejecutarClaude(job, c, prompts.argsClaude({sessionId, modelo: 'sonnet'}), prompts.promptCaption({plan, nombre}));
       if (job.cancelado) return;
       const hayCaption = Boolean(files.resolverArchivo(root, plan, nombre, 'caption'));
       if (k.falta || !hayCaption) {
@@ -367,7 +367,7 @@ function crearFlujo(opts) {
       if (necesitaPrep && !(await preparar(job, c, plan, nombre, e))) return;
       c.estado({fase: e.fase === 'error' || e.fase === 'interrumpido' ? 'subido' : e.fase, mensaje: 'Claude está mirando el video…', trabajo: job.id, error: null});
       c.progreso('Claude está mirando el video para recomendar un estilo…');
-      const r = await ejecutarClaude(job, c, prompts.argsClaude({sessionId: uuid(), solo_lectura: true}), prompts.promptRecomendar({plan, nombre, archivo: e.entrada.archivo}));
+      const r = await ejecutarClaude(job, c, prompts.argsClaude({sessionId: uuid(), solo_lectura: true, modelo: 'sonnet'}), prompts.promptRecomendar({plan, nombre, archivo: e.entrada.archivo}));
       if (job.cancelado) return;
       if (r.falta) return c.estado({fase: 'error', error: r.falta, trabajo: null});
       const ev = evaluar(r.run, r.salida, c);

@@ -120,7 +120,7 @@ export function selectorGuion(alCambiar) {
       return;
     }
     if (!r.datos.length) {
-      msg.textContent = 'Todavía no hay guiones. Crea uno primero en la sección Guiones.';
+      msg.replaceChildren('Todavía no hay guiones. ', el('a', {className: 'secundario pequeno enlace', href: '#/guiones', textContent: 'Ir a Guiones'}));
       selPlan.append(opcion('', 'Sin planes'));
       alCambiar();
       return;

@@ -12,7 +12,7 @@ const {send, readJson, allowed, servirEstatico} = require('./http');
 
 const RE_PLAN = /^[A-Za-z0-9_-]{1,80}$/;
 const RE_NOMBRE = /^[A-Za-z0-9_-]{1,120}$/;
-const ARGS_GUIONES = ['-p', '--output-format', 'stream-json', '--verbose', '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Write,Edit,Glob,Grep', '--disallowedTools', prompts.DENEGADAS.join(',')];
+const ARGS_GUIONES = ['-p', '--model', 'opus', '--output-format', 'stream-json', '--verbose', '--permission-mode', 'acceptEdits', '--allowedTools', 'Read,Write,Edit,Glob,Grep', '--disallowedTools', prompts.DENEGADAS.join(',')];
 const ACCIONES_VIDEO = ['empezar', 'recomendar', 'cambios', 'aprobar', 'reintentar'];
 
 /**

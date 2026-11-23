@@ -33,6 +33,13 @@ describe('argsClaude', () => {
     expect(p.argsClaude({})).not.toContain('--resume');
     expect(p.argsClaude({})).not.toContain('--session-id');
   });
+  it('modelo: opus por defecto, sonnet si se pide; nada fuera de la lista', () => {
+    const a = p.argsClaude({sessionId: UUID});
+    expect(a[a.indexOf('--model') + 1]).toBe('opus');
+    const b = p.argsClaude({sessionId: UUID, modelo: 'sonnet'});
+    expect(b[b.indexOf('--model') + 1]).toBe('sonnet');
+    expect(() => p.argsClaude({modelo: '--dangerously-skip-permissions'})).toThrow();
+  });
   it('rechaza ids raros', () => {
     expect(() => p.argsClaude({sessionId: '--dangerously-skip-permissions'})).toThrow();
     expect(() => p.argsClaude({resume: 'a b; rm'})).toThrow();

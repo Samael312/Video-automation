@@ -1,11 +1,13 @@
 // Asistente de un video: carga, cabecera, barra de pasos y el panel de cada fase (paneles.js).
 import {$, el, enc, pedir, textoError, conAttr} from './comun.js';
+import {mostrarAviso} from './aviso.js';
 import {tomarPendiente} from './pendiente.js';
-import {W, PASOS, FASES_CURSO, ganchos, iniciarW, aplicarVideo, pasoDe, conectar} from './asistente.js';
-import {panelSubir, panelGuionPendiente, panelCurso, panelRevision, panelListo, panelAlerta, pintarRecom, subir} from './paneles.js';
+import {W, PASOS, FASES_CURSO, ganchos, iniciarW, aplicarVideo, pasoDe, conectar, fraseDePaso} from './asistente.js';
+import {panelSubir, panelGuionPendiente, panelCurso, panelRevision, panelListo, panelAlerta, pintarRecom, pintarEtapa, subir} from './paneles.js';
 
 ganchos.pintar = () => pintar();
 ganchos.pintarRecom = () => pintarRecom();
+ganchos.pintarEtapa = () => pintarEtapa();
 
 export async function mostrarVideo(plan, nombre, modo) {
   const token = iniciarW({plan, nombre, modo: ['editar', 'audio', 'guion'].includes(modo) ? modo : null, estado: null, log: [], archivos: {}, fuente: null, trabajoId: null, trabajoTipo: null, estilo: null, tipoLocal: null, req: [], recom: null, recomendando: false, mensaje: '', porcentaje: null, ultimoPaso: null, xhr: null, nodos: {}, errCount: 0, caption: null});
@@ -43,6 +45,7 @@ function dibujar() {
   const err = conAttr(el('p', {className: 'error-linea', hidden: true}), {role: 'alert'});
   W.nodos.err = err;
   W.nodos.pasos = el('ol', {className: 'pasos'});
+  W.nodos.frase = conAttr(el('p', {className: 'paso-frase'}), {'aria-live': 'polite'});
   W.nodos.panel = el('div', {className: 'video-panel'});
   cont.replaceChildren(
     W.plan === 'VIDEOS_PROFE' || W.plan === 'AUDIOS_PROFE'
@@ -50,6 +53,7 @@ function dibujar() {
       : el('a', {className: 'volver', href: `#/p/${enc(W.plan)}`, textContent: `← ${W.plan}`}),
     el('header', {className: 'cab-video'}, el('span', {className: 'insignia', textContent: W.modo === 'audio' ? '🔊 Audio a video' : W.modo === 'guion' ? '🎙️ Video desde guion' : '🎬 Editar video'}), el('h1', {textContent: W.nombre})),
     W.nodos.pasos,
+    W.nodos.frase,
     err,
     W.nodos.panel,
   );
@@ -59,6 +63,11 @@ function dibujar() {
 function pintar() {
   if (!W || !W.estado) return;
   const fase = W.estado.fase;
+  // aviso solo si la fase cambia en vivo (no al abrir un video que ya estaba asi)
+  const antes = W.fasePintada;
+  W.fasePintada = fase;
+  if (antes && antes !== fase && fase === 'listo') mostrarAviso('¡Tu video está listo!');
+  else if (antes && antes !== fase && fase === 'revision') mostrarAviso('La vista previa está lista.');
   const paso = pasoDe(fase);
   const alerta = ['error', 'necesita_accion', 'interrumpido'].includes(fase);
   W.nodos.pasos.replaceChildren(
@@ -68,6 +77,9 @@ function pintar() {
       return li;
     }),
   );
+  // solo si cambia: es aria-live y no debe repetirse en cada repintado
+  const frase = fraseDePaso(paso, fase, W.modo);
+  if (W.nodos.frase.textContent !== frase) W.nodos.frase.textContent = frase;
   W.nodos.log = null;
   W.nodos.msg = null;
   W.nodos.barra = null;

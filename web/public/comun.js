@@ -1,4 +1,5 @@
 // Utilidades comunes del navegador. Todo se construye con nodos de texto: nada de innerHTML.
+import {mostrarAviso} from './aviso.js';
 
 export const $ = (id) => document.getElementById(id);
 export const enc = encodeURIComponent;
@@ -87,6 +88,28 @@ export async function conBloqueo(botones, fn) {
   }
 }
 
+// ---------- subida: velocidad y tiempo restante ----------
+/** Bytes/s en la ventana (ms) que termina en la ultima muestra {t, b}; null si no hay datos suficientes. */
+export function velocidadSubida(muestras, ventanaMs = 3000) {
+  if (!Array.isArray(muestras) || muestras.length < 2) return null;
+  const ult = muestras[muestras.length - 1];
+  const prim = muestras.find((m) => ult.t - m.t <= ventanaMs) || ult;
+  const dt = ult.t - prim.t;
+  if (dt < 300) return null;
+  return ((ult.b - prim.b) * 1000) / dt;
+}
+/** % entero 0-100; 0 si el total no es positivo (archivo vacio). */
+export const porcentaje = (cargado, total) => (total > 0 ? Math.max(0, Math.min(100, Math.round((cargado / total) * 100))) : 0);
+const relojSub = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+/** "Subiendo X… 45 % · 3.2 MB/s · quedan 0:12" (sin velocidad ni tiempo si aun no se sabe). */
+export function textoSubida(nombre, cargado, total, bps) {
+  if (!(total > 0)) return `Subiendo ${nombre}…`;
+  const p = porcentaje(cargado, total);
+  let t = `Subiendo ${nombre}… ${p} %`;
+  if (bps > 0 && Number.isFinite(bps)) t += ` · ${(bps / 1048576).toFixed(1)} MB/s · quedan ${relojSub(Math.max(0, total - cargado) / bps)}`;
+  return t;
+}
+
 // ---------- portapapeles ----------
 // writeText a veces se queda colgado (sin resolver ni rechazar): se le da 1.5 s y se prueba el plan B.
 export async function copiar(texto, boton) {
@@ -109,6 +132,7 @@ export async function copiar(texto, boton) {
   const original = boton.dataset.original || boton.textContent;
   boton.dataset.original = original;
   boton.textContent = ok ? '¡Copiado!' : 'No se pudo copiar: selecciónalo y copia a mano';
+  if (ok) mostrarAviso('Copiado al portapapeles');
   setTimeout(() => (boton.textContent = original), ok ? 1500 : 3500);
 }
 export const botonCopiar = (texto, etiqueta = 'Copiar') => {

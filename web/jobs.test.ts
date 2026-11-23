@@ -58,6 +58,14 @@ describe('Gestor', () => {
 });
 
 describe('Trabajo', () => {
+  it('cada evento lleva su hora (en) para que al reconectar los tiempos sean reales', () => {
+    const t = new Trabajo('T9', 'x', 'P', 'N');
+    const antes = Date.now();
+    t.emitir({type: 'progreso', mensaje: 'a'});
+    expect(t.log[0].en).toBeGreaterThanOrEqual(antes);
+    t.emitir({type: 'progreso', mensaje: 'b', en: 123});
+    expect(t.log[1].en).toBe(123);
+  });
   it('limita el registro', () => {
     const t = new Trabajo({tipo: 'x'});
     for (let i = 0; i < MAX_LOG + 50; i++) t.emitir({type: 'progreso', mensaje: String(i)});

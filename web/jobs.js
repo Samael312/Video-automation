@@ -49,8 +49,9 @@ class Trabajo {
     this.inicio = Date.now();
   }
 
-  /** Guarda el evento (con tope) y lo manda a quienes estan escuchando. */
+  /** Guarda el evento (con tope y su hora `en`) y lo manda a quienes estan escuchando. */
   emitir(ev) {
+    if (ev && typeof ev === 'object' && typeof ev.en !== 'number') ev = {...ev, en: Date.now()};
     this.log.push(ev);
     if (this.log.length > MAX_LOG) this.log.splice(0, this.log.length - MAX_LOG);
     const linea = `data: ${JSON.stringify(ev)}\n\n`;

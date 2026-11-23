@@ -1,9 +1,19 @@
 // Paneles del asistente segun la fase: subir + estilo, en curso, revisar, listo y alertas.
-import {el, mb, pedir, textoError, conAttr, conBloqueo, copiar, urlArchivo, enc} from './comun.js';
+import {el, mb, pedir, textoError, conAttr, conBloqueo, copiar, urlArchivo, enc, velocidadSubida, textoSubida, porcentaje} from './comun.js';
+import {etapa, reloj} from './etapas.js';
 import {panelRetro} from './secciones.js';
 import {W, EXT_OK, EXT_AUDIO, ESTILOS_UI, ganchos, setErr, lanzar, rutaAccion, logDetalles, pintarProgreso, recargarVideo} from './asistente.js';
 
 const pintar = () => ganchos.pintar();
+
+// ---------- requisitos que faltan (subir y errores) ----------
+function cajaRequisitos(faltan, nota) {
+  const lista = el('ul', {className: 'req-lista'});
+  for (const r of faltan) {
+    lista.append(el('li', {}, el('strong', {textContent: r.titulo || r.id}), r.detalle ? el('p', {textContent: r.detalle}) : null, r.arreglo ? el('p', {className: 'req-arreglo'}, el('span', {textContent: 'Cómo arreglarlo: '}), el('code', {textContent: r.arreglo})) : null));
+  }
+  return el('section', {className: 'caja caja-aviso'}, el('h2', {textContent: 'Faltan requisitos en este PC'}), el('p', {className: 'tenue', textContent: nota}), lista);
+}
 
 // ---------- panel: subir + estilo ----------
 export function esAudio() {
@@ -15,13 +25,7 @@ export function panelSubir() {
   const faltan = W.req.filter((r) => r && r.ok === false);
   const frag = el('div');
 
-  if (faltan.length) {
-    const lista = el('ul', {className: 'req-lista'});
-    for (const r of faltan) {
-      lista.append(el('li', {}, el('strong', {textContent: r.titulo || r.id}), r.detalle ? el('p', {textContent: r.detalle}) : null, r.arreglo ? el('p', {className: 'req-arreglo'}, el('span', {textContent: 'Cómo arreglarlo: '}), el('code', {textContent: r.arreglo})) : null));
-    }
-    frag.append(el('section', {className: 'caja caja-aviso'}, el('h2', {textContent: 'Faltan requisitos en este PC'}), el('p', {className: 'tenue', textContent: 'Puedes subir tu grabación, pero no podrás empezar la edición hasta arreglar esto.'}), lista));
-  }
+  if (faltan.length) frag.append(cajaRequisitos(faltan, 'Puedes subir tu grabación, pero no podrás empezar la edición hasta arreglar esto.'));
 
   // 1. subir
   const entrada = W.estado.entrada;
@@ -173,7 +177,8 @@ export function subir(file) {
   s.barra.hidden = false;
   s.barra.firstChild.style.width = '0%';
   s.subEstado.hidden = false;
-  s.subEstado.textContent = `Subiendo ${file.name}… 0 %`;
+  s.subEstado.textContent = textoSubida(file.name, 0, file.size, null);
+  let muestras = [];
   s.cancelarSub.hidden = false;
   s.zona.classList.add('ocupada');
   actualizarEmpezar();
@@ -186,10 +191,12 @@ export function subir(file) {
   };
   xhr.upload.onprogress = (e) => {
     if (!e.lengthComputable || !W || W.token !== token) return;
-    const p = Math.round((e.loaded / e.total) * 100);
+    const p = porcentaje(e.loaded, e.total);
     s.barra.firstChild.style.width = `${p}%`;
     s.barra.setAttribute('aria-valuenow', String(p));
-    s.subEstado.textContent = `Subiendo ${file.name}… ${p} % (${mb(e.loaded)} de ${mb(e.total)})`;
+    const ahora = Date.now();
+    muestras = [...muestras.filter((m) => ahora - m.t <= 3000), {t: ahora, b: e.loaded}];
+    s.subEstado.textContent = `${textoSubida(file.name, e.loaded, e.total, velocidadSubida(muestras))} (${mb(e.loaded)} de ${mb(e.total)})`;
   };
   xhr.onload = async () => {
     if (!fin()) return;
@@ -232,6 +239,8 @@ export function panelGuionPendiente() {
 export function panelCurso() {
   const fase = W.estado.fase;
   const titulos = {preparando: 'Preparando tu video', planificando: 'Planificando la edición', renderizando: 'Renderizando el video'};
+  W.nodos.etapa = el('p', {className: 'etapa-actual'});
+  W.nodos.hechas = el('ul', {className: 'etapas-hechas'});
   W.nodos.msg = conAttr(el('p', {className: 'curso-msg', textContent: W.mensaje || 'Empezando…'}), {role: 'status', 'aria-live': 'polite'});
   W.nodos.barra = conAttr(el('div', {className: 'barra-prog', hidden: true}, el('span')), {role: 'progressbar', 'aria-valuemin': '0', 'aria-valuemax': '100', 'aria-label': 'Progreso'});
   const cancelar = el('button', {type: 'button', className: 'secundario', textContent: 'Cancelar'});
@@ -242,9 +251,43 @@ export function panelCurso() {
       if (!r.ok) setErr(textoError(r, 'No se pudo cancelar.'));
     });
   });
-  const caja = el('section', {className: 'panel video-sec curso'}, el('div', {className: 'curso-cab'}, el('span', {className: 'spinner', 'aria-hidden': 'true'}), el('h2', {textContent: titulos[fase]})), W.nodos.msg, W.nodos.barra, el('p', {className: 'tenue', textContent: 'Puedes dejar esta página abierta; se actualiza sola. Puede tardar varios minutos.'}), el('div', {className: 'acciones'}, cancelar), logDetalles());
+  const caja = el('section', {className: 'panel video-sec curso'}, el('div', {className: 'curso-cab'}, el('span', {className: 'spinner', ariaHidden: 'true'}), el('h2', {textContent: titulos[fase]})), W.nodos.etapa, W.nodos.hechas, W.nodos.msg, W.nodos.barra, el('p', {className: 'tenue', textContent: 'Puedes dejar esta página abierta; se actualiza sola. Puede tardar varios minutos.'}), el('div', {className: 'acciones'}, cancelar), logDetalles());
   pintarProgreso();
+  pintarEtapa();
+  // reloj de la etapa: se para solo cuando el panel ya no esta en la pagina
+  const nodo = W.nodos.etapa;
+  const tic = setInterval(() => {
+    if (!nodo.isConnected || !W || W.nodos.etapa !== nodo) return clearInterval(tic);
+    pintarReloj();
+  }, 1000);
   return caja;
+}
+
+function pintarReloj() {
+  const n = W.nodos.etapa;
+  const a = W.etapas && W.etapas.actual;
+  const r = n && n.querySelector('.etapa-reloj');
+  if (a && r) r.textContent = reloj(Date.now() - a.desde);
+}
+
+/** Etapa actual (icono + texto + reloj) y las ya hechas con su duracion. */
+export function pintarEtapa() {
+  if (!W || !W.nodos.etapa) return;
+  const a = W.etapas && W.etapas.actual;
+  if (!a) {
+    W.nodos.etapa.hidden = true;
+    W.nodos.hechas.replaceChildren();
+    return;
+  }
+  const e = etapa(a.paso);
+  W.nodos.etapa.hidden = false;
+  W.nodos.etapa.replaceChildren(el('span', {className: 'etapa-ico', textContent: e.icono}), el('span', {textContent: e.texto}), el('span', {className: 'etapa-reloj', textContent: reloj(Date.now() - a.desde)}));
+  W.nodos.hechas.replaceChildren(
+    ...W.etapas.hechas.map((h) => {
+      const eh = etapa(h.paso);
+      return el('li', {}, el('span', {className: 'etapa-ok', textContent: '✓'}), el('span', {textContent: eh.texto}), el('span', {className: 'tenue', textContent: reloj(h.ms)}));
+    }),
+  );
 }
 
 // ---------- panel: revisar ----------
@@ -297,7 +340,7 @@ export function panelListo() {
   return el(
     'div',
     {},
-    el('section', {className: 'panel video-sec'}, el('h2', {textContent: '¡Tu video está listo! 🎉'}), el('div', {className: 'reproductor-caja'}, video), el('div', {className: 'acciones'}, el('a', {className: 'primario enlace', href: urlArchivo(W.plan, W.nombre, 'video', '?descargar=1'), download: `${W.nombre}.mp4`, textContent: 'Descargar video'}))),
+    el('section', {className: 'panel video-sec'}, el('h2', {className: 'titulo-listo'}, el('span', {className: 'check-ok', ariaHidden: 'true', textContent: '✓'}), '¡Tu video está listo! 🎉'), el('div', {className: 'reproductor-caja'}, video), el('div', {className: 'acciones'}, el('a', {className: 'primario enlace', href: urlArchivo(W.plan, W.nombre, 'video', '?descargar=1'), download: `${W.nombre}.mp4`, textContent: 'Descargar video'}))),
     el('section', {className: 'panel video-sec'}, el('h2', {textContent: 'Caption para TikTok'}), cap, el('div', {className: 'acciones'}, copiarBtn)),
     panelRetro({
       titulo: '¿Quieres cambiar algo de este video?',
@@ -322,6 +365,8 @@ export function panelAlerta(titulo, texto, tipo) {
   });
   const caja = el('section', {className: `caja caja-${tipo === 'accion' ? 'accion' : 'error'} video-sec`}, el('h2', {textContent: titulo}), el('p', {className: 'caja-texto', textContent: texto}), el('div', {className: 'acciones'}, reintentar));
   const frag = el('div', {}, caja);
+  const faltan = tipo === 'error' ? W.req.filter((r) => r && r.ok === false) : [];
+  if (faltan.length) frag.append(cajaRequisitos(faltan, 'Puede que el error venga de aquí. Arréglalo y pulsa Reintentar.'));
   if (tipo !== 'interrumpido' || W.log.length) frag.append(logDetalles());
   return frag;
 }
